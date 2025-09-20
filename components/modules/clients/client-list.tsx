@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -33,6 +34,25 @@ export function ClientList() {
 
   useEffect(() => {
     fetchClients()
+
+    // Set up real-time subscription for clients
+    const supabase = createClient()
+    const subscription = supabase
+      .channel('clients_realtime')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'clients' },
+        (payload) => {
+          console.log('Client change detected:', payload)
+          // Refetch clients when any change occurs
+          fetchClients()
+        }
+      )
+      .subscribe()
+
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(subscription)
+    }
   }, [])
 
   const fetchClients = async () => {
@@ -204,7 +224,8 @@ export function ClientList() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{clients.length}</div>
-            <div className="text-sm text-green-600 mt-1">
+            <div className="flex items-center text-sm text-green-600 mt-1">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
               Live data
             </div>
           </CardContent>

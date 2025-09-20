@@ -3,6 +3,9 @@
 
 import { useAuth, usePermissions } from '@/lib/hooks/useAuth'
 import Link from 'next/link'
+import RealtimeStats from '@/components/dashboard/realtime-stats'
+import { RealtimeNotificationSystem } from '@/components/realtime/notification-system'
+import { RealtimeActivityFeed } from '@/components/realtime/activity-feed'
 
 export default function DashboardPage() {
   const { user, logout } = useAuth()
@@ -123,6 +126,7 @@ export default function DashboardPage() {
               <div className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">
                 {user.role.replace('_', ' ')}
               </div>
+              <RealtimeNotificationSystem />
               <button
                 onClick={logout}
                 className="text-sm text-gray-500 hover:text-gray-700"
@@ -142,6 +146,16 @@ export default function DashboardPage() {
             <p className="text-gray-600">
               Welcome to your BlackGoldUnited ERP dashboard. Access the modules you have permissions for below.
             </p>
+          </div>
+
+          {/* Real-time Statistics */}
+          <div className="mb-8">
+            <RealtimeStats />
+          </div>
+
+          {/* Real-time Activity Feed */}
+          <div className="mb-8">
+            <RealtimeActivityFeed />
           </div>
 
           {/* Modules Grid */}

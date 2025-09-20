@@ -220,11 +220,14 @@ export function useSalesStats() {
             sum + (Number(inv.paidAmount) || Number(inv.totalAmount) || 0), 0
           )
 
-          const thisMonthInvoices = invoices?.filter(inv =>
-            new Date(inv.createdAt || '') >= thisMonth
-          ) || []
+          // Fetch current month's invoices for comparison
+          const { data: currentMonthInvoices } = await supabase
+            .from('invoices')
+            .select('totalAmount, paidAmount, createdAt')
+            .gte('createdAt', thisMonth.toISOString())
+            .eq('deletedAt', null)
 
-          const thisMonthRevenue = thisMonthInvoices.reduce((sum, inv) =>
+          const thisMonthRevenue = (currentMonthInvoices || []).reduce((sum, inv) =>
             sum + (Number(inv.paidAmount) || Number(inv.totalAmount) || 0), 0
           )
 

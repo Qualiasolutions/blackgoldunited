@@ -14,9 +14,9 @@ import {
   File,
   CheckCircle,
   AlertCircle,
-  Progress,
   Folder,
   Tag,
+  Loader2,
   Globe,
   Lock,
   Calendar,
@@ -354,7 +354,7 @@ export function DocumentUpload({
                 )}
                 {pendingCount > 0 && (
                   <Badge className="bg-blue-100 text-blue-700">
-                    <Progress className="h-3 w-3 mr-1" />
+                    <Loader2 className="h-3 w-3 mr-1" />
                     {pendingCount} pending
                   </Badge>
                 )}
@@ -386,7 +386,7 @@ export function DocumentUpload({
                     )}
                     {fileItem.status === 'uploading' && (
                       <Badge className="bg-blue-100 text-blue-700">
-                        <Progress className="h-3 w-3 mr-1 animate-spin" />
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                         Uploading...
                       </Badge>
                     )}

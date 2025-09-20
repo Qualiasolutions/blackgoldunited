@@ -42,7 +42,7 @@ interface RFQ {
 
 export default function RFQPage() {
   const { user } = useAuth()
-  const { hasModuleAccess, hasFullAccess, canPerformAction } = usePermissions()
+  const { hasModuleAccess, hasFullAccess } = usePermissions()
   const [rfqs, setRfqs] = useState<RFQ[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -84,7 +84,7 @@ export default function RFQPage() {
         id: item.id,
         rfqNumber: item.quotationNumber || `RFQ-${item.id.slice(-6)}`,
         clientId: item.clientId,
-        clientName: item.clients?.companyName || 'Unknown Client',
+        clientName: (item.clients as any)?.companyName || 'Unknown Client',
         title: item.title || 'Untitled RFQ',
         description: item.description || '',
         status: item.status || 'DRAFT',

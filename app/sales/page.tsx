@@ -25,7 +25,7 @@ import { useSalesStats } from '@/lib/hooks/useSalesStats'
 
 export default function SalesPage() {
   const { user } = useAuth()
-  const { hasModuleAccess, hasFullAccess, canPerformAction } = usePermissions()
+  const { hasModuleAccess, hasFullAccess } = usePermissions()
   const { stats, loading, error } = useSalesStats()
 
   if (!hasModuleAccess('sales')) {
@@ -408,7 +408,7 @@ export default function SalesPage() {
                 <div className="text-center py-8">
                   <div className="animate-pulse text-gray-500">Loading recent activity...</div>
                 </div>
-              ) : stats?.recentActivity?.length > 0 ? (
+              ) : stats && stats.recentActivity && stats.recentActivity.length > 0 ? (
                 stats.recentActivity.map((activity: any, index: number) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center space-x-3">

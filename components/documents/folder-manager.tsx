@@ -152,7 +152,7 @@ export function FolderManager({
       let currentId: string | null = folderId
 
       while (currentId) {
-        const { data, error } = await supabase
+        const { data, error }: { data: any, error: any } = await supabase
           .from('document_folders')
           .select('*')
           .eq('id', currentId)

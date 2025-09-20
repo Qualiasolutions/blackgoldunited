@@ -200,7 +200,7 @@ export default function DocumentsPage() {
         .eq('id', document.id)
 
       // Download file
-      const link = document.createElement('a')
+      const link = window.document.createElement('a')
       link.href = document.fileUrl
       link.download = document.originalName
       link.click()

@@ -1,17 +1,6 @@
-import { MainLayout } from '@/components/layout/main-layout'
-import { DashboardPage } from '@/components/dashboard/dashboard-page'
-
-// Mock user data - in real app this would come from authentication
-const mockUser = {
-  name: 'John Smith',
-  email: 'john.smith@bgu.com',
-  role: 'MANAGEMENT'
-}
+import { redirect } from 'next/navigation'
 
 export default function HomePage() {
-  return (
-    <MainLayout user={mockUser}>
-      <DashboardPage user={mockUser} />
-    </MainLayout>
-  )
+  // Redirect to login page - the dashboard should be accessed via /dashboard
+  redirect('/auth/login')
 }

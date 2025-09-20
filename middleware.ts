@@ -111,7 +111,6 @@ const PUBLIC_ROUTES = [
   '/auth/reset-password',
   '/auth/error',
   '/auth/verify-email',
-  '/',
 ]
 
 // Admin-only routes

@@ -161,7 +161,7 @@ export function validateNavigation(
 
   return {
     allowed: false,
-    reason: `Access denied: ${getRoleDescription(role)} does not have access to ${module} module`
+    reason: `Access denied: ${getRoleDescription(userRole)} does not have access to ${module} module`
   };
 }
 

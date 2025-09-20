@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { SignupData } from '@/lib/types/auth'
 import { UserRole } from '@/lib/types/auth'
@@ -64,8 +65,15 @@ export default function SignupPage() {
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-black via-gray-900 to-black items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 via-transparent to-yellow-500/5"></div>
         <div className="relative z-10 text-center px-8">
-          <div className="mx-auto h-20 w-20 flex items-center justify-center bg-gradient-to-br from-yellow-400 to-yellow-600 text-black rounded-2xl shadow-2xl mb-8">
-            <Building className="h-10 w-10" />
+          <div className="mx-auto mb-8">
+            <Image
+              src="/united-logo-white.webp"
+              alt="BlackGoldUnited"
+              width={200}
+              height={80}
+              className="mx-auto"
+              priority
+            />
           </div>
           <h1 className="text-4xl font-bold text-white mb-4">
             BlackGoldUnited
@@ -90,8 +98,15 @@ export default function SignupPage() {
       <div className="flex-1 flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <div className="lg:hidden mx-auto h-16 w-16 flex items-center justify-center bg-gradient-to-br from-yellow-400 to-yellow-600 text-black rounded-xl shadow-lg mb-6">
-              <Building className="h-8 w-8" />
+            <div className="lg:hidden mx-auto mb-6">
+              <Image
+                src="/united-logo-white.webp"
+                alt="BlackGoldUnited"
+                width={120}
+                height={48}
+                className="mx-auto filter brightness-0"
+                priority
+              />
             </div>
             <h2 className="text-3xl font-extrabold text-gray-900">
               Create your account
@@ -294,6 +309,21 @@ export default function SignupPage() {
                 >
                   Sign in to BGU
                 </Link>
+              </p>
+            </div>
+
+            {/* Powered by Qualia Solutions */}
+            <div className="text-center pt-6">
+              <p className="text-xs text-gray-500">
+                Powered by{' '}
+                <a
+                  href="https://qualiasolutions.net"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-yellow-600 hover:text-yellow-500 transition-colors"
+                >
+                  Qualia Solutions
+                </a>
               </p>
             </div>
           </form>

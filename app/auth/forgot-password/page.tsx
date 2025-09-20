@@ -67,6 +67,21 @@ export default function ForgotPasswordPage() {
               Back to sign in
             </Link>
           </div>
+
+          {/* Powered by Qualia Solutions */}
+          <div className="text-center pt-6">
+            <p className="text-xs text-gray-500">
+              Powered by{' '}
+              <a
+                href="https://qualiasolutions.net"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-black hover:text-gray-700 transition-colors"
+              >
+                Qualia Solutions
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     )
@@ -150,6 +165,21 @@ export default function ForgotPasswordPage() {
             >
               Back to sign in
             </Link>
+          </div>
+
+          {/* Powered by Qualia Solutions */}
+          <div className="text-center pt-6">
+            <p className="text-xs text-gray-500">
+              Powered by{' '}
+              <a
+                href="https://qualiasolutions.net"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-black hover:text-gray-700 transition-colors"
+              >
+                Qualia Solutions
+              </a>
+            </p>
           </div>
         </form>
       </div>

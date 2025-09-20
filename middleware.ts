@@ -250,13 +250,10 @@ export default withAuth(
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - api/auth (NextAuth.js routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files (public directory)
+     * Temporarily disable middleware matcher to prevent redirect loops
+     * when NextAuth is not properly configured in production
+     * TODO: Re-enable once environment variables are properly set in Vercel
      */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|public/).*)',
+    '/disabled-temporarily-for-deployment',
   ],
 }

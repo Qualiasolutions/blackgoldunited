@@ -12,7 +12,7 @@ export async function GET() {
     }
 
     // Start with simple queries and add complexity gradually
-    const results = {}
+    const results: any = {}
 
     // Try to get clients data
     try {
@@ -79,12 +79,12 @@ export async function GET() {
     const { clients = [], invoices = [], products = [], purchaseOrders = [] } = results
 
     // Revenue calculations
-    const totalRevenue = invoices.reduce((sum, inv) => sum + (Number(inv.paidAmount) || Number(inv.totalAmount) || 0), 0)
+    const totalRevenue = invoices.reduce((sum: number, inv: any) => sum + (Number(inv.paidAmount) || Number(inv.totalAmount) || 0), 0)
     const previousRevenue = totalRevenue * 0.9 // Mock previous period for change calculation
     const revenueChange = previousRevenue > 0 ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 : 0
 
     // Client calculations
-    const activeClientsCount = clients.filter(c => c.isActive !== false).length
+    const activeClientsCount = clients.filter((c: any) => c.isActive !== false).length
     const totalClientsCount = clients.length
     const previousClients = Math.max(1, activeClientsCount - 2) // Mock previous count
     const clientsChange = ((activeClientsCount - previousClients) / previousClients) * 100
@@ -95,7 +95,7 @@ export async function GET() {
     const productsChange = ((productsInStock - previousProducts) / previousProducts) * 100
 
     // Purchase order calculations
-    const pendingOrdersCount = purchaseOrders.filter(po =>
+    const pendingOrdersCount = purchaseOrders.filter((po: any) =>
       ['DRAFT', 'SENT', 'CONFIRMED', 'PENDING'].includes(po.status)
     ).length
     const previousOrders = Math.max(1, pendingOrdersCount + 1)
@@ -103,25 +103,25 @@ export async function GET() {
 
     // Recent activity from available data
     const recentActivity = [
-      ...invoices.slice(0, 3).map(inv => ({
+      ...invoices.slice(0, 3).map((inv: any) => ({
         id: inv.id || 'unknown',
         type: 'invoice',
         description: `Invoice ${inv.invoiceNumber || 'N/A'}`,
         amount: Number(inv.totalAmount) || 0,
         timestamp: inv.createdAt || new Date().toISOString()
       })),
-      ...clients.slice(0, 2).map(client => ({
+      ...clients.slice(0, 2).map((client: any) => ({
         id: client.id || 'unknown',
         type: 'client',
         description: `New client: ${client.companyName}`,
         amount: 0,
         timestamp: client.createdAt || new Date().toISOString()
       }))
-    ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 5)
+    ].sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 5)
 
     // Top products by price (simplified)
     const topProducts = products
-      .map(product => ({
+      .map((product: any) => ({
         id: product.id,
         name: product.name,
         code: product.productCode,
@@ -129,7 +129,7 @@ export async function GET() {
         totalStock: 100, // Mock stock data
         warehouses: 1
       }))
-      .sort((a, b) => b.price - a.price)
+      .sort((a: any, b: any) => b.price - a.price)
       .slice(0, 5)
 
     const stats = {

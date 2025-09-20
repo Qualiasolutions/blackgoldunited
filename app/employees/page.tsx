@@ -143,8 +143,8 @@ export default function EmployeesPage() {
                     </div>
                   </div>
                 </CardContent>
-              </Link>
-            </Card>
+              </Card>
+            </Link>
 
             <Link href="/payroll">
               <Card className="hover:shadow-md transition-shadow cursor-pointer">
@@ -159,8 +159,8 @@ export default function EmployeesPage() {
                     </div>
                   </div>
                 </CardContent>
-              </Link>
-            </Card>
+              </Card>
+            </Link>
           </div>
 
           {/* Employee List */}

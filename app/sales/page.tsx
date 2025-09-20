@@ -133,7 +133,7 @@ export default function SalesPage() {
                     </div>
                   </div>
                 </CardContent>
-              </Link>
+              </Card>
             </Link>
 
             <Card className="hover:shadow-md transition-shadow cursor-pointer">

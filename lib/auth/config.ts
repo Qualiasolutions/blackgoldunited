@@ -35,8 +35,11 @@ declare module "next-auth/jwt" {
 }
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma) as any,
-  secret: process.env.NEXTAUTH_SECRET,
+  // Only use adapter if DATABASE_URL is properly configured
+  ...(process.env.DATABASE_URL && process.env.DATABASE_URL !== 'YOUR_DB_PASSWORD'
+    ? { adapter: PrismaAdapter(prisma) as any }
+    : {}),
+  secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-for-development-only',
   providers: [
     CredentialsProvider({
       id: 'credentials',
@@ -59,6 +62,12 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
+          // Check if database is available
+          if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes('YOUR_DB_PASSWORD')) {
+            console.warn('Database not configured, skipping authentication')
+            return null
+          }
+
           // Find user by email
           const user = await prisma.user.findUnique({
             where: {
@@ -137,14 +146,18 @@ export const authOptions: NextAuthOptions = {
           }
         } catch (error) {
           console.error('Authentication error:', error)
-          await logAuthEvent({
-            action: 'LOGIN_FAILED',
-            email: credentials.email,
-            ipAddress: req.headers?.['x-forwarded-for'] as string,
-            userAgent: req.headers?.['user-agent'],
-            success: false,
-            details: { reason: 'System error', error: (error as Error).message }
-          })
+          try {
+            await logAuthEvent({
+              action: 'LOGIN_FAILED',
+              email: credentials.email,
+              ipAddress: req.headers?.['x-forwarded-for'] as string,
+              userAgent: req.headers?.['user-agent'],
+              success: false,
+              details: { reason: 'System error', error: (error as Error).message }
+            })
+          } catch (logError) {
+            console.error('Failed to log auth event:', logError)
+          }
           return null
         }
       }

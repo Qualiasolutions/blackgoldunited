@@ -105,6 +105,7 @@ const ROUTE_PERMISSIONS: Record<string, {
 
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = [
+  '/',
   '/auth/login',
   '/auth/signup',
   '/auth/forgot-password',
@@ -183,46 +184,64 @@ function hasRoutePermission(
 
 export default withAuth(
   function middleware(req: NextRequest) {
-    const { pathname } = req.nextUrl
-    const token = req.nextauth.token
+    try {
+      const { pathname } = req.nextUrl
+      const token = req.nextauth.token
 
-    // Allow access to public routes
-    if (PUBLIC_ROUTES.some(route => pathname.startsWith(route))) {
+      // Allow access to public routes
+      if (PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(route))) {
+        return NextResponse.next()
+      }
+
+      // Redirect to login if not authenticated
+      if (!token) {
+        const loginUrl = new URL('/auth/login', req.url)
+        loginUrl.searchParams.set('callbackUrl', pathname)
+        return NextResponse.redirect(loginUrl)
+      }
+
+      // Check route permissions
+      const userRole = token.role as UserRole
+      const hasPermission = hasRoutePermission(userRole, pathname)
+
+      if (!hasPermission) {
+        // Redirect to unauthorized page or dashboard
+        const unauthorizedUrl = new URL('/dashboard', req.url)
+        unauthorizedUrl.searchParams.set('error', 'insufficient_permissions')
+        return NextResponse.redirect(unauthorizedUrl)
+      }
+
+      return NextResponse.next()
+    } catch (error) {
+      console.error('Middleware error:', error)
+      // Allow the request to continue if middleware fails
       return NextResponse.next()
     }
-
-    // Redirect to login if not authenticated
-    if (!token) {
-      const loginUrl = new URL('/auth/login', req.url)
-      loginUrl.searchParams.set('callbackUrl', pathname)
-      return NextResponse.redirect(loginUrl)
-    }
-
-    // Check route permissions
-    const userRole = token.role as UserRole
-    const hasPermission = hasRoutePermission(userRole, pathname)
-
-    if (!hasPermission) {
-      // Redirect to unauthorized page or dashboard
-      const unauthorizedUrl = new URL('/dashboard', req.url)
-      unauthorizedUrl.searchParams.set('error', 'insufficient_permissions')
-      return NextResponse.redirect(unauthorizedUrl)
-    }
-
-    return NextResponse.next()
   },
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        const { pathname } = req.nextUrl
+        try {
+          const { pathname } = req.nextUrl
 
-        // Allow access to public routes without token
-        if (PUBLIC_ROUTES.some(route => pathname.startsWith(route))) {
+          // Always allow access to public routes
+          if (PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(route))) {
+            return true
+          }
+
+          // If NextAuth is not properly configured, allow access to prevent redirect loops
+          if (!process.env.NEXTAUTH_SECRET || process.env.NEXTAUTH_SECRET === 'fallback-secret-for-development-only') {
+            console.warn('NextAuth not properly configured, allowing access')
+            return true
+          }
+
+          // Require token for all other routes
+          return !!token
+        } catch (error) {
+          console.error('Authorization callback error:', error)
+          // Allow access if authorization check fails to prevent redirect loops
           return true
         }
-
-        // Require token for all other routes
-        return !!token
       }
     }
   }

@@ -1,46 +1,41 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* BlackGoldUnited ERP - Light Theme Only */
-:root {
-  --background: #ffffff;
-  --foreground: #1f2937;
-  --card: #ffffff;
-  --card-foreground: #1f2937;
-  --primary: #2563eb;
-  --primary-foreground: #ffffff;
-  --secondary: #f3f4f6;
-  --secondary-foreground: #374151;
-  --muted: #f9fafb;
-  --muted-foreground: #6b7280;
-  --accent: #f3f4f6;
-  --accent-foreground: #374151;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  --border: #e5e7eb;
-  --input: #ffffff;
-  --ring: #2563eb;
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+  }
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
 /* Force light theme always - override any dark mode */
@@ -53,24 +48,83 @@ html {
 }
 
 body {
-  background: var(--background) !important;
-  color: var(--foreground) !important;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-/* Ensure all components use light theme */
-.bg-background {
-  background-color: #ffffff !important;
-}
-
-.bg-card {
-  background-color: #ffffff !important;
-}
-
-.text-foreground {
+  background: #ffffff !important;
   color: #1f2937 !important;
 }
 
-.border {
+/* Override any dark mode classes */
+.dark,
+[data-theme="dark"],
+[data-mode="dark"] {
+  background: #ffffff !important;
+  color: #1f2937 !important;
+}
+
+/* Ensure all components use light theme */
+.dark * {
+  background-color: inherit !important;
+  color: inherit !important;
+}
+
+/* Specific overrides for common UI patterns */
+.bg-gray-900,
+.bg-slate-900,
+.bg-black {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+}
+
+.text-white {
+  color: #1f2937 !important;
+}
+
+/* Card and panel overrides */
+[class*="bg-card"] {
+  background-color: #ffffff !important;
+}
+
+[class*="text-card-foreground"] {
+  color: #1f2937 !important;
+}
+
+/* Ensure proper contrast for buttons and interactive elements */
+button {
+  color: inherit;
+}
+
+.bg-primary {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.bg-secondary {
+  background-color: #f3f4f6 !important;
+  color: #374151 !important;
+}
+
+/* Table styling for light theme */
+table {
+  background-color: #ffffff !important;
+}
+
+th,
+td {
+  color: #1f2937 !important;
   border-color: #e5e7eb !important;
+}
+
+/* Form elements */
+input,
+textarea,
+select {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  border-color: #e5e7eb !important;
+}
+
+/* Navigation and sidebar */
+nav,
+aside {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
 }

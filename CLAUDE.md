@@ -1,15 +1,84 @@
-# BlackGoldUnited ERP System - Claude Code Configuration
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
-BlackGoldUnited is a comprehensive business management system built on Next.js, designed to handle sales, clients, inventory, purchases, finance, accounting, HR, and QHSE operations with role-based access control.
+BlackGoldUnited is a comprehensive ERP system built for business management with 14 interconnected modules. The system handles sales, clients, inventory, purchases, finance, accounting, HR, payroll, attendance, QHSE, templates, reports, and organizational structure with strict role-based access control.
 
-## Architecture
-- **Frontend**: Next.js 15 with TypeScript and React
-- **Styling**: Tailwind CSS with shadcn/ui components
-- **Database**: PostgreSQL (to be implemented)
-- **Authentication**: NextAuth.js with role-based permissions
-- **State Management**: React Context/Zustand (to be implemented)
-- **Testing**: Jest + Playwright (to be configured)
+## Core Architecture
+- **Frontend**: Next.js 15.5.3 with TypeScript and React 19
+- **Styling**: Tailwind CSS v3.4.14 with shadcn/ui component system
+- **Database**: PostgreSQL with Prisma ORM v6.0.0, deployed on Supabase
+- **Authentication**: NextAuth.js v4.24.11 with comprehensive audit logging
+- **UI Components**: Radix UI primitives with custom styling
+- **Form Handling**: React Hook Form v7.63.0 with Zod validation
+- **Data Tables**: TanStack Table v8.21.3 for complex data grids
+- **Deployment**: Vercel with automatic deployments
+
+## Essential Development Commands
+
+### Database Management
+```bash
+# Generate Prisma client
+npm run db:generate
+
+# Push schema changes to database
+npm run db:push
+
+# Create new migration
+npm run db:migrate
+
+# Deploy migrations to production
+npm run db:migrate:deploy
+
+# Reset database (development only)
+npm run db:reset
+
+# Seed database with initial data
+npm run db:seed
+
+# Open Prisma Studio
+npm run db:studio
+
+# Validate database schema
+npm run db:validate
+
+# Create database backup
+npm run db:backup
+```
+
+### Development Workflow
+```bash
+# Start development server with Turbopack
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm run start
+
+# Lint code
+npm run lint
+
+# Fix linting issues
+npm run lint:fix
+
+# Type check
+npm run type-check
+```
+
+### Role-Based Access Control Matrix
+The system implements strict access control based on 5 user roles:
+
+| Module | MANAGEMENT | FINANCE_TEAM | PROCUREMENT_BD | ADMIN_HR | IMS_QHSE |
+|--------|------------|--------------|----------------|----------|----------|
+| Administration | Full (F) | Read (R) | None (N) | Full (F) | None (N) |
+| Finance | Full (F) | Full (F) | Read (R) | None (N) | None (N) |
+| Procurement | Full (F) | Read (R) | Full (F) | None (N) | None (N) |
+| Projects & Operations | Full (F) | Read (R) | Full (F) | None (N) | Read (R) |
+| IMS/Compliance | Full (F) | None (N) | None (N) | None (N) | Full (F) |
+| Correspondence | Full (F) | None (N) | Read (R) | Read (R) | Read (R) |
 
 ## Command Templates from ~/Desktop/templates/claude-commands.md
 

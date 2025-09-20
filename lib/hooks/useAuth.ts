@@ -12,9 +12,9 @@ import type {
   PasswordReset,
   ChangePasswordData,
   AuthResponse,
-  SessionUser,
-  UserRole
+  SessionUser
 } from '@/lib/types/auth'
+import { UserRole } from '@/lib/types/auth'
 import { validateLogin, validateSignup, validatePasswordResetRequest, validatePasswordReset, validateChangePassword } from '@/lib/auth/validation'
 
 export function useAuth() {

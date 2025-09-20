@@ -1,92 +1,141 @@
 // Route Protection Middleware for BlackGoldUnited ERP
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { UserRole } from '@/lib/types/auth'
+import { UserRole, AccessLevel, ACCESS_CONTROL_MATRIX } from '@/lib/types/auth'
 
-// Define protected routes and their required permissions
+// Define protected routes and their required permissions based on BGU Portal Layout PDF
 const ROUTE_PERMISSIONS: Record<string, {
   module: string
-  requiredAccess: 'read' | 'full'
+  requiredAccess: AccessLevel
   requiredAction?: 'create' | 'read' | 'update' | 'delete'
 }> = {
   // Dashboard - requires basic read access to any module
-  '/dashboard': { module: 'any', requiredAccess: 'read' },
+  '/dashboard': { module: 'any', requiredAccess: AccessLevel.READ },
 
-  // Sales Module
-  '/sales': { module: 'sales', requiredAccess: 'read' },
-  '/sales/clients': { module: 'sales', requiredAccess: 'read' },
-  '/sales/clients/new': { module: 'sales', requiredAccess: 'full', requiredAction: 'create' },
-  '/sales/invoices': { module: 'sales', requiredAccess: 'read' },
-  '/sales/invoices/new': { module: 'sales', requiredAccess: 'full', requiredAction: 'create' },
-  '/sales/payments': { module: 'sales', requiredAccess: 'read' },
-  '/sales/rfqs': { module: 'sales', requiredAccess: 'read' },
-  '/sales/rfqs/new': { module: 'sales', requiredAccess: 'full', requiredAction: 'create' },
+  // Sales Module (exact PDF mapping)
+  '/sales': { module: 'sales', requiredAccess: AccessLevel.READ },
+  '/sales/invoices': { module: 'sales', requiredAccess: AccessLevel.READ },
+  '/sales/invoices/create': { module: 'sales', requiredAccess: AccessLevel.FULL, requiredAction: 'create' },
+  '/sales/rfq': { module: 'sales', requiredAccess: AccessLevel.READ },
+  '/sales/rfq/create': { module: 'sales', requiredAccess: AccessLevel.FULL, requiredAction: 'create' },
+  '/sales/credit-notes': { module: 'sales', requiredAccess: AccessLevel.READ },
+  '/sales/refunds': { module: 'sales', requiredAccess: AccessLevel.READ },
+  '/sales/recurring': { module: 'sales', requiredAccess: AccessLevel.READ },
+  '/sales/payments': { module: 'sales', requiredAccess: AccessLevel.READ },
+  '/sales/settings': { module: 'sales', requiredAccess: AccessLevel.FULL },
 
-  // Inventory Module
-  '/inventory': { module: 'inventory', requiredAccess: 'read' },
-  '/inventory/products': { module: 'inventory', requiredAccess: 'read' },
-  '/inventory/products/new': { module: 'inventory', requiredAccess: 'full', requiredAction: 'create' },
-  '/inventory/stock': { module: 'inventory', requiredAccess: 'read' },
-  '/inventory/warehouses': { module: 'inventory', requiredAccess: 'read' },
-  '/inventory/requisitions': { module: 'inventory', requiredAccess: 'read' },
+  // Clients Module (exact PDF mapping)
+  '/clients': { module: 'clients', requiredAccess: AccessLevel.READ },
+  '/clients/create': { module: 'clients', requiredAccess: AccessLevel.FULL, requiredAction: 'create' },
+  '/clients/contacts': { module: 'clients', requiredAccess: AccessLevel.READ },
+  '/clients/settings': { module: 'clients', requiredAccess: AccessLevel.FULL },
 
-  // Purchase Module
-  '/purchase': { module: 'purchase', requiredAccess: 'read' },
-  '/purchase/suppliers': { module: 'purchase', requiredAccess: 'read' },
-  '/purchase/suppliers/new': { module: 'purchase', requiredAccess: 'full', requiredAction: 'create' },
-  '/purchase/orders': { module: 'purchase', requiredAccess: 'read' },
-  '/purchase/orders/new': { module: 'purchase', requiredAccess: 'full', requiredAction: 'create' },
-  '/purchase/invoices': { module: 'purchase', requiredAccess: 'read' },
+  // Inventory Module (exact PDF mapping)
+  '/inventory': { module: 'inventory', requiredAccess: AccessLevel.READ },
+  '/inventory/products': { module: 'inventory', requiredAccess: AccessLevel.READ },
+  '/inventory/requisitions': { module: 'inventory', requiredAccess: AccessLevel.READ },
+  '/inventory/pricing': { module: 'inventory', requiredAccess: AccessLevel.READ },
+  '/inventory/warehouses': { module: 'inventory', requiredAccess: AccessLevel.READ },
+  '/inventory/stock': { module: 'inventory', requiredAccess: AccessLevel.READ },
+  '/inventory/settings': { module: 'inventory', requiredAccess: AccessLevel.FULL },
+  '/inventory/product-settings': { module: 'inventory', requiredAccess: AccessLevel.FULL },
 
-  // Finance Module
-  '/finance': { module: 'finance', requiredAccess: 'read' },
-  '/finance/accounts': { module: 'finance', requiredAccess: 'read' },
-  '/finance/transactions': { module: 'finance', requiredAccess: 'read' },
-  '/finance/expenses': { module: 'finance', requiredAccess: 'read' },
-  '/finance/expenses/new': { module: 'finance', requiredAccess: 'full', requiredAction: 'create' },
+  // Purchase Module (exact PDF mapping)
+  '/purchase': { module: 'purchase', requiredAccess: AccessLevel.READ },
+  '/purchase/invoices': { module: 'purchase', requiredAccess: AccessLevel.READ },
+  '/purchase/refunds': { module: 'purchase', requiredAccess: AccessLevel.READ },
+  '/purchase/debit-notes': { module: 'purchase', requiredAccess: AccessLevel.READ },
+  '/purchase/suppliers': { module: 'purchase', requiredAccess: AccessLevel.READ },
+  '/purchase/payments': { module: 'purchase', requiredAccess: AccessLevel.READ },
+  '/purchase/invoice-settings': { module: 'purchase', requiredAccess: AccessLevel.FULL },
+  '/purchase/supplier-settings': { module: 'purchase', requiredAccess: AccessLevel.FULL },
 
-  // Accounting Module
-  '/accounting': { module: 'accounting', requiredAccess: 'read' },
-  '/accounting/chart-of-accounts': { module: 'accounting', requiredAccess: 'read' },
-  '/accounting/journal-entries': { module: 'accounting', requiredAccess: 'read' },
-  '/accounting/journal-entries/new': { module: 'accounting', requiredAccess: 'full', requiredAction: 'create' },
-  '/accounting/assets': { module: 'accounting', requiredAccess: 'read' },
+  // Finance Module (exact PDF mapping)
+  '/finance': { module: 'finance', requiredAccess: AccessLevel.READ },
+  '/finance/expenses': { module: 'finance', requiredAccess: AccessLevel.READ },
+  '/finance/incomes': { module: 'finance', requiredAccess: AccessLevel.READ },
+  '/finance/accounts': { module: 'finance', requiredAccess: AccessLevel.READ },
+  '/finance/settings': { module: 'finance', requiredAccess: AccessLevel.FULL },
 
-  // Employees Module
-  '/employees': { module: 'employees', requiredAccess: 'read' },
-  '/employees/list': { module: 'employees', requiredAccess: 'read' },
-  '/employees/new': { module: 'employees', requiredAccess: 'full', requiredAction: 'create' },
-  '/employees/departments': { module: 'employees', requiredAccess: 'read' },
+  // Accounting Module (exact PDF mapping)
+  '/accounting': { module: 'accounting', requiredAccess: AccessLevel.READ },
+  '/accounting/journal': { module: 'accounting', requiredAccess: AccessLevel.READ },
+  '/accounting/journal/create': { module: 'accounting', requiredAccess: AccessLevel.FULL, requiredAction: 'create' },
+  '/accounting/chart': { module: 'accounting', requiredAccess: AccessLevel.READ },
+  '/accounting/cost-centers': { module: 'accounting', requiredAccess: AccessLevel.READ },
+  '/accounting/assets': { module: 'accounting', requiredAccess: AccessLevel.READ },
+  '/accounting/settings': { module: 'accounting', requiredAccess: AccessLevel.FULL },
 
-  // Attendance Module
-  '/attendance': { module: 'attendance', requiredAccess: 'read' },
-  '/attendance/logs': { module: 'attendance', requiredAccess: 'read' },
-  '/attendance/shifts': { module: 'attendance', requiredAccess: 'read' },
-  '/attendance/leave': { module: 'attendance', requiredAccess: 'read' },
+  // Employees Module (exact PDF mapping)
+  '/employees': { module: 'employees', requiredAccess: AccessLevel.READ },
+  '/employees/roles': { module: 'employees', requiredAccess: AccessLevel.FULL },
+  '/employees/settings': { module: 'employees', requiredAccess: AccessLevel.FULL },
 
-  // Payroll Module
-  '/payroll': { module: 'payroll', requiredAccess: 'read' },
-  '/payroll/runs': { module: 'payroll', requiredAccess: 'read' },
-  '/payroll/runs/new': { module: 'payroll', requiredAccess: 'full', requiredAction: 'create' },
-  '/payroll/salary-structures': { module: 'payroll', requiredAccess: 'read' },
+  // Organizational Structure Module (exact PDF mapping)
+  '/organizational': { module: 'organizational', requiredAccess: AccessLevel.READ },
+  '/organizational/designations': { module: 'organizational', requiredAccess: AccessLevel.FULL },
+  '/organizational/departments': { module: 'organizational', requiredAccess: AccessLevel.FULL },
+  '/organizational/levels': { module: 'organizational', requiredAccess: AccessLevel.FULL },
+  '/organizational/employment-types': { module: 'organizational', requiredAccess: AccessLevel.FULL },
+  '/organizational/chart': { module: 'organizational', requiredAccess: AccessLevel.READ },
 
-  // QHSE Module
-  '/qhse': { module: 'qhse', requiredAccess: 'read' },
-  '/qhse/policies': { module: 'qhse', requiredAccess: 'read' },
-  '/qhse/procedures': { module: 'qhse', requiredAccess: 'read' },
-  '/qhse/forms': { module: 'qhse', requiredAccess: 'read' },
-  '/qhse/reports': { module: 'qhse', requiredAccess: 'read' },
+  // Attendance Module (exact PDF mapping)
+  '/attendance': { module: 'attendance', requiredAccess: AccessLevel.READ },
+  '/attendance/logs': { module: 'attendance', requiredAccess: AccessLevel.READ },
+  '/attendance/days': { module: 'attendance', requiredAccess: AccessLevel.READ },
+  '/attendance/sheets': { module: 'attendance', requiredAccess: AccessLevel.READ },
+  '/attendance/permissions': { module: 'attendance', requiredAccess: AccessLevel.FULL },
+  '/attendance/leaves': { module: 'attendance', requiredAccess: AccessLevel.READ },
+  '/attendance/shifts': { module: 'attendance', requiredAccess: AccessLevel.FULL },
+  '/attendance/allocated-shifts': { module: 'attendance', requiredAccess: AccessLevel.FULL },
+  '/attendance/sessions': { module: 'attendance', requiredAccess: AccessLevel.READ },
+  '/attendance/settings': { module: 'attendance', requiredAccess: AccessLevel.FULL },
 
-  // Settings Module
-  '/settings': { module: 'settings', requiredAccess: 'read' },
-  '/settings/company': { module: 'settings', requiredAccess: 'full' },
-  '/settings/users': { module: 'settings', requiredAccess: 'full' },
-  '/settings/permissions': { module: 'settings', requiredAccess: 'full' },
+  // Payroll Module (exact PDF mapping)
+  '/payroll': { module: 'payroll', requiredAccess: AccessLevel.READ },
+  '/payroll/contracts': { module: 'payroll', requiredAccess: AccessLevel.FULL },
+  '/payroll/pay-runs': { module: 'payroll', requiredAccess: AccessLevel.FULL },
+  '/payroll/pay-slips': { module: 'payroll', requiredAccess: AccessLevel.READ },
+  '/payroll/loans': { module: 'payroll', requiredAccess: AccessLevel.FULL },
+  '/payroll/components': { module: 'payroll', requiredAccess: AccessLevel.FULL },
+  '/payroll/structures': { module: 'payroll', requiredAccess: AccessLevel.FULL },
+  '/payroll/settings': { module: 'payroll', requiredAccess: AccessLevel.FULL },
+
+  // Reports Module (exact PDF mapping)
+  '/reports': { module: 'reports', requiredAccess: AccessLevel.READ },
+  '/reports/sales': { module: 'reports', requiredAccess: AccessLevel.READ },
+  '/reports/purchase': { module: 'reports', requiredAccess: AccessLevel.READ },
+  '/reports/accounting': { module: 'reports', requiredAccess: AccessLevel.READ },
+  '/reports/employees': { module: 'reports', requiredAccess: AccessLevel.READ },
+  '/reports/clients': { module: 'reports', requiredAccess: AccessLevel.READ },
+  '/reports/inventory': { module: 'reports', requiredAccess: AccessLevel.READ },
+  '/reports/activity': { module: 'reports', requiredAccess: AccessLevel.READ },
+
+  // Templates Module (exact PDF mapping)
+  '/templates': { module: 'templates', requiredAccess: AccessLevel.READ },
+  '/templates/printable': { module: 'templates', requiredAccess: AccessLevel.FULL },
+  '/templates/prefilled': { module: 'templates', requiredAccess: AccessLevel.FULL },
+  '/templates/terms': { module: 'templates', requiredAccess: AccessLevel.FULL },
+  '/templates/files': { module: 'templates', requiredAccess: AccessLevel.FULL },
+  '/templates/reminders': { module: 'templates', requiredAccess: AccessLevel.FULL },
+
+  // QHSE Module (exact PDF mapping)
+  '/qhse': { module: 'qhse', requiredAccess: AccessLevel.READ },
+  '/qhse/reports': { module: 'qhse', requiredAccess: AccessLevel.READ },
+  '/qhse/policy': { module: 'qhse', requiredAccess: AccessLevel.FULL },
+  '/qhse/procedures': { module: 'qhse', requiredAccess: AccessLevel.FULL },
+  '/qhse/forms': { module: 'qhse', requiredAccess: AccessLevel.FULL },
+  '/qhse/reports-alt': { module: 'qhse', requiredAccess: AccessLevel.READ },
+
+  // Settings Module (exact PDF mapping)
+  '/settings': { module: 'settings', requiredAccess: AccessLevel.READ },
+  '/settings/account': { module: 'settings', requiredAccess: AccessLevel.FULL },
+  '/settings/general': { module: 'settings', requiredAccess: AccessLevel.FULL },
 
   // Profile routes (accessible to all authenticated users)
-  '/profile': { module: 'any', requiredAccess: 'read' },
-  '/profile/edit': { module: 'any', requiredAccess: 'read' },
-  '/profile/change-password': { module: 'any', requiredAccess: 'read' },
+  '/profile': { module: 'any', requiredAccess: AccessLevel.READ },
+  '/profile/edit': { module: 'any', requiredAccess: AccessLevel.READ },
+  '/profile/change-password': { module: 'any', requiredAccess: AccessLevel.READ },
 }
 
 // Public routes that don't require authentication
@@ -144,8 +193,37 @@ function hasRoutePermission(
     return true
   }
 
-  // For now, allow all authenticated users access to all modules
-  // TODO: Implement proper role-based access control with user metadata
+  // Get user's access control matrix
+  const userPermissions = ACCESS_CONTROL_MATRIX[userRole]
+  if (!userPermissions) {
+    return false
+  }
+
+  // Get module permission from access control matrix
+  const modulePermission = userPermissions[routePermission.module as keyof typeof userPermissions]
+  if (!modulePermission) {
+    return false
+  }
+
+  // Check if user has no access to this module
+  if (modulePermission.access === AccessLevel.NONE) {
+    return false
+  }
+
+  // Check if route requires full access but user only has read access
+  if (routePermission.requiredAccess === AccessLevel.FULL &&
+      modulePermission.access === AccessLevel.READ) {
+    return false
+  }
+
+  // Check specific action permission if required
+  if (routePermission.requiredAction) {
+    const actionAllowed = modulePermission.actions[routePermission.requiredAction]
+    if (!actionAllowed) {
+      return false
+    }
+  }
+
   return true
 }
 

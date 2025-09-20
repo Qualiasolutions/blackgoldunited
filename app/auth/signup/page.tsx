@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { SignupData } from '@/lib/types/auth'
-import { UserRole } from '@prisma/client'
+import { UserRole } from '@/lib/types/auth'
 
 export default function SignupPage() {
   const router = useRouter()

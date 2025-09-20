@@ -2,7 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  serverExternalPackages: ['@prisma/client'],
+  experimental: {
+    serverComponentsExternalPackages: ['@supabase/supabase-js']
+  },
   output: 'standalone',
   typescript: {
     ignoreBuildErrors: false,

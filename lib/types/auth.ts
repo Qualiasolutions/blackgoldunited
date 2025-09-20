@@ -1,5 +1,20 @@
 // Authentication Types for BlackGoldUnited ERP System
-import { UserRole, AccessLevel } from '@prisma/client'
+
+// User roles enum
+export enum UserRole {
+  MANAGEMENT = 'MANAGEMENT',
+  FINANCE_TEAM = 'FINANCE_TEAM',
+  PROCUREMENT_BD = 'PROCUREMENT_BD',
+  ADMIN_HR = 'ADMIN_HR',
+  IMS_QHSE = 'IMS_QHSE'
+}
+
+// Access levels enum
+export enum AccessLevel {
+  NONE = 'NONE',
+  READ = 'READ',
+  FULL = 'FULL'
+}
 
 export interface User {
   id: string

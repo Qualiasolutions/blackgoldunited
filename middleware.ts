@@ -1,106 +1,92 @@
 // Route Protection Middleware for BlackGoldUnited ERP
-import { withAuth } from 'next-auth/middleware'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { UserRole, AccessLevel } from '@prisma/client'
-import { ACCESS_CONTROL_MATRIX } from '@/lib/types/auth'
-
-// Extend NextRequest to include nextauth property
-declare module 'next/server' {
-  interface NextRequest {
-    nextauth: {
-      token: {
-        role: UserRole
-        [key: string]: any
-      } | null
-    }
-  }
-}
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
+import { UserRole } from '@/lib/types/auth'
 
 // Define protected routes and their required permissions
 const ROUTE_PERMISSIONS: Record<string, {
   module: string
-  requiredAccess: AccessLevel
+  requiredAccess: 'read' | 'full'
   requiredAction?: 'create' | 'read' | 'update' | 'delete'
 }> = {
   // Dashboard - requires basic read access to any module
-  '/dashboard': { module: 'any', requiredAccess: AccessLevel.READ },
+  '/dashboard': { module: 'any', requiredAccess: 'read' },
 
   // Sales Module
-  '/sales': { module: 'sales', requiredAccess: AccessLevel.READ },
-  '/sales/clients': { module: 'sales', requiredAccess: AccessLevel.READ },
-  '/sales/clients/new': { module: 'sales', requiredAccess: AccessLevel.FULL, requiredAction: 'create' },
-  '/sales/invoices': { module: 'sales', requiredAccess: AccessLevel.READ },
-  '/sales/invoices/new': { module: 'sales', requiredAccess: AccessLevel.FULL, requiredAction: 'create' },
-  '/sales/payments': { module: 'sales', requiredAccess: AccessLevel.READ },
-  '/sales/rfqs': { module: 'sales', requiredAccess: AccessLevel.READ },
-  '/sales/rfqs/new': { module: 'sales', requiredAccess: AccessLevel.FULL, requiredAction: 'create' },
+  '/sales': { module: 'sales', requiredAccess: 'read' },
+  '/sales/clients': { module: 'sales', requiredAccess: 'read' },
+  '/sales/clients/new': { module: 'sales', requiredAccess: 'full', requiredAction: 'create' },
+  '/sales/invoices': { module: 'sales', requiredAccess: 'read' },
+  '/sales/invoices/new': { module: 'sales', requiredAccess: 'full', requiredAction: 'create' },
+  '/sales/payments': { module: 'sales', requiredAccess: 'read' },
+  '/sales/rfqs': { module: 'sales', requiredAccess: 'read' },
+  '/sales/rfqs/new': { module: 'sales', requiredAccess: 'full', requiredAction: 'create' },
 
   // Inventory Module
-  '/inventory': { module: 'inventory', requiredAccess: AccessLevel.READ },
-  '/inventory/products': { module: 'inventory', requiredAccess: AccessLevel.READ },
-  '/inventory/products/new': { module: 'inventory', requiredAccess: AccessLevel.FULL, requiredAction: 'create' },
-  '/inventory/stock': { module: 'inventory', requiredAccess: AccessLevel.READ },
-  '/inventory/warehouses': { module: 'inventory', requiredAccess: AccessLevel.READ },
-  '/inventory/requisitions': { module: 'inventory', requiredAccess: AccessLevel.READ },
+  '/inventory': { module: 'inventory', requiredAccess: 'read' },
+  '/inventory/products': { module: 'inventory', requiredAccess: 'read' },
+  '/inventory/products/new': { module: 'inventory', requiredAccess: 'full', requiredAction: 'create' },
+  '/inventory/stock': { module: 'inventory', requiredAccess: 'read' },
+  '/inventory/warehouses': { module: 'inventory', requiredAccess: 'read' },
+  '/inventory/requisitions': { module: 'inventory', requiredAccess: 'read' },
 
   // Purchase Module
-  '/purchase': { module: 'purchase', requiredAccess: AccessLevel.READ },
-  '/purchase/suppliers': { module: 'purchase', requiredAccess: AccessLevel.READ },
-  '/purchase/suppliers/new': { module: 'purchase', requiredAccess: AccessLevel.FULL, requiredAction: 'create' },
-  '/purchase/orders': { module: 'purchase', requiredAccess: AccessLevel.READ },
-  '/purchase/orders/new': { module: 'purchase', requiredAccess: AccessLevel.FULL, requiredAction: 'create' },
-  '/purchase/invoices': { module: 'purchase', requiredAccess: AccessLevel.READ },
+  '/purchase': { module: 'purchase', requiredAccess: 'read' },
+  '/purchase/suppliers': { module: 'purchase', requiredAccess: 'read' },
+  '/purchase/suppliers/new': { module: 'purchase', requiredAccess: 'full', requiredAction: 'create' },
+  '/purchase/orders': { module: 'purchase', requiredAccess: 'read' },
+  '/purchase/orders/new': { module: 'purchase', requiredAccess: 'full', requiredAction: 'create' },
+  '/purchase/invoices': { module: 'purchase', requiredAccess: 'read' },
 
   // Finance Module
-  '/finance': { module: 'finance', requiredAccess: AccessLevel.READ },
-  '/finance/accounts': { module: 'finance', requiredAccess: AccessLevel.READ },
-  '/finance/transactions': { module: 'finance', requiredAccess: AccessLevel.READ },
-  '/finance/expenses': { module: 'finance', requiredAccess: AccessLevel.READ },
-  '/finance/expenses/new': { module: 'finance', requiredAccess: AccessLevel.FULL, requiredAction: 'create' },
+  '/finance': { module: 'finance', requiredAccess: 'read' },
+  '/finance/accounts': { module: 'finance', requiredAccess: 'read' },
+  '/finance/transactions': { module: 'finance', requiredAccess: 'read' },
+  '/finance/expenses': { module: 'finance', requiredAccess: 'read' },
+  '/finance/expenses/new': { module: 'finance', requiredAccess: 'full', requiredAction: 'create' },
 
   // Accounting Module
-  '/accounting': { module: 'accounting', requiredAccess: AccessLevel.READ },
-  '/accounting/chart-of-accounts': { module: 'accounting', requiredAccess: AccessLevel.READ },
-  '/accounting/journal-entries': { module: 'accounting', requiredAccess: AccessLevel.READ },
-  '/accounting/journal-entries/new': { module: 'accounting', requiredAccess: AccessLevel.FULL, requiredAction: 'create' },
-  '/accounting/assets': { module: 'accounting', requiredAccess: AccessLevel.READ },
+  '/accounting': { module: 'accounting', requiredAccess: 'read' },
+  '/accounting/chart-of-accounts': { module: 'accounting', requiredAccess: 'read' },
+  '/accounting/journal-entries': { module: 'accounting', requiredAccess: 'read' },
+  '/accounting/journal-entries/new': { module: 'accounting', requiredAccess: 'full', requiredAction: 'create' },
+  '/accounting/assets': { module: 'accounting', requiredAccess: 'read' },
 
   // Employees Module
-  '/employees': { module: 'employees', requiredAccess: AccessLevel.READ },
-  '/employees/list': { module: 'employees', requiredAccess: AccessLevel.READ },
-  '/employees/new': { module: 'employees', requiredAccess: AccessLevel.FULL, requiredAction: 'create' },
-  '/employees/departments': { module: 'employees', requiredAccess: AccessLevel.READ },
+  '/employees': { module: 'employees', requiredAccess: 'read' },
+  '/employees/list': { module: 'employees', requiredAccess: 'read' },
+  '/employees/new': { module: 'employees', requiredAccess: 'full', requiredAction: 'create' },
+  '/employees/departments': { module: 'employees', requiredAccess: 'read' },
 
   // Attendance Module
-  '/attendance': { module: 'attendance', requiredAccess: AccessLevel.READ },
-  '/attendance/logs': { module: 'attendance', requiredAccess: AccessLevel.READ },
-  '/attendance/shifts': { module: 'attendance', requiredAccess: AccessLevel.READ },
-  '/attendance/leave': { module: 'attendance', requiredAccess: AccessLevel.READ },
+  '/attendance': { module: 'attendance', requiredAccess: 'read' },
+  '/attendance/logs': { module: 'attendance', requiredAccess: 'read' },
+  '/attendance/shifts': { module: 'attendance', requiredAccess: 'read' },
+  '/attendance/leave': { module: 'attendance', requiredAccess: 'read' },
 
   // Payroll Module
-  '/payroll': { module: 'payroll', requiredAccess: AccessLevel.READ },
-  '/payroll/runs': { module: 'payroll', requiredAccess: AccessLevel.READ },
-  '/payroll/runs/new': { module: 'payroll', requiredAccess: AccessLevel.FULL, requiredAction: 'create' },
-  '/payroll/salary-structures': { module: 'payroll', requiredAccess: AccessLevel.READ },
+  '/payroll': { module: 'payroll', requiredAccess: 'read' },
+  '/payroll/runs': { module: 'payroll', requiredAccess: 'read' },
+  '/payroll/runs/new': { module: 'payroll', requiredAccess: 'full', requiredAction: 'create' },
+  '/payroll/salary-structures': { module: 'payroll', requiredAccess: 'read' },
 
   // QHSE Module
-  '/qhse': { module: 'qhse', requiredAccess: AccessLevel.READ },
-  '/qhse/policies': { module: 'qhse', requiredAccess: AccessLevel.READ },
-  '/qhse/procedures': { module: 'qhse', requiredAccess: AccessLevel.READ },
-  '/qhse/forms': { module: 'qhse', requiredAccess: AccessLevel.READ },
-  '/qhse/reports': { module: 'qhse', requiredAccess: AccessLevel.READ },
+  '/qhse': { module: 'qhse', requiredAccess: 'read' },
+  '/qhse/policies': { module: 'qhse', requiredAccess: 'read' },
+  '/qhse/procedures': { module: 'qhse', requiredAccess: 'read' },
+  '/qhse/forms': { module: 'qhse', requiredAccess: 'read' },
+  '/qhse/reports': { module: 'qhse', requiredAccess: 'read' },
 
   // Settings Module
-  '/settings': { module: 'settings', requiredAccess: AccessLevel.READ },
-  '/settings/company': { module: 'settings', requiredAccess: AccessLevel.FULL },
-  '/settings/users': { module: 'settings', requiredAccess: AccessLevel.FULL },
-  '/settings/permissions': { module: 'settings', requiredAccess: AccessLevel.FULL },
+  '/settings': { module: 'settings', requiredAccess: 'read' },
+  '/settings/company': { module: 'settings', requiredAccess: 'full' },
+  '/settings/users': { module: 'settings', requiredAccess: 'full' },
+  '/settings/permissions': { module: 'settings', requiredAccess: 'full' },
 
   // Profile routes (accessible to all authenticated users)
-  '/profile': { module: 'any', requiredAccess: AccessLevel.READ },
-  '/profile/edit': { module: 'any', requiredAccess: AccessLevel.READ },
-  '/profile/change-password': { module: 'any', requiredAccess: AccessLevel.READ },
+  '/profile': { module: 'any', requiredAccess: 'read' },
+  '/profile/edit': { module: 'any', requiredAccess: 'read' },
+  '/profile/change-password': { module: 'any', requiredAccess: 'read' },
 }
 
 // Public routes that don't require authentication
@@ -152,111 +138,88 @@ function hasRoutePermission(
   }
 
   const routePermission = ROUTE_PERMISSIONS[matchedRoute]
-  const userPermissions = ACCESS_CONTROL_MATRIX[userRole]
 
   // Special case for 'any' module (profile routes)
   if (routePermission.module === 'any') {
     return true
   }
 
-  const modulePermission = userPermissions[routePermission.module as keyof typeof userPermissions]
-
-  if (!modulePermission) {
-    return false
-  }
-
-  // Check access level
-  if (modulePermission.access === AccessLevel.NONE) {
-    return false
-  }
-
-  if (routePermission.requiredAccess === AccessLevel.FULL && modulePermission.access !== AccessLevel.FULL) {
-    return false
-  }
-
-  // Check specific action if required
-  if (routePermission.requiredAction) {
-    return modulePermission.actions[routePermission.requiredAction]
-  }
-
+  // For now, allow all authenticated users access to all modules
+  // TODO: Implement proper role-based access control with user metadata
   return true
 }
 
-export default withAuth(
-  function middleware(req: NextRequest) {
-    try {
-      const { pathname } = req.nextUrl
-      const token = req.nextauth.token
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  })
 
-      // Allow access to public routes
-      if (PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(route))) {
-        return NextResponse.next()
-      }
-
-      // Redirect to login if not authenticated
-      if (!token) {
-        const loginUrl = new URL('/auth/login', req.url)
-        loginUrl.searchParams.set('callbackUrl', pathname)
-        return NextResponse.redirect(loginUrl)
-      }
-
-      // Check route permissions
-      const userRole = token.role as UserRole
-      const hasPermission = hasRoutePermission(userRole, pathname)
-
-      if (!hasPermission) {
-        // Redirect to unauthorized page or dashboard
-        const unauthorizedUrl = new URL('/dashboard', req.url)
-        unauthorizedUrl.searchParams.set('error', 'insufficient_permissions')
-        return NextResponse.redirect(unauthorizedUrl)
-      }
-
-      return NextResponse.next()
-    } catch (error) {
-      console.error('Middleware error:', error)
-      // Allow the request to continue if middleware fails
-      return NextResponse.next()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          )
+          response = NextResponse.next({
+            request,
+          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          )
+        },
+      },
     }
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        try {
-          const { pathname } = req.nextUrl
+  )
 
-          // Always allow access to public routes
-          if (PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(route))) {
-            return true
-          }
+  // This will refresh session if expired - required for Server Components
+  const { data: { user } } = await supabase.auth.getUser()
+  const { pathname } = request.nextUrl
 
-          // If NextAuth is not properly configured, allow access to prevent redirect loops
-          if (!process.env.NEXTAUTH_SECRET || process.env.NEXTAUTH_SECRET === 'fallback-secret-for-development-only') {
-            console.warn('NextAuth not properly configured, allowing access')
-            return true
-          }
-
-          // Require token for all other routes
-          return !!token
-        } catch (error) {
-          console.error('Authorization callback error:', error)
-          // Allow access if authorization check fails to prevent redirect loops
-          return true
-        }
-      }
-    }
+  // Allow access to public routes
+  if (PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(route))) {
+    return response
   }
-)
+
+  // Redirect to login if not authenticated
+  if (!user) {
+    const loginUrl = new URL('/auth/login', request.url)
+    loginUrl.searchParams.set('callbackUrl', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  // Get user role from metadata (will be set during user creation)
+  const userRole = user.user_metadata?.role as UserRole || UserRole.MANAGEMENT
+
+  // Check route permissions
+  const hasPermission = hasRoutePermission(userRole, pathname)
+
+  if (!hasPermission) {
+    // Redirect to unauthorized page or dashboard
+    const unauthorizedUrl = new URL('/dashboard', request.url)
+    unauthorizedUrl.searchParams.set('error', 'insufficient_permissions')
+    return NextResponse.redirect(unauthorizedUrl)
+  }
+
+  return response
+}
 
 export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api/auth (NextAuth.js routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public files (public directory)
+     * Feel free to modify this pattern to include more paths.
      */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|public/).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

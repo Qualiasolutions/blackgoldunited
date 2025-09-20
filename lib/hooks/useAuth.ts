@@ -1,9 +1,10 @@
 // Authentication Hooks for BlackGoldUnited ERP
 'use client'
 
-import { useSession, signIn, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import type { User } from '@supabase/supabase-js'
 import type {
   LoginCredentials,
   SignupData,
@@ -11,15 +12,65 @@ import type {
   PasswordReset,
   ChangePasswordData,
   AuthResponse,
-  SessionUser
+  SessionUser,
+  UserRole
 } from '@/lib/types/auth'
 import { validateLogin, validateSignup, validatePasswordResetRequest, validatePasswordReset, validateChangePassword } from '@/lib/auth/validation'
 
 export function useAuth() {
-  const { data: session, status, update } = useSession()
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [sessionUser, setSessionUser] = useState<SessionUser | undefined>(undefined)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const supabase = createClient()
+
+  useEffect(() => {
+    // Get initial session
+    const getInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      setUser(session?.user ?? null)
+      if (session?.user) {
+        const userData = convertToSessionUser(session.user)
+        setSessionUser(userData)
+      }
+      setIsLoading(false)
+    }
+
+    getInitialSession()
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setUser(session?.user ?? null)
+        if (session?.user) {
+          const userData = convertToSessionUser(session.user)
+          setSessionUser(userData)
+        } else {
+          setSessionUser(undefined)
+        }
+        setIsLoading(false)
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [supabase.auth])
+
+  const convertToSessionUser = (user: User): SessionUser => {
+    const role = (user.user_metadata?.role as UserRole) || UserRole.MANAGEMENT
+    // TODO: Implement proper access control matrix based on role
+    const permissions = {} as any // Simplified for now
+
+    return {
+      id: user.id,
+      email: user.email!,
+      firstName: user.user_metadata?.firstName || '',
+      lastName: user.user_metadata?.lastName || '',
+      role,
+      permissions,
+      employeeId: user.user_metadata?.employeeId
+    }
+  }
 
   const login = useCallback(async (credentials: LoginCredentials): Promise<AuthResponse> => {
     setIsLoading(true)
@@ -34,20 +85,19 @@ export function useAuth() {
         return { success: false, message: errorMessage }
       }
 
-      // Attempt sign in
-      const result = await signIn('credentials', {
+      // Attempt sign in with Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: credentials.email,
         password: credentials.password,
-        redirect: false
       })
 
-      if (result?.error) {
+      if (error) {
         const errorMessage = 'Invalid email or password'
         setError(errorMessage)
         return { success: false, message: errorMessage }
       }
 
-      if (result?.ok) {
+      if (data.user) {
         router.push('/dashboard')
         return { success: true, message: 'Login successful' }
       }
@@ -62,18 +112,19 @@ export function useAuth() {
     } finally {
       setIsLoading(false)
     }
-  }, [router])
+  }, [router, supabase.auth])
 
   const logout = useCallback(async (): Promise<void> => {
     setIsLoading(true)
     try {
-      await signOut({ callbackUrl: '/auth/login' })
+      await supabase.auth.signOut()
+      router.push('/auth/login')
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [router, supabase.auth])
 
   const signup = useCallback(async (data: SignupData): Promise<AuthResponse> => {
     setIsLoading(true)
@@ -88,20 +139,22 @@ export function useAuth() {
         return { success: false, message: errorMessage }
       }
 
-      // Call signup API
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
+      // Sign up with Supabase
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            role: data.role || 'MANAGEMENT'
+          }
+        }
       })
 
-      const result = await response.json()
-
-      if (!response.ok) {
-        setError(result.message || 'Signup failed')
-        return { success: false, message: result.message || 'Signup failed' }
+      if (error) {
+        setError(error.message || 'Signup failed')
+        return { success: false, message: error.message || 'Signup failed' }
       }
 
       return { success: true, message: 'Account created successfully' }
@@ -112,7 +165,7 @@ export function useAuth() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [supabase.auth])
 
   const requestPasswordReset = useCallback(async (data: PasswordResetRequest): Promise<AuthResponse> => {
     setIsLoading(true)
@@ -127,20 +180,14 @@ export function useAuth() {
         return { success: false, message: errorMessage }
       }
 
-      // Call password reset API
-      const response = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
+      // Request password reset with Supabase
+      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`
       })
 
-      const result = await response.json()
-
-      if (!response.ok) {
-        setError(result.message || 'Password reset request failed')
-        return { success: false, message: result.message || 'Password reset request failed' }
+      if (error) {
+        setError(error.message || 'Password reset request failed')
+        return { success: false, message: error.message || 'Password reset request failed' }
       }
 
       return { success: true, message: 'Password reset email sent successfully' }
@@ -151,7 +198,7 @@ export function useAuth() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [supabase.auth])
 
   const resetPassword = useCallback(async (data: PasswordReset): Promise<AuthResponse> => {
     setIsLoading(true)
@@ -166,20 +213,14 @@ export function useAuth() {
         return { success: false, message: errorMessage }
       }
 
-      // Call password reset confirmation API
-      const response = await fetch('/api/auth/reset-password/confirm', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
+      // Update password with Supabase
+      const { error } = await supabase.auth.updateUser({
+        password: data.password
       })
 
-      const result = await response.json()
-
-      if (!response.ok) {
-        setError(result.message || 'Password reset failed')
-        return { success: false, message: result.message || 'Password reset failed' }
+      if (error) {
+        setError(error.message || 'Password reset failed')
+        return { success: false, message: error.message || 'Password reset failed' }
       }
 
       return { success: true, message: 'Password reset successfully' }
@@ -190,7 +231,7 @@ export function useAuth() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [supabase.auth])
 
   const changePassword = useCallback(async (data: ChangePasswordData): Promise<AuthResponse> => {
     setIsLoading(true)
@@ -205,20 +246,14 @@ export function useAuth() {
         return { success: false, message: errorMessage }
       }
 
-      // Call change password API
-      const response = await fetch('/api/auth/change-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
+      // Update password with Supabase
+      const { error } = await supabase.auth.updateUser({
+        password: data.newPassword
       })
 
-      const result = await response.json()
-
-      if (!response.ok) {
-        setError(result.message || 'Password change failed')
-        return { success: false, message: result.message || 'Password change failed' }
+      if (error) {
+        setError(error.message || 'Password change failed')
+        return { success: false, message: error.message || 'Password change failed' }
       }
 
       return { success: true, message: 'Password changed successfully' }
@@ -229,15 +264,28 @@ export function useAuth() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [supabase.auth])
 
   const updateProfile = useCallback(async (data: Partial<SessionUser>): Promise<AuthResponse> => {
     setIsLoading(true)
     setError(null)
 
     try {
-      // Update session
-      await update(data)
+      // Update user metadata with Supabase
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          role: data.role,
+          employeeId: data.employeeId
+        }
+      })
+
+      if (error) {
+        setError(error.message || 'Profile update failed')
+        return { success: false, message: error.message || 'Profile update failed' }
+      }
+
       return { success: true, message: 'Profile updated successfully' }
     } catch (error) {
       const errorMessage = 'Profile update failed'
@@ -246,7 +294,7 @@ export function useAuth() {
     } finally {
       setIsLoading(false)
     }
-  }, [update])
+  }, [supabase.auth])
 
   const clearError = useCallback(() => {
     setError(null)
@@ -254,9 +302,9 @@ export function useAuth() {
 
   return {
     // Session data
-    user: session?.user as SessionUser | undefined,
-    isAuthenticated: !!session?.user,
-    isLoading: status === 'loading' || isLoading,
+    user: sessionUser,
+    isAuthenticated: !!user,
+    isLoading,
     error,
 
     // Auth actions

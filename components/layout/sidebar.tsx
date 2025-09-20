@@ -70,11 +70,11 @@ const bguNavigationModules = [
     icon: 'TrendingUp',
     href: '/sales',
     subModules: [
-      { id: 'manage-invoices', title: 'Manage Invoices', href: '/sales/invoices' },
-      { id: 'create-invoice', title: 'Create Invoice', href: '/sales/invoices/create' },
-      { id: 'manage-estimates', title: 'Manage Estimates', href: '/sales/rfq' },
-      { id: 'create-estimate', title: 'Create Estimate', href: '/sales/rfq/create' },
-      { id: 'credit-notes', title: 'Credit Notes', href: '/sales/credit-notes' },
+      { id: 'manage-invoices', title: 'Manage Invoice - All', href: '/sales/invoices' },
+      { id: 'create-invoice', title: 'Create Invoice - new', href: '/sales/invoices/create' },
+      { id: 'manage-rfq', title: 'Manage (RFQ) - Quotation', href: '/sales/rfq' },
+      { id: 'create-rfq', title: 'Create RFQ - Request for Quotation', href: '/sales/rfq/create' },
+      { id: 'credit-notes', title: 'Credit notes', href: '/sales/credit-notes' },
       { id: 'refund-receipts', title: 'Refund Receipts', href: '/sales/refunds' },
       { id: 'recurring-invoices', title: 'Recurring Invoices', href: '/sales/recurring' },
       { id: 'client-payments', title: 'Client Payments', href: '/sales/payments' },
@@ -88,8 +88,9 @@ const bguNavigationModules = [
     href: '/clients',
     subModules: [
       { id: 'manage-clients', title: 'Manage Clients', href: '/clients' },
-      { id: 'create-client', title: 'Create Client', href: '/clients/create' },
-      { id: 'client-contracts', title: 'Client Contracts', href: '/clients/contracts' }
+      { id: 'add-clients', title: 'Add New Clients', href: '/clients/create' },
+      { id: 'contact-list', title: 'Contact List - Summary List', href: '/clients/contacts' },
+      { id: 'client-settings', title: 'Client Settings', href: '/clients/settings' }
     ]
   },
   {
@@ -98,22 +99,28 @@ const bguNavigationModules = [
     icon: 'Package',
     href: '/inventory',
     subModules: [
-      { id: 'manage-inventory', title: 'Manage Inventory', href: '/inventory' },
-      { id: 'add-product', title: 'Add Product', href: '/inventory/create' },
-      { id: 'stock-movements', title: 'Stock Movements', href: '/inventory/movements' },
-      { id: 'inventory-reports', title: 'Inventory Reports', href: '/inventory/reports' }
+      { id: 'products-services', title: 'Products & Services - Summary List', href: '/inventory' },
+      { id: 'manage-requisition', title: 'Manage Requisition', href: '/inventory/requisition' },
+      { id: 'price-list', title: 'Price List', href: '/inventory/price-list' },
+      { id: 'warehouses', title: 'Warehouses', href: '/inventory/warehouses' },
+      { id: 'manage-stockings', title: 'Manage Stockings', href: '/inventory/stockings' },
+      { id: 'inventory-settings', title: 'Inventory Settings', href: '/inventory/settings' },
+      { id: 'product-settings', title: 'Product Settings', href: '/inventory/product-settings' }
     ]
   },
   {
     id: 'purchases',
-    title: 'Purchases',
+    title: 'Purchase',
     icon: 'ShoppingCart',
     href: '/purchases',
     subModules: [
-      { id: 'purchase-orders', title: 'Purchase Orders', href: '/purchases/orders' },
-      { id: 'create-po', title: 'Create Purchase Order', href: '/purchases/orders/create' },
-      { id: 'suppliers', title: 'Suppliers', href: '/purchases/suppliers' },
-      { id: 'purchase-requests', title: 'Purchase Requests', href: '/purchases/requests' }
+      { id: 'purchase-invoices', title: 'Purchase Invoices', href: '/purchases/invoices' },
+      { id: 'purchase-refunds', title: 'Purchases Refunds', href: '/purchases/refunds' },
+      { id: 'debit-notes', title: 'Debit Notes', href: '/purchases/debit-notes' },
+      { id: 'manage-suppliers', title: 'Mange Suppliers', href: '/purchases/suppliers' },
+      { id: 'supplier-payments', title: 'Suppliers Payment', href: '/purchases/payments' },
+      { id: 'purchase-invoice-settings', title: 'Purchase Invoice Settings', href: '/purchases/invoice-settings' },
+      { id: 'supplier-settings', title: 'Suppliers Settings', href: '/purchases/supplier-settings' }
     ]
   },
   {
@@ -122,9 +129,10 @@ const bguNavigationModules = [
     icon: 'DollarSign',
     href: '/finance',
     subModules: [
-      { id: 'budgets', title: 'Budgets', href: '/finance/budgets' },
-      { id: 'cash-flow', title: 'Cash Flow', href: '/finance/cash-flow' },
-      { id: 'financial-reports', title: 'Financial Reports', href: '/finance/reports' }
+      { id: 'expenses', title: 'Expenses', href: '/finance/expenses' },
+      { id: 'incomes', title: 'Incomes', href: '/finance/incomes' },
+      { id: 'treasuries-banks', title: 'Treasuries & Bank Accounts', href: '/finance/treasuries' },
+      { id: 'finance-settings', title: 'Finance Settings', href: '/finance/settings' }
     ]
   },
   {
@@ -133,9 +141,12 @@ const bguNavigationModules = [
     icon: 'Calculator',
     href: '/accounting',
     subModules: [
-      { id: 'chart-accounts', title: 'Chart of Accounts', href: '/accounting/chart' },
       { id: 'journal-entries', title: 'Journal Entries', href: '/accounting/journal' },
-      { id: 'trial-balance', title: 'Trial Balance', href: '/accounting/trial-balance' }
+      { id: 'add-entry', title: 'Add Entry', href: '/accounting/add-entry' },
+      { id: 'chart-accounts', title: 'Chart of Accounts', href: '/accounting/chart' },
+      { id: 'cost-centers', title: 'Cost Centers', href: '/accounting/cost-centers' },
+      { id: 'assets', title: 'Assets', href: '/accounting/assets' },
+      { id: 'accounting-settings', title: 'Accounting Settings', href: '/accounting/settings' }
     ]
   },
   {
@@ -144,9 +155,9 @@ const bguNavigationModules = [
     icon: 'UserCheck',
     href: '/employees',
     subModules: [
-      { id: 'employee-list', title: 'Employee List', href: '/employees' },
-      { id: 'add-employee', title: 'Add Employee', href: '/employees/create' },
-      { id: 'employee-records', title: 'Employee Records', href: '/employees/records' }
+      { id: 'manage-employees', title: 'Manage Employees', href: '/employees' },
+      { id: 'manage-employee-roles', title: 'Manage Employees Roles', href: '/employees/roles' },
+      { id: 'employee-settings', title: 'Settings', href: '/employees/settings' }
     ]
   },
   {
@@ -155,9 +166,11 @@ const bguNavigationModules = [
     icon: 'Building2',
     href: '/organization',
     subModules: [
-      { id: 'org-chart', title: 'Organization Chart', href: '/organization/chart' },
-      { id: 'departments', title: 'Departments', href: '/organization/departments' },
-      { id: 'positions', title: 'Positions', href: '/organization/positions' }
+      { id: 'manage-designations', title: 'Manage Designations', href: '/organization/designations' },
+      { id: 'manage-departments', title: 'Manage Departments', href: '/organization/departments' },
+      { id: 'manage-employee-levels', title: 'Manage Employee Levels', href: '/organization/levels' },
+      { id: 'manage-employment-type', title: 'Manage Employment Type', href: '/organization/employment-types' },
+      { id: 'organizational-chart', title: 'Organizational Chart', href: '/organization/chart' }
     ]
   },
   {
@@ -166,9 +179,15 @@ const bguNavigationModules = [
     icon: 'Clock',
     href: '/attendance',
     subModules: [
-      { id: 'time-tracking', title: 'Time Tracking', href: '/attendance/tracking' },
-      { id: 'leave-management', title: 'Leave Management', href: '/attendance/leave' },
-      { id: 'attendance-reports', title: 'Attendance Reports', href: '/attendance/reports' }
+      { id: 'attendance-logs', title: 'Attendance Logs', href: '/attendance/logs' },
+      { id: 'attendance-days', title: 'Attendance Days', href: '/attendance/days' },
+      { id: 'attendance-sheets', title: 'Attendance Sheets', href: '/attendance/sheets' },
+      { id: 'attendance-permissions', title: 'Attendance Permissions', href: '/attendance/permissions' },
+      { id: 'leave-applications', title: 'Leave Applications', href: '/attendance/leave' },
+      { id: 'shifts-management', title: 'Shifts Management', href: '/attendance/shifts' },
+      { id: 'allocated-shifts', title: 'Allocated Shifts', href: '/attendance/allocated-shifts' },
+      { id: 'attendance-log-sessions', title: 'Attendance Log Sessions', href: '/attendance/log-sessions' },
+      { id: 'attendance-settings', title: 'Settings', href: '/attendance/settings' }
     ]
   },
   {
@@ -177,9 +196,13 @@ const bguNavigationModules = [
     icon: 'CreditCard',
     href: '/payroll',
     subModules: [
-      { id: 'salary-processing', title: 'Salary Processing', href: '/payroll/processing' },
-      { id: 'payslips', title: 'Payslips', href: '/payroll/payslips' },
-      { id: 'payroll-reports', title: 'Payroll Reports', href: '/payroll/reports' }
+      { id: 'contracts', title: 'Contracts', href: '/payroll/contracts' },
+      { id: 'pay-runs', title: 'Pay Runs', href: '/payroll/pay-runs' },
+      { id: 'pay-slips', title: 'Pay slips', href: '/payroll/payslips' },
+      { id: 'loan', title: 'Loan', href: '/payroll/loans' },
+      { id: 'salary-components', title: 'Salary Components', href: '/payroll/salary-components' },
+      { id: 'salary-structures', title: 'Salary Structures', href: '/payroll/salary-structures' },
+      { id: 'payroll-settings', title: 'Settings', href: '/payroll/settings' }
     ]
   },
   {
@@ -189,8 +212,12 @@ const bguNavigationModules = [
     href: '/reports',
     subModules: [
       { id: 'sales-reports', title: 'Sales Reports', href: '/reports/sales' },
-      { id: 'financial-reports', title: 'Financial Reports', href: '/reports/financial' },
-      { id: 'custom-reports', title: 'Custom Reports', href: '/reports/custom' }
+      { id: 'purchase-reports', title: 'Purchase Reports', href: '/reports/purchase' },
+      { id: 'accounting-reports', title: 'Accounting Reports', href: '/reports/accounting' },
+      { id: 'employee-reports', title: 'Employee Reports', href: '/reports/employee' },
+      { id: 'clients-reports', title: 'Clients Reports', href: '/reports/clients' },
+      { id: 'store-reports', title: 'Store Reports', href: '/reports/store' },
+      { id: 'system-activity-log', title: 'System Activity Log', href: '/reports/activity-log' }
     ]
   },
   {
@@ -199,9 +226,23 @@ const bguNavigationModules = [
     icon: 'FileText',
     href: '/templates',
     subModules: [
-      { id: 'invoice-templates', title: 'Invoice Templates', href: '/templates/invoices' },
-      { id: 'document-templates', title: 'Document Templates', href: '/templates/documents' },
-      { id: 'email-templates', title: 'Email Templates', href: '/templates/emails' }
+      { id: 'printable-templates', title: 'Printable Template', href: '/templates/printable' },
+      { id: 'prefilled-templates', title: 'Prefilled Templates', href: '/templates/prefilled' },
+      { id: 'terms-conditions', title: 'Terms & Conditions', href: '/templates/terms' },
+      { id: 'manage-documents', title: 'Manage Files/Documents', href: '/templates/documents' },
+      { id: 'auto-reminder-rules', title: 'Auto Reminder Rules', href: '/templates/reminders' }
+    ]
+  },
+  {
+    id: 'qhse',
+    title: 'QHSE',
+    icon: 'Shield',
+    href: '/qhse',
+    subModules: [
+      { id: 'qhse-reports', title: 'Reports', href: '/qhse/reports' },
+      { id: 'qhse-policy', title: 'Policy', href: '/qhse/policy' },
+      { id: 'qhse-procedures', title: 'Procedures', href: '/qhse/procedures' },
+      { id: 'qhse-forms', title: 'Forms', href: '/qhse/forms' }
     ]
   },
   {
@@ -210,9 +251,8 @@ const bguNavigationModules = [
     icon: 'Settings',
     href: '/settings',
     subModules: [
-      { id: 'general-settings', title: 'General Settings', href: '/settings/general' },
-      { id: 'user-management', title: 'User Management', href: '/settings/users' },
-      { id: 'system-settings', title: 'System Settings', href: '/settings/system' }
+      { id: 'account-information', title: 'Account Information', href: '/settings/account' },
+      { id: 'account-settings', title: 'Account Settings', href: '/settings/general' }
     ]
   }
 ]

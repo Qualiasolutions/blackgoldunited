@@ -103,9 +103,9 @@ export function DashboardPage({ user }: DashboardPageProps) {
           <div className="text-center text-red-600 bg-red-50 p-4 rounded-lg">
             <p>Error loading dashboard: {error}</p>
           </div>
-        ) : (
+        ) : stats ? (
           <SummaryWidgets stats={stats} />
-        )}
+        ) : null}
       </div>
 
       {/* Additional Sections */}

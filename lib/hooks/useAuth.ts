@@ -14,7 +14,7 @@ import type {
   AuthResponse,
   SessionUser
 } from '@/lib/types/auth'
-import { UserRole } from '@/lib/types/auth'
+import { UserRole, ACCESS_CONTROL_MATRIX } from '@/lib/types/auth'
 import { validateLogin, validateSignup, validatePasswordResetRequest, validatePasswordReset, validateChangePassword } from '@/lib/auth/validation'
 
 export function useAuth() {
@@ -58,8 +58,8 @@ export function useAuth() {
 
   const convertToSessionUser = (user: User): SessionUser => {
     const role = (user.user_metadata?.role as UserRole) || UserRole.MANAGEMENT
-    // TODO: Implement proper access control matrix based on role
-    const permissions = {} as any // Simplified for now
+    // Get permissions from ACCESS_CONTROL_MATRIX based on user role
+    const permissions = ACCESS_CONTROL_MATRIX[role]
 
     return {
       id: user.id,

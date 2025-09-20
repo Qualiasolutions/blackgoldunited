@@ -68,6 +68,30 @@ npm run lint:fix
 npm run type-check
 ```
 
+### Component Architecture
+```bash
+# Main layout system:
+# - app/layout.tsx - Root layout with providers
+# - components/layout/main-layout.tsx - Sidebar + header layout
+# - components/layout/sidebar.tsx - 14-module navigation
+# - components/layout/header.tsx - Top navigation with user menu
+
+# Authentication components:
+# - components/auth/protected-route.tsx - Route-level protection
+# - components/auth/role-guard.tsx - Component-level role checks
+# - components/providers/AuthProvider.tsx - Auth context provider
+
+# Module-specific components:
+# - components/modules/sales/ - Sales module components
+# - components/modules/clients/ - Client management components
+# - components/modules/inventory/ - Inventory components
+# - components/modules/purchase/ - Purchase components
+
+# shadcn/ui components:
+# - components/ui/ - Reusable UI primitives (button, input, table, etc.)
+# - components/data-table/ - Advanced data table with search/filtering
+```
+
 ### Supabase Integration
 ```bash
 # Client-side authentication (hooks):
@@ -87,6 +111,18 @@ npm run type-check
 # NEXT_PUBLIC_SUPABASE_ANON_KEY - Supabase anonymous key
 ```
 
+### Testing Setup
+```bash
+# Current testing status:
+# - No tests configured yet (package.json shows placeholder scripts)
+# - Test framework: Not yet implemented
+# - Coverage: Not yet implemented
+
+# To add testing:
+# npm install --save-dev jest @testing-library/react @testing-library/jest-dom
+# npm install --save-dev @types/jest jest-environment-jsdom
+```
+
 ### Role-Based Access Control Matrix
 The system implements strict access control based on 5 user roles:
 
@@ -98,6 +134,67 @@ The system implements strict access control based on 5 user roles:
 | Projects & Operations | Full (F) | Read (R) | Full (F) | None (N) | Read (R) |
 | IMS/Compliance | Full (F) | None (N) | None (N) | None (N) | Full (F) |
 | Correspondence | Full (F) | None (N) | Read (R) | Read (R) | Read (R) |
+
+## Current Implementation Status
+
+### ✅ Completed Features
+- **Core Architecture**: Next.js 15.5.3 + TypeScript + React 19 setup
+- **Supabase Integration**: Authentication, database client, middleware
+- **UI Foundation**: shadcn/ui components, Tailwind CSS styling
+- **Layout System**: Main layout with sidebar and header navigation
+- **Authentication**: useAuth hook, login/logout/signup functionality
+- **Route Protection**: middleware.ts with role-based access control
+- **Navigation**: 14-module navigation structure with role permissions
+- **Component Library**: Base UI components and module-specific components
+- **Type System**: Comprehensive TypeScript definitions
+
+### 🚧 In Development
+- **Database Schema**: Prisma schema defined but currently uses Supabase client
+- **Module Components**: Sales, clients, inventory, purchase components built
+- **Data Tables**: TanStack Table integration for complex data grids
+- **Form Handling**: React Hook Form + Zod validation setup
+
+### 📋 TODO Items
+- **Testing Framework**: Jest + Testing Library setup needed
+- **API Endpoints**: REST/GraphQL API implementation
+- **Database Operations**: Full CRUD operations for all modules
+- **Real-time Features**: Supabase realtime subscriptions
+- **File Upload**: Document and image management
+- **Email Integration**: Nodemailer setup for notifications
+- **PDF Generation**: Invoice and report PDF export
+
+## Key File Locations and Patterns
+
+### Configuration Files
+- **middleware.ts**: Route protection with Supabase Auth integration
+- **app/layout.tsx**: Root layout with providers and global styles
+- **lib/supabase/client.ts**: Browser Supabase client configuration
+- **lib/supabase/server.ts**: Server-side Supabase client (SSR)
+- **lib/hooks/useAuth.ts**: Authentication state management hook
+- **lib/config/navigation.ts**: Navigation structure and role permissions
+- **lib/types/**: TypeScript type definitions (auth.ts, bgu.ts)
+
+### Important Conventions
+- **Database**: Use Supabase client, NOT Prisma (schema exists but not actively used)
+- **Authentication**: Always use useAuth() hook for client-side auth
+- **Route Protection**: middleware.ts handles all route-level protection
+- **Components**: Follow shadcn/ui patterns, use className with cn() utility
+- **Styling**: Tailwind CSS with consistent design tokens
+- **Navigation**: Role-based module access defined in lib/config/navigation.ts
+
+### Module Structure Pattern
+```
+app/[module]/
+├── page.tsx              # Main module page
+├── [sub-module]/
+│   ├── page.tsx         # Sub-module page
+│   └── create/page.tsx  # Create form page
+
+components/modules/[module]/
+├── [module]-list.tsx    # List view component
+├── [module]-form.tsx    # Create/edit form
+└── [module]-card.tsx    # Card display component
+```
 
 ## Command Templates from ~/Desktop/templates/claude-commands.md
 
@@ -267,14 +364,14 @@ Develop Employee Management system featuring:
 
 ### 3. Validation Phase
 ```bash
-# Run validation suite
-./scripts/claude-validation-suite.sh
+# Current validation commands available:
+npm run lint           # ESLint code quality checks
+npm run lint:fix       # Auto-fix linting issues
+npm run type-check     # TypeScript type checking
+npm run build          # Build validation
 
-# Check security compliance
-./scripts/security-audit-gate.sh
-
-# Monitor health
-./scripts/mcp-health-monitor.sh
+# Note: Advanced validation scripts not yet implemented
+# TODO: Add testing framework and custom validation scripts
 ```
 
 ## BGU Business Rules
@@ -300,25 +397,26 @@ Develop Employee Management system featuring:
 - Secure document storage and retrieval
 - Compliance with financial regulations
 
-## Automation Integration
+## Development Best Practices
 
-### Validation Scripts
-- `claude-project-analyzer.sh`: Project structure analysis
-- `claude-validation-suite.sh`: Comprehensive validation
-- `security-audit-gate.sh`: Security compliance checking
-- `mcp-health-monitor.sh`: System health monitoring
+### Code Quality Standards
+- **ESLint**: Follow established linting rules (npm run lint)
+- **TypeScript**: Maintain strict type checking (npm run type-check)
+- **Components**: Use shadcn/ui patterns and conventions
+- **Styling**: Consistent Tailwind CSS usage with design tokens
+- **Authentication**: Always validate user permissions before data access
 
-### CI/CD Pipeline
-- Automated testing on all commits
-- Security scanning with CodeQL
-- Performance monitoring
-- Deployment automation with rollback capability
+### Security Guidelines
+- **Route Protection**: All protected routes handled by middleware.ts
+- **Authentication**: Use Supabase Auth for all authentication flows
+- **Role Validation**: Check user roles before displaying sensitive UI elements
+- **Input Validation**: Use Zod schemas for form and API validation
+- **Environment Variables**: Keep secrets secure and properly configured
 
-## Success Metrics
-- Development velocity: 60% improvement through parallel agents
-- Code quality: 95%+ test coverage maintenance
-- Security: Zero critical vulnerabilities
-- Performance: <2s page loads, <100ms API responses
-- User satisfaction: Role-appropriate access and functionality
+### Performance Considerations
+- **Client Components**: Use 'use client' directive only when necessary
+- **Image Optimization**: Use Next.js Image component for optimized loading
+- **Database Queries**: Optimize Supabase queries with proper indexing
+- **Bundle Size**: Monitor and optimize bundle size with Next.js analyzer
 
-Remember to run validation scripts after major changes and use specialized agents for domain-specific implementations.
+Remember to run `npm run lint` and `npm run type-check` before committing changes.

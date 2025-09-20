@@ -1,0 +1,4 @@
+Create CLAUDE.md file for AI assistant configuration
+Set up ESLint for code quality
+Set up CI/CD pipeline with GitHub Actions
+Consider containerization with Docker

@@ -1,0 +1,38 @@
+{
+  "timestamp": "2025-09-20T13:21:45+03:00",
+  "healthy_count": 0,
+  "unhealthy_count": 6,
+  "total_count": 6,
+  "mcps": [
+    {
+      "name": "Checking",
+      "status": "UNHEALTHY",
+      "details": "Connection failed or not responding"
+    },
+    {
+      "name": "filesystem:",
+      "status": "UNHEALTHY",
+      "details": "Connection failed or not responding"
+    },
+    {
+      "name": "context7:",
+      "status": "UNHEALTHY",
+      "details": "Connection failed or not responding"
+    },
+    {
+      "name": "playwright:",
+      "status": "UNHEALTHY",
+      "details": "Connection failed or not responding"
+    },
+    {
+      "name": "shadcn-ui:",
+      "status": "UNHEALTHY",
+      "details": "Connection failed or not responding"
+    },
+    {
+      "name": "supabase:",
+      "status": "UNHEALTHY",
+      "details": "Connection failed or not responding"
+    }
+  ]
+}

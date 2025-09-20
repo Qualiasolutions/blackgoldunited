@@ -8,8 +8,8 @@ BlackGoldUnited is a comprehensive ERP system built for business management with
 ## Core Architecture
 - **Frontend**: Next.js 15.5.3 with TypeScript and React 19
 - **Styling**: Tailwind CSS v3.4.14 with shadcn/ui component system
-- **Database**: PostgreSQL with Prisma ORM v6.0.0, deployed on Supabase
-- **Authentication**: NextAuth.js v4.24.11 with comprehensive audit logging
+- **Database**: PostgreSQL deployed on Supabase with direct SQL queries
+- **Authentication**: Supabase Auth with SSR support (@supabase/ssr)
 - **UI Components**: Radix UI primitives with custom styling
 - **Form Handling**: React Hook Form v7.63.0 with Zod validation
 - **Data Tables**: TanStack Table v8.21.3 for complex data grids
@@ -19,32 +19,32 @@ BlackGoldUnited is a comprehensive ERP system built for business management with
 
 ### Database Management
 ```bash
-# Generate Prisma client
-npm run db:generate
-
-# Push schema changes to database
-npm run db:push
-
-# Create new migration
-npm run db:migrate
-
-# Deploy migrations to production
-npm run db:migrate:deploy
-
-# Reset database (development only)
-npm run db:reset
-
-# Seed database with initial data
-npm run db:seed
-
-# Open Prisma Studio
-npm run db:studio
-
-# Validate database schema
-npm run db:validate
-
 # Create database backup
 npm run db:backup
+
+# Supabase-specific database operations:
+# - Schema changes: Use Supabase Dashboard SQL Editor or migration files
+# - Direct queries: Use Supabase MCP tools or SQL Editor
+# - Database admin: Access Supabase Dashboard at https://supabase.com/dashboard
+# - Local development: Use createClient() from @/lib/supabase/client or server
+```
+
+### Authentication Management
+```bash
+# Test login credentials (production):
+# Email: admin@blackgoldunited.com
+# Password: admin123
+# Role: MANAGEMENT (full access)
+
+# Additional test users:
+# finance@blackgoldunited.com / admin123 (FINANCE_TEAM)
+# procurement@blackgoldunited.com / admin123 (PROCUREMENT_BD)
+
+# Authentication is handled by Supabase Auth with:
+# - Email/password authentication
+# - Role-based access control via user metadata
+# - Session management with SSR support
+# - Automatic session refresh in middleware
 ```
 
 ### Development Workflow
@@ -66,6 +66,25 @@ npm run lint:fix
 
 # Type check
 npm run type-check
+```
+
+### Supabase Integration
+```bash
+# Client-side authentication (hooks):
+# useAuth() - Custom hook for authentication state management
+# - login(credentials) - Sign in with email/password
+# - logout() - Sign out user
+# - signup(data) - Create new user account
+# - user - Current user session data with role and permissions
+
+# Server-side authentication:
+# import { createClient } from '@/lib/supabase/server'
+# const supabase = await createClient()
+# const { data: { user } } = await supabase.auth.getUser()
+
+# Environment variables (already configured on Vercel):
+# NEXT_PUBLIC_SUPABASE_URL - Supabase project URL
+# NEXT_PUBLIC_SUPABASE_ANON_KEY - Supabase anonymous key
 ```
 
 ### Role-Based Access Control Matrix
@@ -117,10 +136,10 @@ Acceptance Criteria:
 - Tests coverage > 90%
 
 Technical Considerations:
-- Integration with existing authentication
-- Database schema design
-- API endpoint security
-- Performance optimization
+- Integration with Supabase authentication and row-level security
+- Database schema design with Supabase PostgreSQL
+- API endpoint security with Supabase Auth middleware
+- Performance optimization with Supabase caching and indexes
 
 Please analyze the current codebase and create a comprehensive implementation plan.
 ```
@@ -165,7 +184,7 @@ Categories:
 - IMS/Compliance: Management(F), IMS/QHSE(F), Others(R)
 - Correspondence: Management(F), Admin/HR(R), Others(R)
 
-Include middleware for route protection and component-level permissions.
+Include Supabase Auth middleware for route protection and component-level permissions with user metadata roles.
 ```
 
 ### Module Implementation Templates

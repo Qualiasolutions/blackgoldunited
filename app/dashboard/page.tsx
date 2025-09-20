@@ -2,7 +2,6 @@
 
 import { useAuth, usePermissions } from '@/lib/hooks/useAuth'
 import Link from 'next/link'
-import Image from 'next/image'
 import { useState } from 'react'
 import {
   Search,
@@ -24,6 +23,7 @@ import { EnhancedCard } from '@/components/ui/enhanced-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { MainLayout } from '@/components/layout/main-layout'
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -43,60 +43,24 @@ export default function DashboardPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* BGU Portal Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Image
-                src="/united-logo-white.webp"
-                alt="BlackGoldUnited"
-                width={40}
-                height={40}
-                className="rounded-lg"
-              />
-              <div>
-                <h1 className="text-xl font-bold text-white">BlackGoldUnited</h1>
-                <p className="text-xs text-blue-100">ERP Portal</p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-blue-100">{currentDate}</span>
-              <Button size="sm" variant="ghost" className="text-white hover:bg-blue-500">
-                <Bell className="h-4 w-4" />
-              </Button>
-              <Button size="sm" variant="ghost" className="text-white hover:bg-blue-500">
-                <Settings className="h-4 w-4" />
-              </Button>
-              <div className="flex items-center space-x-2 text-white">
-                <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
-                  <span className="text-sm font-medium">{user.firstName?.charAt(0)}</span>
-                </div>
-                <span className="text-sm">{user.firstName}</span>
-              </div>
-            </div>
+    <MainLayout user={{ name: `${user.firstName} ${user.lastName}`, email: user.email, role: user.role }}>
+      <div className="bg-gray-50 min-h-full">
+        {/* Main Dashboard Content */}
+        <div className="py-6">
+          {/* Welcome Section */}
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              Hi {user.firstName}, Welcome Back!
+            </h2>
+            <p className="text-gray-600">
+              {currentDate} - Your BGU Dashboard overview
+            </p>
           </div>
-        </div>
-      </header>
 
-      {/* Main Dashboard Content */}
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Hi {user.firstName}, Welcome Back!
-          </h2>
-          <p className="text-gray-600">
-            {currentDate} - Your BGU Dashboard overview
-          </p>
-        </div>
-
-        {/* Search Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Invoice Search */}
-          <EnhancedCard className="p-6">
+          {/* Search Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Invoice Search */}
+            <EnhancedCard className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Invoice Search</h3>
               <Search className="h-5 w-5 text-gray-400" />
@@ -132,10 +96,10 @@ export default function DashboardPage() {
               </Button>
             </div>
           </EnhancedCard>
-        </div>
+          </div>
 
-        {/* Quick Actions Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {/* Quick Actions Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Link href="/sales/invoices/create">
             <EnhancedCard
               variant="interactive"
@@ -187,10 +151,10 @@ export default function DashboardPage() {
               <span className="font-medium text-orange-900">New Client</span>
             </EnhancedCard>
           </Link>
-        </div>
+          </div>
 
-        {/* Sales Section */}
-        <div className="mb-8">
+          {/* Sales Section */}
+          <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-gray-900">Sales</h3>
             <div className="flex items-center space-x-2">
@@ -247,10 +211,10 @@ export default function DashboardPage() {
               </div>
             </EnhancedCard>
           </div>
-        </div>
+          </div>
 
-        {/* Payments Section */}
-        <div className="mb-8">
+          {/* Payments Section */}
+          <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-gray-900">Payments</h3>
             <div className="flex items-center space-x-2">
@@ -275,10 +239,10 @@ export default function DashboardPage() {
               </div>
             </div>
           </EnhancedCard>
-        </div>
+          </div>
 
-        {/* Recent Activity */}
-        <div>
+          {/* Recent Activity */}
+          <div>
           <h3 className="text-xl font-bold text-gray-900 mb-6">Recent Activity</h3>
           <EnhancedCard className="p-6">
             <div className="text-center py-8">
@@ -296,8 +260,9 @@ export default function DashboardPage() {
               )}
             </div>
           </EnhancedCard>
+          </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </MainLayout>
   )
 }

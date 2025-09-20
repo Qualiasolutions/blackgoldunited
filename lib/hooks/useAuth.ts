@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import type {
   LoginCredentials,
-  SignupData,
+  SignupData, // Keep for type compatibility but not used
   PasswordResetRequest,
   PasswordReset,
   ChangePasswordData,
@@ -15,7 +15,8 @@ import type {
   SessionUser
 } from '@/lib/types/auth'
 import { UserRole, ACCESS_CONTROL_MATRIX } from '@/lib/types/auth'
-import { validateLogin, validateSignup, validatePasswordResetRequest, validatePasswordReset, validateChangePassword } from '@/lib/auth/validation'
+import { validateLogin, validatePasswordResetRequest, validatePasswordReset, validateChangePassword } from '@/lib/auth/validation'
+// validateSignup removed - signup is managed through Supabase dashboard
 
 export function useAuth() {
   const router = useRouter()
@@ -126,46 +127,14 @@ export function useAuth() {
     }
   }, [router, supabase.auth])
 
+  // Signup functionality is disabled - accounts are created directly in Supabase dashboard
   const signup = useCallback(async (data: SignupData): Promise<AuthResponse> => {
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      // Validate signup data
-      const validation = validateSignup(data)
-      if (!validation.isValid) {
-        const errorMessage = validation.errors.map(e => e.message).join(', ')
-        setError(errorMessage)
-        return { success: false, message: errorMessage }
-      }
-
-      // Sign up with Supabase
-      const { data: authData, error } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            firstName: data.firstName,
-            lastName: data.lastName,
-            role: data.role || 'MANAGEMENT'
-          }
-        }
-      })
-
-      if (error) {
-        setError(error.message || 'Signup failed')
-        return { success: false, message: error.message || 'Signup failed' }
-      }
-
-      return { success: true, message: 'Account created successfully' }
-    } catch (error) {
-      const errorMessage = 'An unexpected error occurred'
-      setError(errorMessage)
-      return { success: false, message: errorMessage }
-    } finally {
-      setIsLoading(false)
+    // Account creation is managed by administrators through Supabase dashboard
+    return {
+      success: false,
+      message: 'Account creation is managed by administrators. Please contact your system administrator.'
     }
-  }, [supabase.auth])
+  }, [])
 
   const requestPasswordReset = useCallback(async (data: PasswordResetRequest): Promise<AuthResponse> => {
     setIsLoading(true)

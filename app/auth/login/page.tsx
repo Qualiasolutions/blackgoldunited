@@ -224,16 +224,13 @@ function LoginForm() {
               </button>
             </div>
 
-            {/* Sign Up Link */}
+            {/* Admin Contact Info */}
             <div className="text-center pt-4 border-t border-gray-200">
               <p className="text-sm text-gray-600">
-                Need an account?{' '}
-                <Link
-                  href="/auth/signup"
-                  className="font-medium text-yellow-600 hover:text-yellow-500 transition-colors"
-                >
-                  Contact your system administrator
-                </Link>
+                Account access is managed by administrators.
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                For account creation or issues, contact your system administrator.
               </p>
             </div>
 

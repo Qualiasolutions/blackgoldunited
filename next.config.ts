@@ -2,9 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  experimental: {
-    serverComponentsExternalPackages: ['@supabase/supabase-js']
-  },
+  serverExternalPackages: ['@supabase/supabase-js'],
   output: 'standalone',
   typescript: {
     ignoreBuildErrors: false,

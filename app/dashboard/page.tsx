@@ -47,15 +47,16 @@ export default function DashboardPage() {
       <div className="bg-gradient-to-br from-white via-orange-50 to-white min-h-full">
         {/* Main Dashboard Content */}
         <div className="py-8 px-6">
-          {/* Welcome Section with Orange Theme */}
+          {/* Welcome Section - Subtle with Orange Accents */}
           <div className="mb-10">
-            <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-6 shadow-xl">
-              <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">
+            <div className="bg-white border-2 border-orange-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">
                 Hi {user.firstName}, Welcome Back! 👋
               </h2>
-              <p className="text-orange-100 text-lg font-medium">
+              <p className="text-gray-600 text-lg font-medium">
                 {currentDate} • Your BGU Dashboard Overview
               </p>
+              <div className="mt-4 h-1 w-20 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full"></div>
             </div>
           </div>
 
@@ -76,7 +77,7 @@ export default function DashboardPage() {
                   onChange={(e) => setInvoiceSearch(e.target.value)}
                   className="w-full h-12 border-orange-200 focus:border-orange-400 focus:ring-orange-200 rounded-xl"
                 />
-                <Button className="w-full h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-300">
+                <Button className="w-full h-12 bg-white border-2 border-orange-500 text-orange-600 hover:bg-orange-50 hover:border-orange-600 font-semibold rounded-xl shadow-lg transition-all duration-300">
                   SEARCH INVOICES
                 </Button>
             </div>
@@ -97,7 +98,7 @@ export default function DashboardPage() {
                   onChange={(e) => setClientSearch(e.target.value)}
                   className="w-full h-12 border-orange-200 focus:border-orange-400 focus:ring-orange-200 rounded-xl"
                 />
-                <Button className="w-full h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-300">
+                <Button className="w-full h-12 bg-white border-2 border-orange-500 text-orange-600 hover:bg-orange-50 hover:border-orange-600 font-semibold rounded-xl shadow-lg transition-all duration-300">
                   SEARCH CLIENTS
                 </Button>
             </div>

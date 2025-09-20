@@ -14,15 +14,15 @@ interface MainLayoutProps {
 
 export function MainLayout({ children, user }: MainLayoutProps) {
   return (
-    <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <Sidebar />
-      
-      {/* Main Content */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Header */}
-        <Header user={user} />
-        
+    <div className="flex h-screen bg-background flex-col">
+      {/* Unified Header spanning full width */}
+      <Header user={user} />
+
+      {/* Main content area with sidebar and content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <Sidebar />
+
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto p-6">
           {children}

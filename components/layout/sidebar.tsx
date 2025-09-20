@@ -241,27 +241,7 @@ export function Sidebar({ className }: SidebarProps) {
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col bg-gradient-to-b from-gray-900 via-black to-gray-900">
-      {/* Enhanced Header with BGU Logo - Matching Header Theme */}
-      <div className="flex h-20 items-center border-b border-orange-800/30 px-6 bg-gradient-to-r from-orange-600 to-orange-700 shadow-lg">
-        <div className="flex items-center space-x-3">
-          <div className="relative">
-            <Image
-              src="/united-logo-white.webp"
-              alt="BlackGoldUnited"
-              width={44}
-              height={44}
-              className="rounded-xl shadow-lg ring-2 ring-white/20"
-              priority
-            />
-          </div>
-          <div className="hidden lg:block">
-            <h1 className="text-lg font-bold text-white tracking-tight">BGU Portal</h1>
-            <p className="text-xs text-orange-100 font-medium">Navigation</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Enhanced Navigation */}
+      {/* Enhanced Navigation - No Header (unified with main header) */}
       <ScrollArea className="flex-1 px-3 py-4">
         <div className="space-y-1">
           {/* Module Navigation */}

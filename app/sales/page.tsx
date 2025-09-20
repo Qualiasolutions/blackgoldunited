@@ -4,6 +4,9 @@ import { useAuth, usePermissions } from '@/lib/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { StatsCard } from '@/components/ui/stats-card'
+import { ModuleCard } from '@/components/ui/module-card'
+import { EnhancedCard } from '@/components/ui/enhanced-card'
 import {
   Plus,
   Users,
@@ -22,6 +25,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useSalesStats } from '@/lib/hooks/useSalesStats'
+import { cn } from '@/lib/utils'
 
 export default function SalesPage() {
   const { user } = useAuth()
@@ -137,26 +141,40 @@ export default function SalesPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
       {/* Enhanced Header */}
-      <header className="bg-white shadow-lg border-b">
+      <header className="bg-white/95 backdrop-blur-sm shadow-xl border-b border-gray-200/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                <BarChart3 className="h-6 w-6 text-white" />
+          <div className="flex justify-between h-20">
+            <div className="flex items-center space-x-6">
+              <div className="relative">
+                <div className="h-12 w-12 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <BarChart3 className="h-7 w-7 text-white" />
+                </div>
+                <div className="absolute -inset-0.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl opacity-20 blur-sm animate-pulse" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Sales Management</h1>
-                <p className="text-sm text-gray-600">Manage invoices, quotes, payments and client relationships</p>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 bg-clip-text text-transparent">
+                  Sales Management
+                </h1>
+                <p className="text-sm text-gray-600 mt-1">Comprehensive sales operations and client relationship management</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                {canCreate ? '🟢 Full Access' : canRead ? '🟡 Read Only' : '🔴 No Access'}
+              <Badge variant="outline" className={cn(
+                "px-3 py-1.5 font-medium transition-all duration-200",
+                canCreate
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                  : canRead
+                  ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                  : "bg-red-50 text-red-700 border-red-200"
+              )}>
+                {canCreate ? '✓ Full Access' : canRead ? '◐ Read Only' : '✗ No Access'}
               </Badge>
               <Link href="/dashboard">
-                <Button variant="outline">← Dashboard</Button>
+                <Button variant="outline" className="hover:bg-blue-50 hover:border-blue-200 transition-all duration-200">
+                  ← Dashboard
+                </Button>
               </Link>
             </div>
           </div>
@@ -168,149 +186,93 @@ export default function SalesPage() {
         <div className="px-4 sm:px-0">
 
           {/* Sales Overview Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="border-blue-200 bg-blue-50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-blue-800">Total Revenue</CardTitle>
-                <DollarSign className="h-4 w-4 text-blue-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-900">
-                  ${loading ? '...' : (stats?.totalRevenue || 0).toLocaleString()}
-                </div>
-                <p className="text-xs text-blue-600 flex items-center">
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                  +{stats?.revenueGrowth || 0}% from last month
-                </p>
-              </CardContent>
-            </Card>
+          <div className="mb-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Performance Overview</h2>
+              <div className="h-1 w-24 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <StatsCard
+                title="Total Revenue"
+                value={loading ? '...' : `$${(stats?.totalRevenue || 0).toLocaleString()}`}
+                description="Revenue generated this month"
+                icon={DollarSign}
+                trend={{
+                  value: stats?.revenueGrowth || 0,
+                  label: "from last month",
+                  isPositive: true
+                }}
+                colorScheme="blue"
+              />
 
-            <Card className="border-green-200 bg-green-50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-green-800">Active Clients</CardTitle>
-                <Users className="h-4 w-4 text-green-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-900">
-                  {loading ? '...' : stats?.activeClients || 0}
-                </div>
-                <p className="text-xs text-green-600">
-                  +{stats?.newClients || 0} new this month
-                </p>
-              </CardContent>
-            </Card>
+              <StatsCard
+                title="Active Clients"
+                value={loading ? '...' : stats?.activeClients || 0}
+                description={`+${stats?.newClients || 0} new this month`}
+                icon={Users}
+                colorScheme="green"
+              />
 
-            <Card className="border-purple-200 bg-purple-50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-purple-800">Pending Invoices</CardTitle>
-                <FileText className="h-4 w-4 text-purple-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-purple-900">
-                  {loading ? '...' : stats?.pendingInvoices || 0}
-                </div>
-                <p className="text-xs text-purple-600">
-                  ${(stats?.pendingAmount || 0).toLocaleString()} pending
-                </p>
-              </CardContent>
-            </Card>
+              <StatsCard
+                title="Pending Invoices"
+                value={loading ? '...' : stats?.pendingInvoices || 0}
+                description={`$${(stats?.pendingAmount || 0).toLocaleString()} pending`}
+                icon={FileText}
+                colorScheme="purple"
+              />
 
-            <Card className="border-orange-200 bg-orange-50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-orange-800">Conversion Rate</CardTitle>
-                <TrendingUp className="h-4 w-4 text-orange-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-900">
-                  {loading ? '...' : stats?.conversionRate || 0}%
-                </div>
-                <p className="text-xs text-orange-600">
-                  +{stats?.conversionGrowth || 0}% this quarter
-                </p>
-              </CardContent>
-            </Card>
+              <StatsCard
+                title="Conversion Rate"
+                value={loading ? '...' : `${stats?.conversionRate || 0}%`}
+                description="Quote to sale conversion"
+                icon={TrendingUp}
+                trend={{
+                  value: stats?.conversionGrowth || 0,
+                  label: "this quarter",
+                  isPositive: true
+                }}
+                colorScheme="orange"
+              />
+            </div>
           </div>
 
           {/* Sales Module Navigation */}
           <div className="mb-8">
             <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Sales Modules</h2>
-              <div className="h-1 w-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Sales Modules</h2>
+              <div className="h-1 w-24 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {salesModules.map((module) => {
                 const hasAccess = hasModuleAccess('sales')
-                const IconComponent = module.icon
                 const canAccessModule = module.key === 'settings' ? hasFullAccess('sales') : hasAccess
 
+                const colorSchemeMap: Record<string, any> = {
+                  'invoices': 'blue',
+                  'rfq': 'green',
+                  'credit-notes': 'purple',
+                  'refunds': 'orange',
+                  'recurring': 'teal',
+                  'payments': 'emerald',
+                  'settings': 'amber'
+                }
+
                 return (
-                  <Card
+                  <ModuleCard
                     key={module.key}
-                    className={`${module.color} border-2 transition-all duration-200 ${
-                      canAccessModule
-                        ? 'hover:shadow-lg hover:scale-105 cursor-pointer'
-                        : 'opacity-60 cursor-not-allowed'
-                    }`}
-                  >
-                    {canAccessModule ? (
-                      <Link href={module.path} className="block">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <div className={`p-2 ${module.bgColor} rounded-lg`}>
-                                <IconComponent className={`h-6 w-6 ${module.iconColor}`} />
-                              </div>
-                              <CardTitle className="text-lg font-semibold text-gray-900">
-                                {module.name}
-                              </CardTitle>
-                            </div>
-                            <ArrowRight className="h-4 w-4 text-gray-400" />
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <p className="text-sm text-gray-600 mb-3 leading-relaxed">
-                            {module.description}
-                          </p>
-                          {module.count > 0 && (
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-gray-500">
-                                {module.count} items
-                              </span>
-                              {module.amount > 0 && (
-                                <span className="font-semibold">
-                                  ${module.amount.toLocaleString()}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Link>
-                    ) : (
-                      <div>
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <div className={`p-2 ${module.bgColor} rounded-lg opacity-50`}>
-                                <IconComponent className="h-6 w-6 text-gray-400" />
-                              </div>
-                              <CardTitle className="text-lg font-semibold text-gray-500">
-                                {module.name}
-                              </CardTitle>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <p className="text-sm text-gray-400 mb-3 leading-relaxed">
-                            {module.description}
-                          </p>
-                          <Badge variant="destructive" className="text-xs">
-                            Access Restricted
-                          </Badge>
-                        </CardContent>
-                      </div>
-                    )}
-                  </Card>
+                    name={module.name}
+                    description={module.description}
+                    icon={module.icon}
+                    path={module.path}
+                    hasAccess={canAccessModule}
+                    colorScheme={colorSchemeMap[module.key] || 'blue'}
+                    stats={module.count > 0 ? {
+                      count: module.count,
+                      amount: module.amount,
+                      label: 'items'
+                    } : undefined}
+                  />
                 )
               })}
             </div>
@@ -320,84 +282,95 @@ export default function SalesPage() {
           {canCreate && (
             <div className="mb-8">
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Quick Actions</h3>
-                <div className="h-1 w-16 bg-gradient-to-r from-green-500 to-blue-500 rounded-full"></div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Quick Actions</h3>
+                <div className="h-1 w-24 bg-gradient-to-r from-green-500 to-blue-500 rounded-full" />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Link href="/sales/invoices/create">
-                  <Card className="hover:shadow-md transition-shadow cursor-pointer border-green-200 bg-green-50">
-                    <CardContent className="p-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="bg-green-100 p-2 rounded-lg">
-                          <Plus className="h-5 w-5 text-green-600" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-green-800">New Invoice</h4>
-                          <p className="text-xs text-green-600">Create client invoice</p>
-                        </div>
+                  <EnhancedCard
+                    variant="interactive"
+                    colorScheme="green"
+                    className="h-full"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className="bg-green-100 p-3 rounded-xl">
+                        <Plus className="h-6 w-6 text-green-600" />
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-green-900 text-lg">New Invoice</h4>
+                        <p className="text-sm text-green-700">Create client invoice</p>
+                      </div>
+                    </div>
+                  </EnhancedCard>
                 </Link>
 
                 <Link href="/sales/rfq/create">
-                  <Card className="hover:shadow-md transition-shadow cursor-pointer border-blue-200 bg-blue-50">
-                    <CardContent className="p-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="bg-blue-100 p-2 rounded-lg">
-                          <Plus className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-blue-800">New RFQ</h4>
-                          <p className="text-xs text-blue-600">Request quotation</p>
-                        </div>
+                  <EnhancedCard
+                    variant="interactive"
+                    colorScheme="blue"
+                    className="h-full"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className="bg-blue-100 p-3 rounded-xl">
+                        <Plus className="h-6 w-6 text-blue-600" />
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-blue-900 text-lg">New RFQ</h4>
+                        <p className="text-sm text-blue-700">Request quotation</p>
+                      </div>
+                    </div>
+                  </EnhancedCard>
                 </Link>
 
                 <Link href="/sales/payments/create">
-                  <Card className="hover:shadow-md transition-shadow cursor-pointer border-purple-200 bg-purple-50">
-                    <CardContent className="p-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="bg-purple-100 p-2 rounded-lg">
-                          <Plus className="h-5 w-5 text-purple-600" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-purple-800">Record Payment</h4>
-                          <p className="text-xs text-purple-600">Log client payment</p>
-                        </div>
+                  <EnhancedCard
+                    variant="interactive"
+                    colorScheme="purple"
+                    className="h-full"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className="bg-purple-100 p-3 rounded-xl">
+                        <Plus className="h-6 w-6 text-purple-600" />
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-purple-900 text-lg">Record Payment</h4>
+                        <p className="text-sm text-purple-700">Log client payment</p>
+                      </div>
+                    </div>
+                  </EnhancedCard>
                 </Link>
 
                 <Link href="/sales/recurring/create">
-                  <Card className="hover:shadow-md transition-shadow cursor-pointer border-teal-200 bg-teal-50">
-                    <CardContent className="p-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="bg-teal-100 p-2 rounded-lg">
-                          <Plus className="h-5 w-5 text-teal-600" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-teal-800">Setup Recurring</h4>
-                          <p className="text-xs text-teal-600">Recurring billing</p>
-                        </div>
+                  <EnhancedCard
+                    variant="interactive"
+                    colorScheme="teal"
+                    className="h-full"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className="bg-teal-100 p-3 rounded-xl">
+                        <Plus className="h-6 w-6 text-teal-600" />
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-teal-900 text-lg">Setup Recurring</h4>
+                        <p className="text-sm text-teal-700">Recurring billing</p>
+                      </div>
+                    </div>
+                  </EnhancedCard>
                 </Link>
               </div>
             </div>
           )}
 
           {/* Recent Activity */}
-          <div className="bg-white rounded-xl shadow-sm border p-6">
+          <EnhancedCard variant="elevated" size="lg">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Recent Sales Activity</h3>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Recent Sales Activity</h3>
+                <div className="h-1 w-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
+              </div>
               <Link href="/sales/invoices">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="hover:bg-blue-50 hover:border-blue-200 transition-all duration-200">
                   View All <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -449,7 +422,7 @@ export default function SalesPage() {
                 </div>
               )}
             </div>
-          </div>
+          </EnhancedCard>
 
         </div>
       </main>

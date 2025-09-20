@@ -248,7 +248,4 @@ export const authOptions: NextAuthOptions = {
   },
 
   debug: process.env.NODE_ENV === 'development',
-
-  // Ensure trust host for Vercel deployment
-  trustHost: true,
 }

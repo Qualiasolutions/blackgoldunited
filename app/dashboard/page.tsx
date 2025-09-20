@@ -44,56 +44,62 @@ export default function DashboardPage() {
 
   return (
     <MainLayout user={{ name: `${user.firstName} ${user.lastName}`, email: user.email, role: user.role }}>
-      <div className="bg-gray-50 min-h-full">
+      <div className="bg-gradient-to-br from-white via-orange-50 to-white min-h-full">
         {/* Main Dashboard Content */}
-        <div className="py-6">
-          {/* Welcome Section */}
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Hi {user.firstName}, Welcome Back!
-            </h2>
-            <p className="text-gray-600">
-              {currentDate} - Your BGU Dashboard overview
-            </p>
+        <div className="py-8 px-6">
+          {/* Welcome Section with Orange Theme */}
+          <div className="mb-10">
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-6 shadow-xl">
+              <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">
+                Hi {user.firstName}, Welcome Back! 👋
+              </h2>
+              <p className="text-orange-100 text-lg font-medium">
+                {currentDate} • Your BGU Dashboard Overview
+              </p>
+            </div>
           </div>
 
-          {/* Search Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Search Section with Orange Theme */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
             {/* Invoice Search */}
-            <EnhancedCard className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Invoice Search</h3>
-              <Search className="h-5 w-5 text-gray-400" />
+            <EnhancedCard className="p-8 bg-white border-2 border-orange-100 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Invoice Search</h3>
+                <div className="p-2 bg-orange-100 rounded-xl">
+                  <Search className="h-6 w-6 text-orange-600" />
+                </div>
             </div>
-            <div className="space-y-3">
-              <Input
-                placeholder="Search invoices..."
-                value={invoiceSearch}
-                onChange={(e) => setInvoiceSearch(e.target.value)}
-                className="w-full"
-              />
-              <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                SEARCH
-              </Button>
+              <div className="space-y-4">
+                <Input
+                  placeholder="Search invoices by number, client..."
+                  value={invoiceSearch}
+                  onChange={(e) => setInvoiceSearch(e.target.value)}
+                  className="w-full h-12 border-orange-200 focus:border-orange-400 focus:ring-orange-200 rounded-xl"
+                />
+                <Button className="w-full h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-300">
+                  SEARCH INVOICES
+                </Button>
             </div>
           </EnhancedCard>
 
           {/* Client Search */}
-          <EnhancedCard className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Client Search</h3>
-              <Search className="h-5 w-5 text-gray-400" />
+            <EnhancedCard className="p-8 bg-white border-2 border-orange-100 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Client Search</h3>
+                <div className="p-2 bg-orange-100 rounded-xl">
+                  <Search className="h-6 w-6 text-orange-600" />
+                </div>
             </div>
-            <div className="space-y-3">
-              <Input
-                placeholder="Search clients..."
-                value={clientSearch}
-                onChange={(e) => setClientSearch(e.target.value)}
-                className="w-full"
-              />
-              <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                SEARCH
-              </Button>
+              <div className="space-y-4">
+                <Input
+                  placeholder="Search clients by name, company..."
+                  value={clientSearch}
+                  onChange={(e) => setClientSearch(e.target.value)}
+                  className="w-full h-12 border-orange-200 focus:border-orange-400 focus:ring-orange-200 rounded-xl"
+                />
+                <Button className="w-full h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-300">
+                  SEARCH CLIENTS
+                </Button>
             </div>
           </EnhancedCard>
           </div>

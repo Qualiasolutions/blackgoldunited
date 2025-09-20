@@ -240,23 +240,23 @@ export function Sidebar({ className }: SidebarProps) {
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
 
   const SidebarContent = () => (
-    <div className="flex h-full flex-col bg-white">
-      {/* Enhanced Header with BGU Logo */}
-      <div className="flex h-20 items-center border-b border-gray-200 px-6 bg-gradient-to-r from-blue-600 to-blue-700">
+    <div className="flex h-full flex-col bg-gradient-to-b from-gray-900 via-black to-gray-900">
+      {/* Enhanced Header with BGU Logo - Matching Header Theme */}
+      <div className="flex h-20 items-center border-b border-orange-800/30 px-6 bg-gradient-to-r from-orange-600 to-orange-700 shadow-lg">
         <div className="flex items-center space-x-3">
           <div className="relative">
             <Image
               src="/united-logo-white.webp"
               alt="BlackGoldUnited"
-              width={40}
-              height={40}
-              className="rounded-lg"
+              width={44}
+              height={44}
+              className="rounded-xl shadow-lg ring-2 ring-white/20"
               priority
             />
           </div>
           <div className="hidden lg:block">
-            <h1 className="text-lg font-bold text-white">BlackGoldUnited</h1>
-            <p className="text-xs text-blue-100">ERP Portal</p>
+            <h1 className="text-lg font-bold text-white tracking-tight">BGU Portal</h1>
+            <p className="text-xs text-orange-100 font-medium">Navigation</p>
           </div>
         </div>
       </div>
@@ -277,58 +277,58 @@ export function Sidebar({ className }: SidebarProps) {
                   <button
                     onClick={() => toggleModule(module.id)}
                     className={cn(
-                      "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                      "flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 group",
                       moduleActive
-                        ? "bg-blue-50 text-blue-700 border-l-4 border-blue-600"
-                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                        ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg border-l-4 border-orange-300"
+                        : "text-gray-300 hover:bg-gradient-to-r hover:from-orange-500/20 hover:to-orange-600/20 hover:text-white hover:shadow-md"
                     )}
                   >
                     <div className="flex items-center space-x-3">
                       {IconComponent && (
                         <IconComponent className={cn(
-                          "h-5 w-5",
-                          moduleActive ? "text-blue-600" : "text-gray-500"
+                          "h-5 w-5 transition-colors duration-300",
+                          moduleActive ? "text-white" : "text-orange-400 group-hover:text-white"
                         )} />
                       )}
-                      <span className="font-medium">{module.title}</span>
+                      <span className="font-semibold tracking-wide">{module.title}</span>
                     </div>
                     {expanded ? (
-                      <ChevronDown className="h-4 w-4 text-gray-400" />
+                      <ChevronDown className="h-4 w-4 text-orange-200" />
                     ) : (
-                      <ChevronRight className="h-4 w-4 text-gray-400" />
+                      <ChevronRight className="h-4 w-4 text-orange-200" />
                     )}
                   </button>
                 ) : (
                   <Link href={module.href}>
                     <div className={cn(
-                      "flex items-center space-x-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                      "flex items-center space-x-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 group",
                       moduleActive
-                        ? "bg-blue-50 text-blue-700 border-l-4 border-blue-600"
-                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                        ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg border-l-4 border-orange-300"
+                        : "text-gray-300 hover:bg-gradient-to-r hover:from-orange-500/20 hover:to-orange-600/20 hover:text-white hover:shadow-md"
                     )}>
                       {IconComponent && (
                         <IconComponent className={cn(
-                          "h-5 w-5",
-                          moduleActive ? "text-blue-600" : "text-gray-500"
+                          "h-5 w-5 transition-colors duration-300",
+                          moduleActive ? "text-white" : "text-orange-400 group-hover:text-white"
                         )} />
                       )}
-                      <span className="font-medium">{module.title}</span>
+                      <span className="font-semibold tracking-wide">{module.title}</span>
                     </div>
                   </Link>
                 )}
 
-                {/* Enhanced Submenu */}
+                {/* Enhanced Submenu with Orange Theme */}
                 {expanded && hasSubModules && (
-                  <div className="ml-8 space-y-1 border-l border-gray-200 pl-4 py-2">
+                  <div className="ml-6 space-y-1 border-l-2 border-orange-600/30 pl-4 py-2 bg-black/20 rounded-lg mr-2">
                     {module.subModules.map((subModule) => (
                       <Link key={subModule.id} href={subModule.href}>
                         <div className={cn(
-                          "flex items-center rounded-md px-3 py-2 text-sm transition-all duration-200",
+                          "flex items-center rounded-lg px-3 py-2.5 text-sm transition-all duration-300 group",
                           isActive(subModule.href)
-                            ? "bg-blue-50 text-blue-700 font-medium border-r-2 border-blue-500"
-                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                            ? "bg-gradient-to-r from-orange-400 to-orange-500 text-white font-semibold shadow-md border-r-3 border-orange-300"
+                            : "text-gray-400 hover:bg-orange-500/10 hover:text-orange-200 hover:border-r-2 hover:border-orange-400"
                         )}>
-                          <span>{subModule.title}</span>
+                          <span className="font-medium tracking-wide">{subModule.title}</span>
                         </div>
                       </Link>
                     ))}
@@ -340,25 +340,25 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
       </ScrollArea>
 
-      {/* Enhanced Footer with User Info */}
-      <div className="border-t border-gray-200 p-4 bg-gray-50">
+      {/* Enhanced Footer with User Info - Orange Theme */}
+      <div className="border-t border-orange-800/30 p-4 bg-gradient-to-r from-gray-900 to-black">
         {user && (
           <div className="flex items-center space-x-3 mb-3">
-            <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
-              <span className="text-white text-sm font-medium">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg ring-2 ring-orange-300/20">
+              <span className="text-white text-sm font-bold">
                 {user.firstName?.charAt(0) || 'U'}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="text-sm font-semibold text-white truncate">
                 {user.firstName} {user.lastName}
               </p>
-              <p className="text-xs text-gray-500 truncate">{user.role}</p>
+              <p className="text-xs text-orange-300 truncate font-medium">{user.role}</p>
             </div>
           </div>
         )}
-        <div className="text-xs text-gray-500 text-center">
-          BGU Portal v2.0
+        <div className="text-xs text-orange-400 text-center font-medium">
+          BGU Portal v2.0 • Enterprise
         </div>
       </div>
     </div>

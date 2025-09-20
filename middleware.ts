@@ -5,6 +5,18 @@ import type { NextRequest } from 'next/server'
 import { UserRole, AccessLevel } from '@prisma/client'
 import { ACCESS_CONTROL_MATRIX } from '@/lib/types/auth'
 
+// Extend NextRequest to include nextauth property
+declare module 'next/server' {
+  interface NextRequest {
+    nextauth: {
+      token: {
+        role: UserRole
+        [key: string]: any
+      } | null
+    }
+  }
+}
+
 // Define protected routes and their required permissions
 const ROUTE_PERMISSIONS: Record<string, {
   module: string

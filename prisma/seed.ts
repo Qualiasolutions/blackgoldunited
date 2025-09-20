@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole, AccessLevel } from '@prisma/client'
+import { PrismaClient, UserRole, AccessLevel, AccountType } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
@@ -273,33 +273,33 @@ async function main() {
   // Create default chart of accounts
   const chartOfAccounts = [
     // Assets
-    { accountCode: '1000', accountName: 'Current Assets', accountType: 'ASSET' },
-    { accountCode: '1100', accountName: 'Cash and Cash Equivalents', accountType: 'ASSET' },
-    { accountCode: '1200', accountName: 'Accounts Receivable', accountType: 'ASSET' },
-    { accountCode: '1300', accountName: 'Inventory', accountType: 'ASSET' },
-    { accountCode: '1500', accountName: 'Fixed Assets', accountType: 'ASSET' },
+    { accountCode: '1000', accountName: 'Current Assets', accountType: AccountType.ASSET },
+    { accountCode: '1100', accountName: 'Cash and Cash Equivalents', accountType: AccountType.ASSET },
+    { accountCode: '1200', accountName: 'Accounts Receivable', accountType: AccountType.ASSET },
+    { accountCode: '1300', accountName: 'Inventory', accountType: AccountType.ASSET },
+    { accountCode: '1500', accountName: 'Fixed Assets', accountType: AccountType.ASSET },
 
     // Liabilities
-    { accountCode: '2000', accountName: 'Current Liabilities', accountType: 'LIABILITY' },
-    { accountCode: '2100', accountName: 'Accounts Payable', accountType: 'LIABILITY' },
-    { accountCode: '2200', accountName: 'Accrued Expenses', accountType: 'LIABILITY' },
-    { accountCode: '2500', accountName: 'Long-term Liabilities', accountType: 'LIABILITY' },
+    { accountCode: '2000', accountName: 'Current Liabilities', accountType: AccountType.LIABILITY },
+    { accountCode: '2100', accountName: 'Accounts Payable', accountType: AccountType.LIABILITY },
+    { accountCode: '2200', accountName: 'Accrued Expenses', accountType: AccountType.LIABILITY },
+    { accountCode: '2500', accountName: 'Long-term Liabilities', accountType: AccountType.LIABILITY },
 
     // Equity
-    { accountCode: '3000', accountName: 'Owner\'s Equity', accountType: 'EQUITY' },
-    { accountCode: '3100', accountName: 'Retained Earnings', accountType: 'EQUITY' },
+    { accountCode: '3000', accountName: 'Owner\'s Equity', accountType: AccountType.EQUITY },
+    { accountCode: '3100', accountName: 'Retained Earnings', accountType: AccountType.EQUITY },
 
     // Revenue
-    { accountCode: '4000', accountName: 'Revenue', accountType: 'REVENUE' },
-    { accountCode: '4100', accountName: 'Sales Revenue', accountType: 'REVENUE' },
-    { accountCode: '4200', accountName: 'Service Revenue', accountType: 'REVENUE' },
+    { accountCode: '4000', accountName: 'Revenue', accountType: AccountType.REVENUE },
+    { accountCode: '4100', accountName: 'Sales Revenue', accountType: AccountType.REVENUE },
+    { accountCode: '4200', accountName: 'Service Revenue', accountType: AccountType.REVENUE },
 
     // Expenses
-    { accountCode: '5000', accountName: 'Operating Expenses', accountType: 'EXPENSE' },
-    { accountCode: '5100', accountName: 'Cost of Goods Sold', accountType: 'EXPENSE' },
-    { accountCode: '5200', accountName: 'Salaries and Wages', accountType: 'EXPENSE' },
-    { accountCode: '5300', accountName: 'Rent Expense', accountType: 'EXPENSE' },
-    { accountCode: '5400', accountName: 'Utilities Expense', accountType: 'EXPENSE' },
+    { accountCode: '5000', accountName: 'Operating Expenses', accountType: AccountType.EXPENSE },
+    { accountCode: '5100', accountName: 'Cost of Goods Sold', accountType: AccountType.EXPENSE },
+    { accountCode: '5200', accountName: 'Salaries and Wages', accountType: AccountType.EXPENSE },
+    { accountCode: '5300', accountName: 'Rent Expense', accountType: AccountType.EXPENSE },
+    { accountCode: '5400', accountName: 'Utilities Expense', accountType: AccountType.EXPENSE },
   ]
 
   for (const account of chartOfAccounts) {

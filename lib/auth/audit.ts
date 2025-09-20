@@ -19,7 +19,7 @@ export async function logAuthEvent(params: LogAuthEventParams): Promise<void> {
         tableName: 'authentication',
         recordId: params.userId || 'anonymous',
         action: params.action,
-        oldData: null,
+        oldData: undefined,
         newData: {
           email: params.email,
           ipAddress: params.ipAddress,
@@ -91,8 +91,8 @@ export async function getAuthAuditLogs(options: {
     action: log.action as any,
     userId: log.userId !== 'system' ? log.userId : undefined,
     email: (log.newData as any)?.email || '',
-    ipAddress: log.ipAddress,
-    userAgent: log.userAgent,
+    ipAddress: log.ipAddress || undefined,
+    userAgent: log.userAgent || undefined,
     timestamp: log.timestamp,
     success: (log.newData as any)?.success || false,
     details: (log.newData as any)?.details

@@ -35,7 +35,7 @@ declare module "next-auth/jwt" {
 }
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma) as any,
   providers: [
     CredentialsProvider({
       id: 'credentials',
@@ -142,7 +142,7 @@ export const authOptions: NextAuthOptions = {
             ipAddress: req.headers?.['x-forwarded-for'] as string,
             userAgent: req.headers?.['user-agent'],
             success: false,
-            details: { reason: 'System error', error: error.message }
+            details: { reason: 'System error', error: (error as Error).message }
           })
           return null
         }

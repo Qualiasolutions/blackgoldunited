@@ -36,6 +36,7 @@ declare module "next-auth/jwt" {
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       id: 'credentials',
@@ -203,7 +204,11 @@ export const authOptions: NextAuthOptions = {
       // Allows relative callback URLs
       if (url.startsWith("/")) return `${baseUrl}${url}`
       // Allows callback URLs on the same origin
-      else if (new URL(url).origin === baseUrl) return url
+      try {
+        if (new URL(url).origin === baseUrl) return url
+      } catch (error) {
+        console.warn('Invalid URL in redirect callback:', url)
+      }
       // Default redirect to dashboard after login
       return `${baseUrl}/dashboard`
     }
@@ -230,4 +235,7 @@ export const authOptions: NextAuthOptions = {
   },
 
   debug: process.env.NODE_ENV === 'development',
+
+  // Ensure trust host for Vercel deployment
+  trustHost: true,
 }

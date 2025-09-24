@@ -22,23 +22,48 @@ import {
   Calendar,
   User,
   ArrowLeft,
-  DollarSign
+  DollarSign,
+  RefreshCw,
+  Loader2
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState, useEffect, useCallback } from 'react'
+
+interface InvoiceClient {
+  id: string
+  companyName: string
+  contactPerson: string
+  email: string
+}
+
+interface InvoiceItem {
+  id: string
+  description: string
+  quantity: number
+  unitPrice: number
+  lineTotal: number
+  taxRate: number
+}
 
 interface Invoice {
   id: string
   invoiceNumber: string
   clientId: string
-  clientName: string
-  amount: number
-  paidAmount: number
-  status: 'DRAFT' | 'SENT' | 'PAID' | 'OVERDUE' | 'CANCELLED'
+  issueDate: string
   dueDate: string
+  status: 'DRAFT' | 'SENT' | 'PAID' | 'OVERDUE' | 'CANCELLED' | 'REFUNDED'
+  paymentStatus: 'PENDING' | 'PARTIAL' | 'COMPLETED' | 'FAILED' | 'REFUNDED'
+  subtotal: number
+  taxAmount: number
+  discountAmount: number
+  totalAmount: number
+  paidAmount: number
+  notes?: string
+  terms?: string
   createdAt: string
   updatedAt: string
+  client: InvoiceClient
+  items: InvoiceItem[]
 }
 
 export default function InvoicesPage() {
@@ -46,52 +71,115 @@ export default function InvoicesPage() {
   const { hasModuleAccess, hasFullAccess } = usePermissions()
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string>('')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('')
+  const [filterPaymentStatus, setFilterPaymentStatus] = useState<string>('')
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0
+  })
+  const [searchDebounce, setSearchDebounce] = useState<NodeJS.Timeout>()
 
   const canManage = hasFullAccess('sales')
   const canRead = hasModuleAccess('sales')
 
-  useEffect(() => {
-    fetchInvoices()
-  }, [])
-
-  const fetchInvoices = async () => {
+  const fetchInvoices = useCallback(async (params: {
+    query?: string
+    status?: string
+    paymentStatus?: string
+    page?: number
+    limit?: number
+  } = {}) => {
     try {
-      const supabase = createClient()
+      setLoading(true)
+      setError('')
 
-      const { data, error } = await supabase
-        .from('invoices')
-        .select(`
-          *,
-          clients:clientId (
-            companyName
-          )
-        `)
-        .eq('deletedAt', null)
-        .order('createdAt', { ascending: false })
+      // Build query string
+      const queryParams = new URLSearchParams()
+      if (params.query) queryParams.set('query', params.query)
+      if (params.status) queryParams.set('status', params.status)
+      if (params.paymentStatus) queryParams.set('paymentStatus', params.paymentStatus)
+      if (params.page) queryParams.set('page', params.page.toString())
+      if (params.limit) queryParams.set('limit', params.limit.toString())
+      queryParams.set('sortBy', 'createdAt')
+      queryParams.set('sortOrder', 'desc')
 
-      if (error) throw error
+      const response = await fetch(`/api/sales/invoices?${queryParams}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
 
-      const formattedInvoices = (data || []).map(invoice => ({
-        id: invoice.id,
-        invoiceNumber: invoice.invoiceNumber || `INV-${invoice.id.slice(0, 8)}`,
-        clientId: invoice.clientId,
-        clientName: invoice.clients?.companyName || 'Unknown Client',
-        amount: Number(invoice.totalAmount) || 0,
-        paidAmount: Number(invoice.paidAmount) || 0,
-        status: invoice.status || 'DRAFT',
-        dueDate: invoice.dueDate || new Date().toISOString(),
-        createdAt: invoice.createdAt,
-        updatedAt: invoice.updatedAt
-      }))
+      const result = await response.json()
 
-      setInvoices(formattedInvoices)
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Please log in to view invoices')
+        } else if (response.status === 403) {
+          throw new Error('You don\'t have permission to view invoices')
+        } else {
+          throw new Error(result.error || 'Failed to fetch invoices')
+        }
+      }
+
+      if (result.success) {
+        setInvoices(result.data || [])
+        setPagination(result.pagination)
+      } else {
+        throw new Error(result.error || 'Failed to fetch invoices')
+      }
     } catch (error) {
       console.error('Error fetching invoices:', error)
+      setError(error instanceof Error ? error.message : 'Failed to fetch invoices')
     } finally {
       setLoading(false)
     }
+  }, [])
+
+  // Initial load
+  useEffect(() => {
+    if (canRead) {
+      fetchInvoices()
+    }
+  }, [canRead, fetchInvoices])
+
+  // Debounced search
+  useEffect(() => {
+    if (!canRead) return
+
+    if (searchDebounce) {
+      clearTimeout(searchDebounce)
+    }
+
+    const timeout = setTimeout(() => {
+      fetchInvoices({
+        query: searchTerm || undefined,
+        status: filterStatus || undefined,
+        paymentStatus: filterPaymentStatus || undefined,
+        page: 1,
+        limit: pagination.limit
+      })
+    }, 300)
+
+    setSearchDebounce(timeout)
+
+    return () => {
+      if (timeout) clearTimeout(timeout)
+    }
+  }, [searchTerm, filterStatus, filterPaymentStatus, pagination.limit, fetchInvoices, canRead])
+
+  const handleRefresh = () => {
+    fetchInvoices({
+      query: searchTerm || undefined,
+      status: filterStatus || undefined,
+      paymentStatus: filterPaymentStatus || undefined,
+      page: pagination.page,
+      limit: pagination.limit
+    })
   }
 
   const getStatusBadge = (status: string) => {
@@ -100,7 +188,8 @@ export default function InvoicesPage() {
       SENT: { color: 'bg-blue-100 text-blue-700', icon: Send },
       PAID: { color: 'bg-green-100 text-green-700', icon: CheckCircle },
       OVERDUE: { color: 'bg-red-100 text-red-700', icon: AlertCircle },
-      CANCELLED: { color: 'bg-gray-100 text-gray-700', icon: XCircle }
+      CANCELLED: { color: 'bg-gray-100 text-gray-700', icon: XCircle },
+      REFUNDED: { color: 'bg-purple-100 text-purple-700', icon: XCircle }
     }
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.DRAFT
@@ -114,17 +203,10 @@ export default function InvoicesPage() {
     )
   }
 
-  const filteredInvoices = invoices.filter(invoice => {
-    const matchesSearch = invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         invoice.clientName.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = filterStatus === '' || invoice.status === filterStatus
-
-    return matchesSearch && matchesStatus
-  })
-
-  const totalAmount = invoices.reduce((sum, inv) => sum + inv.amount, 0)
+  const totalAmount = invoices.reduce((sum, inv) => sum + inv.totalAmount, 0)
   const paidAmount = invoices.reduce((sum, inv) => sum + inv.paidAmount, 0)
   const overdueInvoices = invoices.filter(inv => inv.status === 'OVERDUE').length
+  const outstandingAmount = totalAmount - paidAmount
 
   if (!canRead) {
     return (
@@ -166,14 +248,20 @@ export default function InvoicesPage() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 {canManage ? 'Full Access' : 'Read Only'}
               </Badge>
               {canManage && (
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Invoice
-                </Button>
+                <Link href="/sales/invoices/create">
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Invoice
+                  </Button>
+                </Link>
               )}
             </div>
           </div>
@@ -194,8 +282,8 @@ export default function InvoicesPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-900">{invoices.length}</div>
-                <p className="text-xs text-green-600">{filteredInvoices.length} filtered</p>
+                <div className="text-2xl font-bold text-green-900">{pagination.total.toLocaleString()}</div>
+                <p className="text-xs text-green-600">All time invoices</p>
               </CardContent>
             </Card>
 
@@ -203,12 +291,12 @@ export default function InvoicesPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-blue-800 flex items-center">
                   <DollarSign className="h-4 w-4 mr-2" />
-                  Total Amount
+                  Outstanding
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-900">${totalAmount.toLocaleString()}</div>
-                <p className="text-xs text-blue-600">Outstanding invoices</p>
+                <div className="text-2xl font-bold text-blue-900">${outstandingAmount.toLocaleString()}</div>
+                <p className="text-xs text-blue-600">Unpaid amount</p>
               </CardContent>
             </Card>
 
@@ -247,7 +335,7 @@ export default function InvoicesPage() {
                   <div className="relative">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
-                      placeholder="Search invoices..."
+                      placeholder="Search invoices by number, client name..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10"
@@ -259,7 +347,7 @@ export default function InvoicesPage() {
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">All Status</option>
                     <option value="DRAFT">Draft</option>
@@ -267,44 +355,91 @@ export default function InvoicesPage() {
                     <option value="PAID">Paid</option>
                     <option value="OVERDUE">Overdue</option>
                     <option value="CANCELLED">Cancelled</option>
+                    <option value="REFUNDED">Refunded</option>
                   </select>
 
-                  <Button variant="outline" size="sm">
-                    <Filter className="h-4 w-4 mr-2" />
-                    Filter
-                  </Button>
+                  <select
+                    value={filterPaymentStatus}
+                    onChange={(e) => setFilterPaymentStatus(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All Payments</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="PARTIAL">Partial</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="FAILED">Failed</option>
+                    <option value="REFUNDED">Refunded</option>
+                  </select>
                 </div>
               </div>
             </CardContent>
           </Card>
 
+          {/* Error Display */}
+          {error && (
+            <Card className="mb-6 border-red-200 bg-red-50">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2 text-red-800">
+                  <AlertCircle className="h-5 w-5" />
+                  <span className="font-medium">Error:</span>
+                  <span>{error}</span>
+                  <Button variant="outline" size="sm" onClick={handleRefresh} className="ml-auto">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Retry
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Invoices List */}
           <Card>
             <CardHeader>
-              <CardTitle>Invoices ({filteredInvoices.length})</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Invoices</CardTitle>
+                <div className="text-sm text-gray-500">
+                  {loading ? (
+                    <div className="flex items-center space-x-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Loading...</span>
+                    </div>
+                  ) : (
+                    <>
+                      Showing {((pagination.page - 1) * pagination.limit) + 1}-{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total.toLocaleString()}
+                    </>
+                  )}
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-pulse text-gray-500">Loading invoices...</div>
+                <div className="flex items-center justify-center py-12">
+                  <div className="flex items-center space-x-3 text-gray-500">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <span>Loading invoices...</span>
+                  </div>
                 </div>
-              ) : filteredInvoices.length === 0 ? (
+              ) : invoices.length === 0 ? (
                 <div className="text-center py-12">
                   <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No Invoices Found</h3>
                   <p className="text-gray-500 mb-4">
-                    {searchTerm || filterStatus ? 'No invoices match your search criteria.' : 'Create your first invoice to get started.'}
+                    {searchTerm || filterStatus || filterPaymentStatus
+                      ? 'No invoices match your search criteria.'
+                      : 'Create your first invoice to get started.'}
                   </p>
-                  {canManage && !searchTerm && !filterStatus && (
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create First Invoice
-                    </Button>
+                  {canManage && !searchTerm && !filterStatus && !filterPaymentStatus && (
+                    <Link href="/sales/invoices/create">
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create First Invoice
+                      </Button>
+                    </Link>
                   )}
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {filteredInvoices.map((invoice) => (
+                  {invoices.map((invoice) => (
                     <div key={invoice.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
@@ -312,12 +447,26 @@ export default function InvoicesPage() {
                             <h3 className="font-semibold text-gray-900">{invoice.invoiceNumber}</h3>
                             {getStatusBadge(invoice.status)}
                             <Badge variant="outline" className="text-xs">
-                              ${invoice.amount.toLocaleString()}
+                              ${invoice.totalAmount.toLocaleString()}
                             </Badge>
+                            {invoice.paymentStatus !== 'PENDING' && (
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${
+                                  invoice.paymentStatus === 'COMPLETED' ? 'bg-green-50 text-green-700' :
+                                  invoice.paymentStatus === 'PARTIAL' ? 'bg-yellow-50 text-yellow-700' :
+                                  invoice.paymentStatus === 'FAILED' ? 'bg-red-50 text-red-700' :
+                                  'bg-gray-50 text-gray-700'
+                                }`}
+                              >
+                                {invoice.paymentStatus}
+                              </Badge>
+                            )}
                           </div>
 
                           <div className="text-sm text-gray-600 mb-2">
-                            <span className="font-medium">{invoice.clientName}</span>
+                            <span className="font-medium">{invoice.client.companyName}</span>
+                            <span className="text-gray-500 ml-2">({invoice.client.contactPerson})</span>
                           </div>
 
                           <div className="flex items-center space-x-4 text-xs text-gray-500">
@@ -335,14 +484,20 @@ export default function InvoicesPage() {
                                 Paid: ${invoice.paidAmount.toLocaleString()}
                               </span>
                             )}
+                            <span className="flex items-center">
+                              <FileText className="h-3 w-3 mr-1" />
+                              Items: {invoice.items?.length || 0}
+                            </span>
                           </div>
                         </div>
 
                         <div className="flex items-center space-x-2 ml-4">
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
-                          </Button>
+                          <Link href={`/sales/invoices/${invoice.id}`}>
+                            <Button variant="outline" size="sm">
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </Button>
+                          </Link>
 
                           <Button variant="outline" size="sm">
                             <Download className="h-4 w-4 mr-1" />
@@ -351,15 +506,17 @@ export default function InvoicesPage() {
 
                           {canManage && (
                             <>
-                              <Button variant="outline" size="sm">
-                                <Edit className="h-4 w-4 mr-1" />
-                                Edit
-                              </Button>
-
-                              {invoice.status === 'DRAFT' && (
+                              <Link href={`/sales/invoices/${invoice.id}/edit`}>
                                 <Button variant="outline" size="sm">
-                                  <Send className="h-4 w-4 mr-1" />
-                                  Send
+                                  <Edit className="h-4 w-4 mr-1" />
+                                  Edit
+                                </Button>
+                              </Link>
+
+                              {(invoice.status === 'DRAFT' || invoice.status === 'SENT') && (
+                                <Button variant="outline" size="sm" className="text-red-600 hover:bg-red-50">
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  Delete
                                 </Button>
                               )}
                             </>

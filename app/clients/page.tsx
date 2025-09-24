@@ -33,23 +33,31 @@ import { useState, useEffect } from 'react'
 
 interface Client {
   id: string
+  clientCode: string
   companyName: string
   contactPerson: string
   email: string
   phone: string
+  mobile: string
   address: string
   city: string
+  state: string
   country: string
+  postalCode: string
+  taxNumber: string
+  creditLimit: number
+  paymentTerms: number
+  isActive: boolean
+  notes: string
+  createdAt: string
+  updatedAt: string
+  // UI-only fields (will be calculated from relationships in future)
   industry: string
   clientType: 'INDIVIDUAL' | 'CORPORATE' | 'GOVERNMENT' | 'NON_PROFIT'
-  isActive: boolean
-  creditLimit: number
   totalInvoiced: number
   totalPaid: number
   outstandingBalance: number
-  lastInvoiceDate?: string
-  createdAt: string
-  updatedAt: string
+  lastInvoiceDate?: string | null
 }
 
 export default function ClientsPage() {
@@ -57,9 +65,11 @@ export default function ClientsPage() {
   const { hasModuleAccess, hasFullAccess } = usePermissions()
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string>('')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<string>('')
   const [filterStatus, setFilterStatus] = useState<string>('')
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
 
   const canCreate = hasFullAccess('clients')
   const canRead = hasModuleAccess('clients')
@@ -68,9 +78,39 @@ export default function ClientsPage() {
     fetchClients()
   }, [])
 
-  const fetchClients = async () => {
+  // Handle search with debouncing
+  useEffect(() => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout)
+    }
+
+    const timeout = setTimeout(() => {
+      fetchClients({
+        query: searchTerm || undefined,
+        status: filterStatus || undefined
+      })
+    }, 300)
+
+    setSearchTimeout(timeout)
+
+    return () => {
+      if (timeout) clearTimeout(timeout)
+    }
+  }, [searchTerm, filterStatus])
+
+  const fetchClients = async (params: { query?: string; status?: string } = {}) => {
     try {
-      const response = await fetch('/api/clients', {
+      setLoading(true)
+      setError('')
+
+      // Build query parameters
+      const searchParams = new URLSearchParams()
+      if (params.query) searchParams.append('query', params.query)
+      if (params.status) searchParams.append('status', params.status)
+
+      const url = `/api/clients${searchParams.toString() ? '?' + searchParams.toString() : ''}`
+
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -78,7 +118,13 @@ export default function ClientsPage() {
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        if (response.status === 401) {
+          throw new Error('Please log in to view clients')
+        } else if (response.status === 403) {
+          throw new Error('You don\'t have permission to view clients')
+        } else {
+          throw new Error(`Failed to fetch clients (${response.status})`)
+        }
       }
 
       const result = await response.json()
@@ -89,29 +135,37 @@ export default function ClientsPage() {
 
       const formattedClients = (result.data || []).map((client: any) => ({
         id: client.id,
+        clientCode: client.clientCode || '',
         companyName: client.companyName || '',
         contactPerson: client.contactPerson || '',
         email: client.email || '',
         phone: client.phone || '',
+        mobile: client.mobile || '',
         address: client.address || '',
         city: client.city || '',
+        state: client.state || '',
         country: client.country || '',
-        industry: client.industry || '',
-        clientType: client.clientType || 'CORPORATE',
-        isActive: client.isActive !== false,
+        postalCode: client.postalCode || '',
+        taxNumber: client.taxNumber || '',
         creditLimit: Number(client.creditLimit) || 0,
-        totalInvoiced: Number(client.totalInvoiced) || 0,
-        totalPaid: Number(client.totalPaid) || 0,
-        outstandingBalance: Number(client.outstandingBalance) || 0,
-        lastInvoiceDate: client.lastInvoiceDate,
+        paymentTerms: Number(client.paymentTerms) || 0,
+        isActive: client.isActive !== false,
+        notes: client.notes || '',
         createdAt: client.createdAt,
-        updatedAt: client.updatedAt
+        updatedAt: client.updatedAt,
+        // Derived fields for UI display
+        industry: 'General', // Default since we don't have this field yet
+        clientType: 'CORPORATE', // Default since we don't have this field yet
+        totalInvoiced: 0, // Will be calculated from invoices in future
+        totalPaid: 0, // Will be calculated from payments in future
+        outstandingBalance: 0, // Will be calculated in future
+        lastInvoiceDate: null // Will come from invoice relationships in future
       }))
 
       setClients(formattedClients)
     } catch (error) {
       console.error('Error fetching clients:', error)
-      // Show user-friendly error message
+      setError(error instanceof Error ? error.message : 'Failed to fetch clients')
       setClients([])
     } finally {
       setLoading(false)
@@ -148,18 +202,10 @@ export default function ClientsPage() {
     )
   }
 
+  // Filter by client type (front-end only since API doesn't support this yet)
   const filteredClients = clients.filter(client => {
-    const matchesSearch = client.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         client.contactPerson.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         client.industry.toLowerCase().includes(searchTerm.toLowerCase())
-
     const matchesType = filterType === '' || client.clientType === filterType
-    const matchesStatus = filterStatus === '' ||
-                         (filterStatus === 'active' && client.isActive) ||
-                         (filterStatus === 'inactive' && !client.isActive)
-
-    return matchesSearch && matchesType && matchesStatus
+    return matchesType
   })
 
   const totalClients = clients.length
@@ -327,7 +373,14 @@ export default function ClientsPage() {
                     <option value="inactive">Inactive</option>
                   </select>
 
-                  <Button variant="outline" size="sm">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchClients({
+                      query: searchTerm || undefined,
+                      status: filterStatus || undefined
+                    })}
+                  >
                     <Filter className="h-4 w-4 mr-2" />
                     Filter
                   </Button>
@@ -342,9 +395,38 @@ export default function ClientsPage() {
               <CardTitle>Clients ({filteredClients.length})</CardTitle>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-pulse text-gray-500">Loading clients...</div>
+              {error ? (
+                <div className="text-center py-12">
+                  <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <Users className="h-6 w-6 text-red-600" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Clients</h3>
+                  <p className="text-red-600 mb-4">{error}</p>
+                  <Button onClick={() => fetchClients()} variant="outline">
+                    Try Again
+                  </Button>
+                </div>
+              ) : loading ? (
+                <div className="space-y-4">
+                  {/* Loading skeleton */}
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="border border-gray-200 rounded-lg p-4">
+                      <div className="animate-pulse">
+                        <div className="flex items-center space-x-3 mb-3">
+                          <div className="h-6 bg-gray-200 rounded w-48"></div>
+                          <div className="h-5 bg-gray-200 rounded w-16"></div>
+                          <div className="h-5 bg-gray-200 rounded w-20"></div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                          <div className="h-4 bg-gray-200 rounded w-32"></div>
+                          <div className="h-4 bg-gray-200 rounded w-40"></div>
+                          <div className="h-4 bg-gray-200 rounded w-28"></div>
+                        </div>
+                        <div className="h-4 bg-gray-200 rounded w-64 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-96"></div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : filteredClients.length === 0 ? (
                 <div className="text-center py-12">
@@ -353,7 +435,16 @@ export default function ClientsPage() {
                   <p className="text-gray-500 mb-4">
                     {searchTerm || filterType || filterStatus ? 'No clients match your search criteria.' : 'Get started by adding your first client.'}
                   </p>
-                  {canCreate && !searchTerm && !filterType && !filterStatus && (
+                  {searchTerm || filterType || filterStatus ? (
+                    <Button onClick={() => {
+                      setSearchTerm('')
+                      setFilterType('')
+                      setFilterStatus('')
+                      fetchClients()
+                    }} variant="outline">
+                      Clear Filters
+                    </Button>
+                  ) : canCreate && (
                     <Link href="/clients/create">
                       <Button>
                         <Plus className="h-4 w-4 mr-2" />

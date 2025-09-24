@@ -1,179 +1,359 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+/**
+ * Sales Invoices API Routes - Main Collection Endpoints
+ *
+ * This file implements the core CRUD operations for the Sales/Invoices module.
+ * It provides GET (list) and POST (create) endpoints for invoice management.
+ *
+ * Security:
+ * - All endpoints require authentication
+ * - Role-based access control enforced
+ * - Input validation via Zod schemas
+ * - Comprehensive error handling
+ *
+ * Endpoints:
+ * - GET /api/sales/invoices - List invoices with search/pagination/filtering
+ * - POST /api/sales/invoices - Create new invoice with line items
+ *
+ * @author BlackGoldUnited ERP Team
+ * @version 2.0
+ * @since Week 4 - Sales Module Foundation
+ */
 
-// GET /api/sales/invoices - Get all invoices
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { z } from 'zod';
+import { authenticateAndAuthorize } from '@/lib/auth/api-auth';
+
+/**
+ * Invoice item validation schema for line items
+ */
+const invoiceItemSchema = z.object({
+  productId: z.string().uuid().optional(),
+  description: z.string().min(1, 'Description is required'),
+  quantity: z.number().positive('Quantity must be positive'),
+  unitPrice: z.number().min(0, 'Unit price must be non-negative'),
+  taxRate: z.number().min(0).max(100).optional().default(0),
+});
+
+/**
+ * Invoice validation schema for creating new invoices
+ * Matches the Supabase database schema exactly
+ */
+const invoiceSchema = z.object({
+  clientId: z.string().uuid('Invalid client ID'),
+  issueDate: z.string().datetime().optional(),
+  dueDate: z.string().datetime('Due date is required'),
+  status: z.enum(['DRAFT', 'SENT', 'PAID', 'OVERDUE', 'CANCELLED', 'REFUNDED']).optional().default('DRAFT'),
+  paymentStatus: z.enum(['PENDING', 'PARTIAL', 'COMPLETED', 'FAILED', 'REFUNDED']).optional().default('PENDING'),
+  subtotal: z.number().min(0).optional(),
+  taxAmount: z.number().min(0).optional(),
+  discountAmount: z.number().min(0).optional().default(0),
+  totalAmount: z.number().min(0).optional(),
+  paidAmount: z.number().min(0).optional().default(0),
+  notes: z.string().optional(),
+  terms: z.string().optional(),
+  isRecurring: z.boolean().optional().default(false),
+  recurringPeriod: z.number().optional(),
+  nextRecurringDate: z.string().datetime().optional(),
+  items: z.array(invoiceItemSchema).min(1, 'At least one invoice item is required'),
+});
+
+/**
+ * Partial schema for invoice updates (all fields optional)
+ */
+const invoiceUpdateSchema = invoiceSchema.partial().extend({
+  items: z.array(invoiceItemSchema).optional(),
+});
+
+/**
+ * Search and pagination parameters schema
+ * Supports filtering, sorting, and pagination for invoice listings
+ */
+const searchSchema = z.object({
+  query: z.string().optional(),
+  status: z.string().optional(),
+  paymentStatus: z.string().optional(),
+  clientId: z.string().uuid().optional(),
+  dateFrom: z.string().datetime().optional(),
+  dateTo: z.string().datetime().optional(),
+  page: z.string().transform(Number).optional().default('1'),
+  limit: z.string().transform(Number).optional().default('10'),
+  sortBy: z.string().optional().default('createdAt'),
+  sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
+});
+
+/**
+ * GET /api/sales/invoices
+ *
+ * List all invoices with search, filtering, sorting, and pagination support.
+ * Implements role-based access control - different roles have different access levels.
+ *
+ * Query Parameters:
+ * - query: Search term (searches invoice number, notes, client name)
+ * - status: Filter by invoice status (DRAFT, SENT, PAID, etc.)
+ * - paymentStatus: Filter by payment status (PENDING, PARTIAL, COMPLETED, etc.)
+ * - clientId: Filter by specific client
+ * - dateFrom/dateTo: Filter by date range
+ * - page: Page number for pagination (default: 1)
+ * - limit: Items per page (default: 10)
+ * - sortBy: Field to sort by (default: createdAt)
+ * - sortOrder: Sort direction asc/desc (default: desc)
+ *
+ * Access Control:
+ * - MANAGEMENT: Full access ✅
+ * - PROCUREMENT_BD: Full access ✅
+ * - FINANCE_TEAM: Read-only access ✅
+ * - ADMIN_HR: Read-only access ✅
+ * - IMS_QHSE: No access ❌ (403 Forbidden)
+ *
+ * @returns JSON response with invoices array and pagination metadata
+ */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Authenticate and authorize
+    const authResult = await authenticateAndAuthorize(request, 'sales', 'GET');
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
-    // Extract query parameters
-    const { searchParams } = new URL(request.url)
-    const search = searchParams.get('search')
-    const status = searchParams.get('status')
-    const clientId = searchParams.get('clientId')
-    const limit = parseInt(searchParams.get('limit') || '10')
-    const offset = parseInt(searchParams.get('offset') || '0')
+    const supabase = await createClient();
 
-    // Build query with client information
+    // Parse query parameters
+    const { searchParams } = new URL(request.url);
+    const validatedParams = searchSchema.parse(Object.fromEntries(searchParams.entries()));
+
     let query = supabase
       .from('invoices')
       .select(`
         *,
         client:clients!inner(id, companyName, contactPerson, email),
-        createdBy:users!inner(firstName, lastName, email)
-      `)
-      .eq('deletedAt', null)
-      .order('createdAt', { ascending: false })
+        items:invoice_items(*)
+      `, { count: 'exact' })
+      .is('deletedAt', null);
 
-    // Add filters
-    if (search) {
-      query = query.or(`invoiceNumber.ilike.%${search}%,notes.ilike.%${search}%`)
+    // Apply search filter
+    if (validatedParams.query) {
+      query = query.or(`invoiceNumber.ilike.%${validatedParams.query}%,notes.ilike.%${validatedParams.query}%`);
     }
 
-    if (status) {
-      query = query.eq('status', status)
+    // Apply status filters
+    if (validatedParams.status) {
+      query = query.eq('status', validatedParams.status);
     }
 
-    if (clientId) {
-      query = query.eq('clientId', clientId)
+    if (validatedParams.paymentStatus) {
+      query = query.eq('paymentStatus', validatedParams.paymentStatus);
     }
 
-    // Add pagination
-    query = query.range(offset, offset + limit - 1)
+    if (validatedParams.clientId) {
+      query = query.eq('clientId', validatedParams.clientId);
+    }
 
-    const { data: invoices, error, count } = await query
+    // Apply date range filters
+    if (validatedParams.dateFrom) {
+      query = query.gte('issueDate', validatedParams.dateFrom);
+    }
+    if (validatedParams.dateTo) {
+      query = query.lte('issueDate', validatedParams.dateTo);
+    }
+
+    // Apply sorting
+    query = query.order(validatedParams.sortBy, { ascending: validatedParams.sortOrder === 'asc' });
+
+    // Apply pagination
+    const from = (validatedParams.page - 1) * validatedParams.limit;
+    const to = from + validatedParams.limit - 1;
+    query = query.range(from, to);
+
+    const { data: invoices, error, count } = await query;
 
     if (error) {
-      console.error('Database error:', error)
-      return NextResponse.json({ error: 'Failed to fetch invoices' }, { status: 500 })
+      console.error('Database error:', error);
+      return NextResponse.json({ error: 'Failed to fetch invoices' }, { status: 500 });
     }
 
     return NextResponse.json({
-      invoices,
+      success: true,
+      data: invoices || [],
       pagination: {
-        limit,
-        offset,
-        total: count || 0
+        page: validatedParams.page,
+        limit: validatedParams.limit,
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / validatedParams.limit)
       }
-    })
+    });
 
   } catch (error) {
-    console.error('API error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('API error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// POST /api/sales/invoices - Create new invoice
+/**
+ * Generates the next invoice number in sequence
+ * Format: INV-YYYYMMDD-NNNN (e.g., INV-20250924-0001)
+ */
+async function generateInvoiceNumber(supabase: any): Promise<string> {
+  const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const prefix = `INV-${today}`;
+
+  // Get the highest number for today
+  const { data: lastInvoice } = await supabase
+    .from('invoices')
+    .select('invoiceNumber')
+    .like('invoiceNumber', `${prefix}%`)
+    .order('invoiceNumber', { ascending: false })
+    .limit(1)
+    .single();
+
+  let nextNumber = 1;
+  if (lastInvoice?.invoiceNumber) {
+    const lastNumStr = lastInvoice.invoiceNumber.split('-').pop();
+    nextNumber = (parseInt(lastNumStr) || 0) + 1;
+  }
+
+  return `${prefix}-${String(nextNumber).padStart(4, '0')}`;
+}
+
+/**
+ * POST /api/sales/invoices
+ *
+ * Create a new invoice with line items and comprehensive validation.
+ * Only users with create permissions can access this endpoint.
+ *
+ * Required Fields:
+ * - clientId: UUID of the client
+ * - dueDate: Due date for the invoice
+ * - items: Array of invoice line items (at least one required)
+ *
+ * Access Control:
+ * - MANAGEMENT: Create allowed ✅
+ * - PROCUREMENT_BD: Create allowed ✅
+ * - FINANCE_TEAM: Create denied ❌ (403 Forbidden)
+ * - ADMIN_HR: Create denied ❌ (403 Forbidden)
+ * - IMS_QHSE: No access ❌ (403 Forbidden)
+ *
+ * @returns JSON response with created invoice data or validation errors
+ */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Authenticate and authorize
+    const authResult = await authenticateAndAuthorize(request, 'sales', 'POST');
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
-    const body = await request.json()
+    const supabase = await createClient();
 
-    // Validate required fields
-    const { clientId, dueDate, items } = body
-    if (!clientId || !dueDate || !items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({
-        error: 'Client ID, due date, and at least one item are required'
-      }, { status: 400 })
-    }
+    // Parse and validate request body
+    const body = await request.json();
+    const validatedData = invoiceSchema.parse(body);
 
-    // Generate invoice number if not provided
-    if (!body.invoiceNumber) {
-      const { data: lastInvoice } = await supabase
-        .from('invoices')
-        .select('invoiceNumber')
-        .order('createdAt', { ascending: false })
-        .limit(1)
-        .single()
+    // Generate invoice number
+    const invoiceNumber = await generateInvoiceNumber(supabase);
 
-      const lastNumber = lastInvoice?.invoiceNumber ?
-        parseInt(lastInvoice.invoiceNumber.replace('INV-', '')) || 0 : 0
-      body.invoiceNumber = `INV-${String(lastNumber + 1).padStart(6, '0')}`
-    }
+    // Calculate totals from items
+    const subtotal = validatedData.items.reduce((sum, item) => {
+      return sum + (item.quantity * item.unitPrice);
+    }, 0);
 
-    // Calculate totals
-    const subtotal = items.reduce((sum: number, item: any) => sum + (item.quantity * item.unitPrice), 0)
-    const taxAmount = items.reduce((sum: number, item: any) => {
-      const itemTotal = item.quantity * item.unitPrice
-      const itemTax = itemTotal * (item.taxRate || 0) / 100
-      return sum + itemTax
-    }, 0)
-    const totalAmount = subtotal + taxAmount - (body.discountAmount || 0)
+    const taxAmount = validatedData.items.reduce((sum, item) => {
+      const itemTotal = item.quantity * item.unitPrice;
+      const itemTax = itemTotal * (item.taxRate / 100);
+      return sum + itemTax;
+    }, 0);
 
-    // Start transaction
-    const { data: invoice, error: invoiceError } = await supabase
+    const totalAmount = subtotal + taxAmount - validatedData.discountAmount;
+
+    // Get user ID for audit trail
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Insert new invoice
+    const { data: newInvoice, error: invoiceError } = await supabase
       .from('invoices')
-      .insert({
-        ...body,
+      .insert([{
+        invoiceNumber,
+        clientId: validatedData.clientId,
+        issueDate: validatedData.issueDate || new Date().toISOString(),
+        dueDate: validatedData.dueDate,
+        status: validatedData.status,
+        paymentStatus: validatedData.paymentStatus,
         subtotal,
         taxAmount,
+        discountAmount: validatedData.discountAmount,
         totalAmount,
-        createdById: user.id,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      })
+        paidAmount: validatedData.paidAmount,
+        notes: validatedData.notes,
+        terms: validatedData.terms,
+        isRecurring: validatedData.isRecurring,
+        recurringPeriod: validatedData.recurringPeriod,
+        nextRecurringDate: validatedData.nextRecurringDate,
+        createdById: user?.id,
+      }])
       .select()
-      .single()
+      .single();
 
     if (invoiceError) {
-      console.error('Invoice creation error:', invoiceError)
-      if (invoiceError.code === '23505') {
-        return NextResponse.json({ error: 'Invoice number already exists' }, { status: 409 })
+      console.error('Database error:', invoiceError);
+      if (invoiceError.code === '23505') { // Unique violation
+        return NextResponse.json({ error: 'An invoice with this number already exists' }, { status: 409 });
       }
-      return NextResponse.json({ error: 'Failed to create invoice' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to create invoice' }, { status: 500 });
     }
 
     // Insert invoice items
-    const invoiceItems = items.map((item: any) => ({
-      invoiceId: invoice.id,
+    const invoiceItems = validatedData.items.map(item => ({
+      invoiceId: newInvoice.id,
       productId: item.productId,
       description: item.description,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
       lineTotal: item.quantity * item.unitPrice,
-      taxRate: item.taxRate || 0
-    }))
+      taxRate: item.taxRate,
+    }));
 
     const { error: itemsError } = await supabase
       .from('invoice_items')
-      .insert(invoiceItems)
+      .insert(invoiceItems);
 
     if (itemsError) {
       // Rollback invoice creation
-      await supabase.from('invoices').delete().eq('id', invoice.id)
-      console.error('Invoice items creation error:', itemsError)
-      return NextResponse.json({ error: 'Failed to create invoice items' }, { status: 500 })
+      await supabase.from('invoices').delete().eq('id', newInvoice.id);
+      console.error('Database error:', itemsError);
+      return NextResponse.json({ error: 'Failed to create invoice items' }, { status: 500 });
     }
 
-    // Fetch the complete invoice with items
-    const { data: completeInvoice } = await supabase
+    // Fetch the complete invoice with client and items
+    const { data: completeInvoice, error: fetchError } = await supabase
       .from('invoices')
       .select(`
         *,
         client:clients!inner(id, companyName, contactPerson, email),
-        items:invoice_items(*),
-        createdBy:users!inner(firstName, lastName, email)
+        items:invoice_items(*)
       `)
-      .eq('id', invoice.id)
-      .single()
+      .eq('id', newInvoice.id)
+      .single();
 
-    return NextResponse.json({ invoice: completeInvoice }, { status: 201 })
+    if (fetchError) {
+      console.error('Database error:', fetchError);
+      return NextResponse.json({ error: 'Failed to fetch created invoice' }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: completeInvoice,
+      message: 'Invoice created successfully'
+    }, { status: 201 });
 
   } catch (error) {
-    console.error('API error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({
+        error: 'Validation failed',
+        details: error.errors
+      }, { status: 400 });
+    }
+
+    console.error('API error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

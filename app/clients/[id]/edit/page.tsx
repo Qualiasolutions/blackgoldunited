@@ -16,47 +16,141 @@ import {
   Phone,
   MapPin,
   CreditCard,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
 
-export default function CreateClientPage() {
+interface ClientEditData {
+  clientCode: string
+  companyName: string
+  contactPerson: string
+  email: string
+  phone: string
+  mobile: string
+  address: string
+  city: string
+  state: string
+  postalCode: string
+  country: string
+  taxNumber: string
+  creditLimit: number
+  paymentTerms: number
+  notes: string
+  isActive: boolean
+}
+
+export default function EditClientPage() {
   const { user } = useAuth()
   const { hasFullAccess } = usePermissions()
   const router = useRouter()
-  const [saving, setSaving] = useState(false)
+  const params = useParams()
+  const clientId = params.id as string
 
-  // Form state - aligned with API schema
-  const [formData, setFormData] = useState({
-    clientCode: '', // New required field
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string>('')
+
+  // Form state
+  const [formData, setFormData] = useState<ClientEditData>({
+    clientCode: '',
     companyName: '',
     contactPerson: '',
     email: '',
     phone: '',
-    mobile: '', // API field
+    mobile: '',
     address: '',
     city: '',
     state: '',
     postalCode: '',
     country: '',
-    taxNumber: '', // API uses taxNumber instead of taxId
+    taxNumber: '',
     creditLimit: 0,
-    paymentTerms: 30, // API expects number (days)
+    paymentTerms: 30,
     notes: '',
     isActive: true
   })
 
   const [errors, setErrors] = useState<{[key: string]: string}>({})
+  const canEdit = hasFullAccess('clients')
 
-  const canCreate = hasFullAccess('clients')
+  useEffect(() => {
+    if (clientId) {
+      fetchClient()
+    }
+  }, [clientId])
+
+  const fetchClient = async () => {
+    try {
+      setLoading(true)
+      setError('')
+
+      const response = await fetch(`/api/clients/${clientId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Please log in to view client details')
+        } else if (response.status === 403) {
+          throw new Error('You don\'t have permission to view this client')
+        } else if (response.status === 404) {
+          throw new Error('Client not found')
+        } else {
+          throw new Error(`Failed to fetch client details (${response.status})`)
+        }
+      }
+
+      const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch client details')
+      }
+
+      const client = result.data
+      setFormData({
+        clientCode: client.clientCode || '',
+        companyName: client.companyName || '',
+        contactPerson: client.contactPerson || '',
+        email: client.email || '',
+        phone: client.phone || '',
+        mobile: client.mobile || '',
+        address: client.address || '',
+        city: client.city || '',
+        state: client.state || '',
+        postalCode: client.postalCode || '',
+        country: client.country || '',
+        taxNumber: client.taxNumber || '',
+        creditLimit: Number(client.creditLimit) || 0,
+        paymentTerms: Number(client.paymentTerms) || 30,
+        notes: client.notes || '',
+        isActive: client.isActive !== false
+      })
+    } catch (error) {
+      console.error('Error fetching client:', error)
+      setError(error instanceof Error ? error.message : 'Failed to fetch client')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }))
+    // Clear error for this field when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }))
+    }
   }
 
   const validateForm = () => {
@@ -85,7 +179,7 @@ export default function CreateClientPage() {
   }
 
   const saveClient = async () => {
-    if (!canCreate) return
+    if (!canEdit) return
 
     // Validate form first
     if (!validateForm()) {
@@ -115,8 +209,8 @@ export default function CreateClientPage() {
       }
 
       // Call API endpoint
-      const response = await fetch('/api/clients', {
-        method: 'POST',
+      const response = await fetch(`/api/clients/${clientId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -126,9 +220,11 @@ export default function CreateClientPage() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
         if (response.status === 401) {
-          throw new Error('Please log in to create clients')
+          throw new Error('Please log in to update clients')
         } else if (response.status === 403) {
-          throw new Error('You don\'t have permission to create clients')
+          throw new Error('You don\'t have permission to update clients')
+        } else if (response.status === 404) {
+          throw new Error('Client not found')
         } else if (response.status === 400) {
           // Validation errors
           if (errorData.details) {
@@ -146,38 +242,74 @@ export default function CreateClientPage() {
         } else if (response.status === 409) {
           throw new Error('A client with this email already exists')
         } else {
-          throw new Error(errorData.error || 'Failed to create client')
+          throw new Error(errorData.error || 'Failed to update client')
         }
       }
 
       const result = await response.json()
 
       if (!result.success) {
-        throw new Error(result.error || 'Failed to create client')
+        throw new Error(result.error || 'Failed to update client')
       }
 
-      // Success - redirect to clients list
-      router.push('/clients?created=true')
+      // Success - redirect to clients list or client detail page
+      router.push('/clients?updated=true')
 
     } catch (error) {
-      console.error('Error creating client:', error)
-      alert(error instanceof Error ? error.message : 'Error creating client. Please try again.')
+      console.error('Error updating client:', error)
+      alert(error instanceof Error ? error.message : 'Error updating client. Please try again.')
     } finally {
       setSaving(false)
     }
   }
 
-  if (!canCreate) {
+  if (!canEdit) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="p-6 text-center">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <h1 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h1>
-            <p className="text-gray-600">You don't have permission to create clients.</p>
+            <p className="text-gray-600">You don't have permission to edit clients.</p>
             <Link href="/clients" className="mt-4 inline-block">
               <Button variant="outline">← Back to Clients</Button>
             </Link>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center">
+            <Loader2 className="h-12 w-12 text-blue-500 mx-auto mb-4 animate-spin" />
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">Loading Client</h1>
+            <p className="text-gray-600">Please wait while we fetch the client details...</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Client</h1>
+            <p className="text-red-600 mb-4">{error}</p>
+            <div className="space-x-2">
+              <Button onClick={fetchClient} variant="outline">
+                Try Again
+              </Button>
+              <Link href="/clients">
+                <Button variant="outline">← Back to Clients</Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -202,8 +334,8 @@ export default function CreateClientPage() {
                 <Users className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Create Client</h1>
-                <p className="text-sm text-gray-600">Add a new client to your system</p>
+                <h1 className="text-2xl font-bold text-gray-900">Edit Client</h1>
+                <p className="text-sm text-gray-600">Update client information</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -212,7 +344,7 @@ export default function CreateClientPage() {
                 disabled={saving || !formData.companyName || !formData.clientCode || !formData.email}
               >
                 <Save className="h-4 w-4 mr-2" />
-                {saving ? 'Creating...' : 'Create Client'}
+                {saving ? 'Saving...' : 'Update Client'}
               </Button>
             </div>
           </div>
@@ -524,7 +656,7 @@ export default function CreateClientPage() {
                     <p>• Set appropriate <strong>Credit Limit</strong> to manage risk</p>
                     <p>• <strong>Payment Terms</strong> in days (30 = Net 30)</p>
                     <p>• <strong>Tax Number</strong> is important for compliance</p>
-                    <p>• All fields can be updated after creation</p>
+                    <p>• Changes are saved immediately when you click Update</p>
                   </div>
                 </CardContent>
               </Card>

@@ -118,7 +118,7 @@ components/
 - `/lib/utils.ts`: Utility functions for formatting and helpers
 
 ## Integration Points
-- Ready for Prisma database integration
+- Ready for Supabase database integration
 - NextAuth.js authentication system compatible
 - API route structure prepared
 - Form validation with react-hook-form + Zod
@@ -133,7 +133,7 @@ components/
 ## Next Steps for Integration
 1. Connect components to actual API endpoints
 2. Implement real authentication with NextAuth.js
-3. Add data persistence with Prisma
+3. Add data persistence with Supabase
 4. Implement real-time notifications
 5. Add comprehensive error boundaries
 6. Performance optimization with React.memo and useMemo

@@ -12,7 +12,7 @@
     "test": "echo \"No tests specified yet\" && exit 0",
     "test:watch": "echo \"No tests specified yet\" && exit 0",
     "test:e2e": "echo \"No E2E tests specified yet\" && exit 0",
-    "db:backup": "pg_dump $DATABASE_URL > backup_$(date +%Y%m%d_%H%M%S).sql"
+    "db:backup": "echo 'Use Supabase Dashboard for database backup'"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

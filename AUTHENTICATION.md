@@ -6,14 +6,14 @@ This document describes the comprehensive authentication and authorization syste
 
 The authentication system provides secure, role-based access control with the following features:
 
-- **NextAuth.js Integration**: Secure session management and authentication
+- **Supabase Auth Integration**: Secure session management and authentication
 - **Role-Based Access Control (RBAC)**: 5 distinct user roles with granular permissions
-- **JWT Token Management**: Secure token-based authentication
+- **JWT Token Management**: Secure token-based authentication via Supabase Auth
 - **Password Security**: Strong password policies and secure hashing
 - **Password Reset**: Email-based password reset functionality
 - **Audit Logging**: Comprehensive authentication event tracking
 - **Route Protection**: Middleware-based route protection
-- **Session Management**: Secure session handling with proper timeouts
+- **Session Management**: Server-side rendering with proper session handling
 
 ## User Roles and Permissions
 
@@ -48,45 +48,42 @@ The authentication system provides secure, role-based access control with the fo
 
 ```
 lib/
-├── auth/
-│   ├── config.ts           # NextAuth.js configuration
-│   ├── audit.ts            # Authentication audit logging
-│   ├── email.ts            # Email utilities for auth
-│   └── validation.ts       # Input validation schemas
+├── supabase/
+│   ├── client.ts           # Supabase client for browser
+│   └── server.ts           # Supabase client for server-side
 ├── hooks/
 │   └── useAuth.ts          # Authentication hooks
 ├── types/
 │   └── auth.ts             # TypeScript type definitions
-└── prisma.ts               # Prisma client configuration
+└── config/
+    └── navigation.ts       # Role-based navigation config
 
 app/
 ├── auth/
 │   ├── login/page.tsx      # Login page
 │   ├── signup/page.tsx     # Signup page
-│   ├── forgot-password/page.tsx # Password reset request
-│   └── reset-password/page.tsx  # Password reset confirmation
-├── api/auth/
-│   ├── [...nextauth]/route.ts   # NextAuth.js API route
-│   ├── signup/route.ts          # User registration API
-│   ├── reset-password/route.ts  # Password reset request API
-│   ├── reset-password/confirm/route.ts # Password reset confirmation API
-│   └── change-password/route.ts # Password change API
-└── dashboard/page.tsx      # Protected dashboard
-
+│   └── forgot-password/page.tsx # Password reset page
 components/
-└── providers/
-    └── AuthProvider.tsx    # Session provider wrapper
+├── providers/
+│   └── AuthProvider.tsx   # Auth context provider
+├── auth/
+│   ├── protected-route.tsx # Route protection component
+│   └── role-guard.tsx      # Component-level role checking
+└── layout/
+    ├── main-layout.tsx     # Main layout with auth
+    ├── sidebar.tsx         # Role-based navigation
+    └── header.tsx          # User menu and auth state
 
 middleware.ts               # Route protection middleware
 ```
 
 ### Key Features
 
-#### 1. NextAuth.js Configuration
-- **Provider**: Custom credentials provider with database integration
-- **Session Strategy**: JWT-based sessions for stateless authentication
-- **Database Integration**: Prisma adapter for user data management
-- **Security**: Secure password hashing using bcryptjs
+#### 1. Supabase Auth Configuration
+- **Provider**: Supabase Auth with email/password authentication
+- **Session Strategy**: Server-side sessions with automatic refresh
+- **Database Integration**: Direct Supabase database integration
+- **Security**: Built-in password hashing and security features
 
 #### 2. Role-Based Access Control
 - **Access Matrix**: Predefined permission matrix for each user role
@@ -118,45 +115,54 @@ middleware.ts               # Route protection middleware
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/auth/[...nextauth]` | GET/POST | NextAuth.js authentication handlers |
-| `/api/auth/signup` | POST | User registration |
-| `/api/auth/reset-password` | POST | Password reset request |
-| `/api/auth/reset-password/confirm` | POST | Password reset confirmation |
-| `/api/auth/change-password` | POST | Change password for authenticated users |
+| Supabase Auth APIs | - | Handled by Supabase Auth service |
+| Login/Logout | - | Via Supabase client methods |
+| User Registration | - | Via Supabase auth.signUp() |
+| Password Reset | - | Via Supabase auth.resetPasswordForEmail() |
+| Session Management | - | Automatic via Supabase Auth |
 
 ### Request/Response Examples
 
 #### Login Request
 ```javascript
-// Handled by NextAuth.js - use signIn function
-import { signIn } from 'next-auth/react'
+// Using Supabase Auth
+import { createClient } from '@/lib/supabase/client'
 
-await signIn('credentials', {
+const supabase = createClient()
+const { data, error } = await supabase.auth.signInWithPassword({
   email: 'user@example.com',
-  password: 'password123',
-  redirect: false
+  password: 'password123'
 })
 ```
 
 #### Signup Request
 ```javascript
-POST /api/auth/signup
-{
-  "firstName": "John",
-  "lastName": "Doe",
-  "email": "john.doe@company.com",
-  "password": "SecurePass123!",
-  "confirmPassword": "SecurePass123!",
-  "role": "PROCUREMENT_BD"
-}
+// Using Supabase Auth
+import { createClient } from '@/lib/supabase/client'
+
+const supabase = createClient()
+const { data, error } = await supabase.auth.signUp({
+  email: 'john.doe@company.com',
+  password: 'SecurePass123!',
+  options: {
+    data: {
+      firstName: 'John',
+      lastName: 'Doe',
+      role: 'PROCUREMENT_BD'
+    }
+  }
+})
 ```
 
 #### Password Reset Request
 ```javascript
-POST /api/auth/reset-password
-{
-  "email": "user@example.com"
-}
+// Using Supabase Auth
+import { createClient } from '@/lib/supabase/client'
+
+const supabase = createClient()
+const { error } = await supabase.auth.resetPasswordForEmail(
+  'user@example.com'
+)
 ```
 
 ## Environment Configuration
@@ -164,19 +170,9 @@ POST /api/auth/reset-password
 Required environment variables:
 
 ```env
-# Authentication
-NEXTAUTH_SECRET=your-secure-secret-key
-NEXTAUTH_URL=http://localhost:3000
-
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/database
-
-# Email (for password reset)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your-email@gmail.com
-SMTP_PASSWORD=your-app-password
-FROM_EMAIL=noreply@blackgoldunited.com
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 ## Usage Examples
@@ -188,17 +184,16 @@ FROM_EMAIL=noreply@blackgoldunited.com
 import { useAuth } from '@/lib/hooks/useAuth'
 
 export default function LoginForm() {
-  const { login, isLoading, error } = useAuth()
+  const { user, loading, signOut } = useAuth()
 
-  const handleSubmit = async (credentials) => {
-    const result = await login(credentials)
-    if (result.success) {
-      // Handle successful login
-    }
-  }
+  if (loading) return <div>Loading...</div>
+  if (!user) return <LoginForm />
 
   return (
-    // Form JSX
+    <div>
+      Welcome {user.email}
+      <button onClick={signOut}>Sign Out</button>
+    </div>
   )
 }
 ```
@@ -207,23 +202,19 @@ export default function LoginForm() {
 
 ```typescript
 'use client'
-import { usePermissions } from '@/lib/hooks/useAuth'
+import { useAuth } from '@/lib/hooks/useAuth'
+import { RoleGuard } from '@/components/auth/role-guard'
 
 export default function InventoryPage() {
-  const { hasPermission, hasModuleAccess } = usePermissions()
-
-  if (!hasModuleAccess('inventory')) {
-    return <div>Access Denied</div>
-  }
-
-  const canCreateProduct = hasPermission('inventory', 'create')
+  const { user, userRole } = useAuth()
 
   return (
-    <div>
-      {canCreateProduct && (
-        <button>Create Product</button>
-      )}
-    </div>
+    <RoleGuard allowedRoles={['MANAGEMENT', 'PROCUREMENT_BD']}>
+      <div>
+        <h1>Inventory Management</h1>
+        {/* Inventory content */}
+      </div>
+    </RoleGuard>
   )
 }
 ```
@@ -255,47 +246,30 @@ export default function InventoryPage() {
 ### 4. Data Validation
 - Server-side validation using Zod schemas
 - Input sanitization and XSS prevention
-- SQL injection protection through Prisma ORM
+- SQL injection protection through Supabase's secure API
 
 ## Database Schema
 
 The authentication system uses the following key database models:
 
-### User Model
-```prisma
-model User {
-  id          String    @id @default(cuid())
-  email       String    @unique
-  firstName   String
-  lastName    String
-  role        UserRole
-  isActive    Boolean   @default(true)
-  passwordHash String
-  resetToken   String?
-  resetTokenExpiry DateTime?
-  // ... other fields
-}
-```
+### User Authentication
+- **User Management**: Handled by Supabase Auth system
+- **User Metadata**: Role and profile information stored in user metadata
+- **Session Management**: Automatic session handling with refresh tokens
 
-### Audit Log Model
-```prisma
-model AuditLog {
-  id          String   @id @default(cuid())
-  tableName   String
-  action      String
-  userId      String
-  timestamp   DateTime @default(now())
-  ipAddress   String?
-  userAgent   String?
-  // ... other fields
-}
+### Database Integration
+```typescript
+// User data is managed through Supabase Auth
+// Additional profile data stored in database tables
+// Role-based permissions handled in middleware and components
 ```
 
 ## Development Setup
 
 1. **Install Dependencies**
    ```bash
-   npm install next-auth @auth/prisma-adapter bcryptjs jsonwebtoken nodemailer
+   # Dependencies already included in package.json
+   npm install
    ```
 
 2. **Configure Environment**
@@ -304,10 +278,11 @@ model AuditLog {
    # Edit .env.local with your configuration
    ```
 
-3. **Setup Database**
+3. **Setup Supabase**
    ```bash
-   npx prisma migrate dev
-   npx prisma generate
+   # Configure Supabase project
+   # Set up authentication in Supabase Dashboard
+   # Configure RLS policies as needed
    ```
 
 4. **Run Development Server**
@@ -366,17 +341,15 @@ Use the signup API or database seeding to create test users with different roles
    - Verify user role in database
    - Check access control matrix configuration
 
-4. **Database Connection Issues**
-   - Verify DATABASE_URL format
-   - Check database server connectivity
+4. **Supabase Connection Issues**
+   - Verify Supabase URL and API key
+   - Check Supabase project status
 
 ### Debug Mode
-Enable debug mode in development:
-```env
-NEXTAUTH_DEBUG=true
-```
-
-This will provide detailed logging for authentication flows.
+Monitor authentication in development:
+- Check browser DevTools for Supabase client logs
+- Use Supabase Dashboard to monitor auth events
+- Review middleware.ts logs for route protection
 
 ## Future Enhancements
 

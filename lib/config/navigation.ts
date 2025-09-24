@@ -12,6 +12,8 @@ export const navigationModules: ModuleConfig[] = [
     subModules: [
       { id: 'manage-invoices', title: 'Manage Invoice - All', href: '/sales/invoices' },
       { id: 'create-invoice', title: 'Create Invoice', href: '/sales/invoices/create' },
+      { id: 'manage-purchase-orders', title: 'Manage Purchase Orders', href: '/sales/purchase-orders' },
+      { id: 'create-purchase-order', title: 'Create Purchase Order', href: '/sales/purchase-orders/create' },
       { id: 'manage-rfq', title: 'Manage (RFQ)', href: '/sales/rfq' },
       { id: 'create-rfq', title: 'Create RFQ', href: '/sales/rfq/create' },
       { id: 'credit-notes', title: 'Credit Notes', href: '/sales/credit-notes' },

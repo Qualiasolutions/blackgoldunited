@@ -72,6 +72,8 @@ const bguNavigationModules = [
     subModules: [
       { id: 'manage-invoices', title: 'Manage Invoice - All', href: '/sales/invoices' },
       { id: 'create-invoice', title: 'Create Invoice - new', href: '/sales/invoices/create' },
+      { id: 'manage-purchase-orders', title: 'Manage Purchase Orders', href: '/sales/purchase-orders' },
+      { id: 'create-purchase-order', title: 'Create Purchase Order', href: '/sales/purchase-orders/create' },
       { id: 'manage-rfq', title: 'Manage (RFQ) - Quotation', href: '/sales/rfq' },
       { id: 'create-rfq', title: 'Create RFQ - Request for Quotation', href: '/sales/rfq/create' },
       { id: 'credit-notes', title: 'Credit notes', href: '/sales/credit-notes' },

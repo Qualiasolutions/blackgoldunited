@@ -18,9 +18,6 @@ In your Vercel project settings, add these environment variables:
 #### **Required Production Variables:**
 
 ```bash
-# Database Configuration
-DATABASE_URL=postgresql://postgres:[YOUR_DB_PASSWORD]@db.vphziwoympzbtnndnqph.supabase.co:5432/postgres?schema=public
-
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=https://vphziwoympzbtnndnqph.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwaHppd295bXB6YnRubmRucXBoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzNjA2MTcsImV4cCI6MjA3MzkzNjYxN30.-amhXg1seYaz90SOwLqxDv8F-YbHu6Vp1mmME72xRuM

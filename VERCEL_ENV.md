@@ -4,9 +4,8 @@
 
 Copy and paste these environment variables into your Vercel project dashboard:
 
-### Database & Supabase Configuration
+### Supabase Configuration
 ```
-DATABASE_URL=postgresql://postgres.vphziwoympzbtnndnqph:Zambelis1!@aws-0-us-west-1.pooler.supabase.com:6543/postgres?schema=public&sslmode=require
 NEXT_PUBLIC_SUPABASE_URL=https://vphziwoympzbtnndnqph.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwaHppd295bXB6YnRubmRucXBoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzNjA2MTcsImV4cCI6MjA3MzkzNjYxN30.-amhXg1seYaz90SOwLqxDv8F-YbHu6Vp1mmME72xRuM
 ```

@@ -74,20 +74,26 @@ const supabase = await createClient()
 
 ### Directory Structure & Patterns
 ```
-app/[module]/                    # Route pages
-├── page.tsx                     # Module dashboard
-├── [sub-module]/page.tsx        # Sub-module list
-└── [sub-module]/create/page.tsx # Create forms
+app/
+├── [module]/                    # Route pages
+│   ├── page.tsx                # Module dashboard
+│   ├── [sub-module]/page.tsx   # Sub-module list
+│   └── [sub-module]/create/    # Create forms
+└── api/                        # API Layer (NEW!)
+    ├── clients/                # Clients API endpoints
+    │   ├── route.ts           # GET (list), POST (create)
+    │   └── [id]/route.ts      # GET, PUT, DELETE single client
+    └── [future-modules]/      # Additional API modules
 
 components/
 ├── layout/                      # Main layout components
-│   ├── main-layout.tsx         # Sidebar + header wrapper
-│   ├── sidebar.tsx             # 14-module navigation
-│   └── header.tsx              # Top bar with user menu
 ├── modules/[module]/           # Module-specific components
 └── ui/                         # shadcn/ui primitives
 
 lib/
+├── auth/                       # Authentication & Authorization (NEW!)
+│   ├── api-auth.ts            # API authentication middleware
+│   └── permissions.ts         # Role-based access control
 ├── supabase/                   # Database clients
 │   ├── client.ts              # Browser client
 │   └── server.ts              # SSR client (async)
@@ -106,24 +112,64 @@ lib/
 
 Access matrix defined in `lib/types/auth.ts` and enforced in `middleware.ts`.
 
+### API Infrastructure & Authentication Flow
+**NEW IN WEEK 2**: Complete API layer with enterprise-grade security
+
+#### API Authentication Pattern
+```typescript
+// All API routes use this pattern:
+import { authenticateAndAuthorize } from '@/lib/auth/api-auth';
+
+export async function GET(request: NextRequest) {
+  // 1. Authenticate user and check permissions
+  const authResult = await authenticateAndAuthorize(request, 'clients', 'GET');
+  if (!authResult.success) {
+    return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+  }
+
+  // 2. Use Supabase with authenticated context
+  const supabase = await createClient();
+  // Database operations here...
+}
+```
+
+#### Role-Based API Access
+- **MANAGEMENT**: Full CRUD access to all modules
+- **FINANCE_TEAM**: Read-only access to clients, full access to finance
+- **PROCUREMENT_BD**: Full access to clients + procurement modules
+- **ADMIN_HR**: Read-only access to clients, full HR access
+- **IMS_QHSE**: No client access (returns 403 Forbidden)
+
+#### API Response Standards
+```typescript
+// Success Response
+{ success: true, data: [...], pagination?: {...} }
+
+// Error Response
+{ error: "Descriptive error message" }
+// With appropriate HTTP status codes (400, 401, 403, 404, 500)
+```
+
 ### Module Development Pattern
 When creating new modules:
-1. Add route in `app/[module-name]/`
-2. Create components in `components/modules/[module-name]/`
-3. Update navigation in `lib/config/navigation.ts`
-4. Add role permissions in `lib/types/auth.ts`
-5. Test with different user roles
+1. **API First**: Create `/app/api/[module-name]/` endpoints
+2. **Frontend**: Add route in `app/[module-name]/`
+3. **Components**: Create in `components/modules/[module-name]/`
+4. **Navigation**: Update `lib/config/navigation.ts`
+5. **Permissions**: Add role permissions in `lib/types/auth.ts`
+6. **Test**: Verify with all 5 user roles
 
 ### Current Development Status
 **📊 REFER TO DEVELOPMENT_PLAN.md FOR EXACT STATUS**
 
-**Current Phase**: Phase 1 - Security & Data Foundation (Week 1)
-**Critical Priority**: Database security vulnerabilities MUST be fixed first
-- **❌ SECURITY ISSUE**: All 63 database tables have RLS disabled
-- **❌ FUNCTIONAL GAP**: No CRUD operations implemented yet
-- **✅ FOUNDATION**: Architecture, auth, UI components complete
+**Current Phase**: Phase 1 - Security & Data Foundation (Week 3)
+**Current Progress**: 30% Complete (2 weeks done, 12 weeks remaining)
+- **✅ SECURITY COMPLETE**: All 63 database tables secured with RLS
+- **✅ API INFRASTRUCTURE**: Complete Clients module API with role-based access
+- **✅ AUTHENTICATION**: Working role-based middleware and permissions
+- **✅ FOUNDATION**: Architecture, auth, UI components, API layer complete
 
-**Next Steps**: Follow DEVELOPMENT_PLAN.md starting with Task 1.1
+**Next Steps**: Follow DEVELOPMENT_PLAN.md starting with Task 3.1 (Frontend-Backend Connection)
 
 ### Environment Variables
 ```bash

@@ -1,9 +1,33 @@
+/**
+ * Clients API Routes - Main Collection Endpoints
+ *
+ * This file implements the core CRUD operations for the Clients module.
+ * It provides GET (list) and POST (create) endpoints for client management.
+ *
+ * Security:
+ * - All endpoints require authentication
+ * - Role-based access control enforced
+ * - Input validation via Zod schemas
+ * - Comprehensive error handling
+ *
+ * Endpoints:
+ * - GET /api/clients - List clients with search/pagination/filtering
+ * - POST /api/clients - Create new client
+ *
+ * @author BlackGoldUnited ERP Team
+ * @version 1.0
+ * @since Week 2 - API Infrastructure Implementation
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { authenticateAndAuthorize } from '@/lib/auth/api-auth';
 
-// Client validation schema
+/**
+ * Client validation schema for creating new clients
+ * Matches the Supabase database schema exactly
+ */
 const clientSchema = z.object({
   clientCode: z.string().min(1, 'Client code is required'),
   companyName: z.string().min(1, 'Company name is required'),
@@ -23,9 +47,15 @@ const clientSchema = z.object({
   notes: z.string().optional(),
 });
 
+/**
+ * Partial schema for client updates (all fields optional)
+ */
 const clientUpdateSchema = clientSchema.partial();
 
-// Search/filter schema
+/**
+ * Search and pagination parameters schema
+ * Supports filtering, sorting, and pagination for client listings
+ */
 const searchSchema = z.object({
   query: z.string().optional(),
   status: z.string().optional(),
@@ -35,7 +65,29 @@ const searchSchema = z.object({
   sortOrder: z.enum(['asc', 'desc']).optional().default('asc'),
 });
 
-// GET - List clients with search and pagination
+/**
+ * GET /api/clients
+ *
+ * List all clients with search, filtering, sorting, and pagination support.
+ * Implements role-based access control - different roles have different access levels.
+ *
+ * Query Parameters:
+ * - query: Search term (searches company name, contact person, email)
+ * - status: Filter by Active/Inactive status
+ * - page: Page number for pagination (default: 1)
+ * - limit: Items per page (default: 10)
+ * - sortBy: Field to sort by (default: companyName)
+ * - sortOrder: Sort direction asc/desc (default: asc)
+ *
+ * Access Control:
+ * - MANAGEMENT: Full access ✅
+ * - PROCUREMENT_BD: Full access ✅
+ * - FINANCE_TEAM: Read-only access ✅
+ * - ADMIN_HR: Read-only access ✅
+ * - IMS_QHSE: No access ❌ (403 Forbidden)
+ *
+ * @returns JSON response with clients array and pagination metadata
+ */
 export async function GET(request: NextRequest) {
   try {
     // Authenticate and authorize
@@ -97,7 +149,26 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Create new client
+/**
+ * POST /api/clients
+ *
+ * Create a new client with comprehensive validation and error handling.
+ * Only users with create permissions can access this endpoint.
+ *
+ * Required Fields:
+ * - clientCode: Unique client identifier
+ * - companyName: Company name
+ * - email: Valid email address
+ *
+ * Access Control:
+ * - MANAGEMENT: Create allowed ✅
+ * - PROCUREMENT_BD: Create allowed ✅
+ * - FINANCE_TEAM: Create denied ❌ (403 Forbidden)
+ * - ADMIN_HR: Create denied ❌ (403 Forbidden)
+ * - IMS_QHSE: No access ❌ (403 Forbidden)
+ *
+ * @returns JSON response with created client data or validation errors
+ */
 export async function POST(request: NextRequest) {
   try {
     // Authenticate and authorize

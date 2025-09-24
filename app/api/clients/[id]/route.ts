@@ -1,0 +1,210 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { z } from 'zod';
+import { authenticateAndAuthorize } from '@/lib/auth/api-auth';
+
+// Client validation schema (partial for updates)
+const clientUpdateSchema = z.object({
+  clientCode: z.string().min(1, 'Client code is required').optional(),
+  companyName: z.string().min(1, 'Company name is required').optional(),
+  contactPerson: z.string().optional(),
+  email: z.string().email('Invalid email address').optional(),
+  phone: z.string().optional(),
+  mobile: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
+  postalCode: z.string().optional(),
+  taxNumber: z.string().optional(),
+  creditLimit: z.number().min(0).optional(),
+  paymentTerms: z.number().min(0).optional(),
+  isActive: z.boolean().optional(),
+  notes: z.string().optional(),
+});
+
+// GET - Get single client by ID
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Authenticate and authorize
+    const authResult = await authenticateAndAuthorize(request, 'clients', 'GET');
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
+
+    const supabase = await createClient();
+
+    const { id } = await params;
+
+    // Validate ID format (UUID)
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+      return NextResponse.json({ error: 'Invalid client ID format' }, { status: 400 });
+    }
+
+    // Fetch client
+    const { data: client, error } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') { // No rows returned
+        return NextResponse.json({ error: 'Client not found' }, { status: 404 });
+      }
+      console.error('Database error:', error);
+      return NextResponse.json({ error: 'Failed to fetch client' }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: client
+    });
+
+  } catch (error) {
+    console.error('API error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// PUT - Update client by ID
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Authenticate and authorize
+    const authResult = await authenticateAndAuthorize(request, 'clients', 'PUT');
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
+
+    const supabase = await createClient();
+
+    const { id } = await params;
+
+    // Validate ID format (UUID)
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+      return NextResponse.json({ error: 'Invalid client ID format' }, { status: 400 });
+    }
+
+    // Parse and validate request body
+    const body = await request.json();
+    const validatedData = clientUpdateSchema.parse(body);
+
+    // Check if client exists first
+    const { data: existingClient, error: checkError } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('id', id)
+      .single();
+
+    if (checkError) {
+      if (checkError.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Client not found' }, { status: 404 });
+      }
+      console.error('Database error:', checkError);
+      return NextResponse.json({ error: 'Failed to check client existence' }, { status: 500 });
+    }
+
+    // Update client
+    const { data: updatedClient, error } = await supabase
+      .from('clients')
+      .update({
+        ...validatedData,
+        updatedAt: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Database error:', error);
+      if (error.code === '23505') { // Unique violation
+        return NextResponse.json({ error: 'A client with this email already exists' }, { status: 409 });
+      }
+      return NextResponse.json({ error: 'Failed to update client' }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: updatedClient,
+      message: 'Client updated successfully'
+    });
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({
+        error: 'Validation failed',
+        details: error.errors
+      }, { status: 400 });
+    }
+
+    console.error('API error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// DELETE - Delete client by ID
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Authenticate and authorize
+    const authResult = await authenticateAndAuthorize(request, 'clients', 'DELETE');
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
+
+    const supabase = await createClient();
+
+    const { id } = await params;
+
+    // Validate ID format (UUID)
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+      return NextResponse.json({ error: 'Invalid client ID format' }, { status: 400 });
+    }
+
+    // Check if client exists and get some info for the response
+    const { data: existingClient, error: checkError } = await supabase
+      .from('clients')
+      .select('id, companyName')
+      .eq('id', id)
+      .single();
+
+    if (checkError) {
+      if (checkError.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Client not found' }, { status: 404 });
+      }
+      console.error('Database error:', checkError);
+      return NextResponse.json({ error: 'Failed to check client existence' }, { status: 500 });
+    }
+
+    // Soft delete by updating isActive instead of hard delete (preserves data integrity)
+    const { error } = await supabase
+      .from('clients')
+      .update({
+        isActive: false,
+        updatedAt: new Date().toISOString(),
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Database error:', error);
+      return NextResponse.json({ error: 'Failed to delete client' }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Client "${existingClient.companyName}" has been deactivated`
+    });
+
+  } catch (error) {
+    console.error('API error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

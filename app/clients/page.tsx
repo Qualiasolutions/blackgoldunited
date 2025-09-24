@@ -30,7 +30,6 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 interface Client {
   id: string
@@ -71,16 +70,24 @@ export default function ClientsPage() {
 
   const fetchClients = async () => {
     try {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('deletedAt', null)
-        .order('companyName')
+      const response = await fetch('/api/clients', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
 
-      if (error) throw error
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
 
-      const formattedClients = (data || []).map(client => ({
+      const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch clients')
+      }
+
+      const formattedClients = (result.data || []).map((client: any) => ({
         id: client.id,
         companyName: client.companyName || '',
         contactPerson: client.contactPerson || '',
@@ -104,6 +111,8 @@ export default function ClientsPage() {
       setClients(formattedClients)
     } catch (error) {
       console.error('Error fetching clients:', error)
+      // Show user-friendly error message
+      setClients([])
     } finally {
       setLoading(false)
     }

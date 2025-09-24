@@ -149,19 +149,19 @@ export function validateNavigation(
 ): { allowed: boolean; reason?: string } {
   // Extract module from path (e.g., '/sales/invoices' -> 'sales')
   const pathParts = targetPath.split('/').filter(Boolean);
-  const module = pathParts[0];
+  const moduleName = pathParts[0];
 
-  if (!module) {
+  if (!moduleName) {
     return { allowed: true }; // Allow dashboard access
   }
 
-  if (hasModuleAccess(userRole, module, AccessLevel.READ)) {
+  if (hasModuleAccess(userRole, moduleName, AccessLevel.READ)) {
     return { allowed: true };
   }
 
   return {
     allowed: false,
-    reason: `Access denied: ${getRoleDescription(userRole)} does not have access to ${module} module`
+    reason: `Access denied: ${getRoleDescription(userRole)} does not have access to ${moduleName} module`
   };
 }
 

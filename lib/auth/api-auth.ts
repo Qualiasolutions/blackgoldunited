@@ -1,0 +1,122 @@
+import { NextRequest } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { UserRole, UserPermissions } from '@/lib/types/auth';
+import { hasHTTPPermission, HTTPMethod } from './permissions';
+
+export interface AuthenticatedUser {
+  id: string;
+  email: string;
+  role: UserRole;
+  firstName: string;
+  lastName: string;
+}
+
+/**
+ * Authenticate and authorize API request
+ */
+export async function authenticateAndAuthorize(
+  request: NextRequest,
+  module: keyof UserPermissions,
+  method: HTTPMethod
+): Promise<{ success: true; user: AuthenticatedUser } | { success: false; error: string; status: number }> {
+  try {
+    const supabase = await createClient();
+
+    // Check authentication
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+    if (authError || !authUser) {
+      return { success: false, error: 'Unauthorized - Please log in', status: 401 };
+    }
+
+    // Get user profile with role
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('id, email, role, firstName, lastName, isActive')
+      .eq('id', authUser.id)
+      .single();
+
+    if (profileError || !userProfile) {
+      console.error('Profile fetch error:', profileError);
+      return { success: false, error: 'User profile not found', status: 404 };
+    }
+
+    // Check if user is active
+    if (!userProfile.isActive) {
+      return { success: false, error: 'Account is deactivated', status: 403 };
+    }
+
+    // Check role-based permissions
+    const userRole = userProfile.role as UserRole;
+    const hasPermission = hasHTTPPermission(userRole, module, method);
+
+    if (!hasPermission) {
+      return {
+        success: false,
+        error: `Insufficient permissions - ${userRole} role cannot ${method} ${module}`,
+        status: 403
+      };
+    }
+
+    return {
+      success: true,
+      user: {
+        id: userProfile.id,
+        email: userProfile.email,
+        role: userRole,
+        firstName: userProfile.firstName,
+        lastName: userProfile.lastName,
+      }
+    };
+
+  } catch (error) {
+    console.error('Authentication error:', error);
+    return { success: false, error: 'Internal authentication error', status: 500 };
+  }
+}
+
+/**
+ * Simple authentication check without authorization (for read-only operations where RLS handles access)
+ */
+export async function authenticateUser(request: NextRequest): Promise<{ success: true; user: AuthenticatedUser } | { success: false; error: string; status: number }> {
+  try {
+    const supabase = await createClient();
+
+    // Check authentication
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+    if (authError || !authUser) {
+      return { success: false, error: 'Unauthorized - Please log in', status: 401 };
+    }
+
+    // Get user profile with role
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('id, email, role, firstName, lastName, isActive')
+      .eq('id', authUser.id)
+      .single();
+
+    if (profileError || !userProfile) {
+      console.error('Profile fetch error:', profileError);
+      return { success: false, error: 'User profile not found', status: 404 };
+    }
+
+    // Check if user is active
+    if (!userProfile.isActive) {
+      return { success: false, error: 'Account is deactivated', status: 403 };
+    }
+
+    return {
+      success: true,
+      user: {
+        id: userProfile.id,
+        email: userProfile.email,
+        role: userProfile.role as UserRole,
+        firstName: userProfile.firstName,
+        lastName: userProfile.lastName,
+      }
+    };
+
+  } catch (error) {
+    console.error('Authentication error:', error);
+    return { success: false, error: 'Internal authentication error', status: 500 };
+  }
+}

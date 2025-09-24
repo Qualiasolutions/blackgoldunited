@@ -1,0 +1,372 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { createClient } from '@/lib/supabase/server'
+import { authenticateAndAuthorize } from '@/lib/auth/api-auth'
+
+// Purchase Invoice update schema
+const purchaseInvoiceUpdateSchema = z.object({
+  supplierInvoiceNumber: z.string().min(1).optional(),
+  invoiceDate: z.string().datetime().optional(),
+  dueDate: z.string().datetime().optional(),
+  taxRate: z.number().min(0).max(100).optional(),
+  discountAmount: z.number().min(0).optional(),
+  shippingCost: z.number().min(0).optional(),
+  status: z.enum(['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'PAID', 'CANCELLED']).optional(),
+  paymentStatus: z.enum(['UNPAID', 'PARTIALLY_PAID', 'PAID', 'OVERDUE']).optional(),
+  notes: z.string().optional(),
+  internalNotes: z.string().optional(),
+  attachmentUrl: z.string().url().optional(),
+  attachmentFilename: z.string().optional()
+})
+
+// GET /api/purchases/invoices/[id] - Get single purchase invoice
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    // Authenticate and authorize
+    const authResult = await authenticateAndAuthorize(request, 'purchase', 'GET')
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    }
+
+    const supabase = await createClient()
+    const invoiceId = params.id
+
+    // Get purchase invoice with all related data
+    const { data: invoice, error } = await supabase
+      .from('purchase_invoices')
+      .select(`
+        *,
+        supplier:suppliers(
+          id,
+          name,
+          supplierCode,
+          email,
+          phone,
+          address,
+          city,
+          state,
+          country,
+          contactPersonName,
+          contactPersonEmail
+        ),
+        purchaseOrder:purchase_orders(
+          id,
+          poNumber,
+          status,
+          orderDate,
+          expectedDeliveryDate
+        ),
+        items:purchase_invoice_items(
+          id,
+          purchaseOrderItemId,
+          productId,
+          quantity,
+          unitPrice,
+          totalAmount,
+          description,
+          product:products(id, name, productCode, unit, costPrice),
+          purchaseOrderItem:purchase_order_items(id, quantity, unitPrice)
+        ),
+        payments:purchase_payments(
+          id,
+          amount,
+          paymentDate,
+          paymentMethod,
+          status,
+          referenceNumber,
+          notes,
+          createdBy,
+          paidBy:users!purchase_payments_createdBy_fkey(firstName, lastName)
+        ),
+        approvals:purchase_invoice_approvals(
+          id,
+          status,
+          approvedBy,
+          approvedAt,
+          comments,
+          approver:users!purchase_invoice_approvals_approvedBy_fkey(firstName, lastName, email)
+        ),
+        createdByUser:users!purchase_invoices_createdBy_fkey(firstName, lastName, email)
+      `)
+      .eq('id', invoiceId)
+      .is('deletedAt', null)
+      .single()
+
+    if (error) {
+      console.error('Database error:', error)
+      return NextResponse.json({ error: 'Purchase invoice not found' }, { status: 404 })
+    }
+
+    // Calculate totals and payment summary
+    const items = invoice.items || []
+    const payments = invoice.payments || []
+
+    const subtotal = items.reduce((sum: number, item: any) => sum + (item.totalAmount || 0), 0)
+    const taxAmount = subtotal * (invoice.taxRate || 0) / 100
+    const totalAmount = subtotal + taxAmount + (invoice.shippingCost || 0) - (invoice.discountAmount || 0)
+
+    const paidAmount = payments
+      .filter((p: any) => p.status === 'COMPLETED')
+      .reduce((sum: number, payment: any) => sum + payment.amount, 0)
+
+    const pendingAmount = payments
+      .filter((p: any) => p.status === 'PENDING')
+      .reduce((sum: number, payment: any) => sum + payment.amount, 0)
+
+    const remainingAmount = totalAmount - paidAmount
+    const isOverdue = new Date(invoice.dueDate) < new Date() && remainingAmount > 0
+
+    // Calculate days overdue
+    const daysOverdue = isOverdue
+      ? Math.floor((new Date().getTime() - new Date(invoice.dueDate).getTime()) / (1000 * 60 * 60 * 24))
+      : 0
+
+    const invoiceWithCalculations = {
+      ...invoice,
+      // Financial calculations
+      subtotal,
+      taxAmount,
+      totalAmount,
+      paidAmount,
+      pendingAmount,
+      remainingAmount,
+
+      // Status calculations
+      isOverdue,
+      daysOverdue,
+
+      // Counts
+      itemsCount: items.length,
+      paymentsCount: payments.length,
+
+      // Payment summary
+      paymentSummary: {
+        total: totalAmount,
+        paid: paidAmount,
+        pending: pendingAmount,
+        remaining: remainingAmount,
+        isFullyPaid: remainingAmount <= 0,
+        isOverdue,
+        daysOverdue
+      },
+
+      // Approval summary
+      approvalSummary: {
+        status: invoice.status,
+        approvals: invoice.approvals || [],
+        needsApproval: invoice.status === 'PENDING_APPROVAL',
+        isApproved: invoice.status === 'APPROVED'
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: invoiceWithCalculations
+    })
+
+  } catch (error) {
+    console.error('API error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+// PUT /api/purchases/invoices/[id] - Update purchase invoice
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    // Authenticate and authorize
+    const authResult = await authenticateAndAuthorize(request, 'purchase', 'PUT')
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    }
+
+    const supabase = await createClient()
+    const invoiceId = params.id
+    const body = await request.json()
+
+    // Validate request data
+    const validationResult = purchaseInvoiceUpdateSchema.safeParse(body)
+    if (!validationResult.success) {
+      return NextResponse.json({
+        error: 'Validation failed',
+        details: validationResult.error.errors
+      }, { status: 400 })
+    }
+
+    const updateData = validationResult.data
+
+    // Check if invoice exists and can be updated
+    const { data: existingInvoice, error: invoiceError } = await supabase
+      .from('purchase_invoices')
+      .select('id, status, paymentStatus, supplierId, supplierInvoiceNumber, taxRate, shippingCost, discountAmount')
+      .eq('id', invoiceId)
+      .is('deletedAt', null)
+      .single()
+
+    if (invoiceError || !existingInvoice) {
+      return NextResponse.json({ error: 'Purchase invoice not found' }, { status: 404 })
+    }
+
+    // Check if invoice can be edited (not if it's paid or cancelled)
+    if (['PAID', 'CANCELLED'].includes(existingInvoice.status)) {
+      return NextResponse.json({
+        error: 'Cannot edit paid or cancelled invoices'
+      }, { status: 400 })
+    }
+
+    // If updating supplier invoice number, check for duplicates
+    if (updateData.supplierInvoiceNumber && updateData.supplierInvoiceNumber !== existingInvoice.supplierInvoiceNumber) {
+      const { data: duplicateInvoice } = await supabase
+        .from('purchase_invoices')
+        .select('id')
+        .eq('supplierId', existingInvoice.supplierId)
+        .eq('supplierInvoiceNumber', updateData.supplierInvoiceNumber)
+        .neq('id', invoiceId)
+        .is('deletedAt', null)
+        .single()
+
+      if (duplicateInvoice) {
+        return NextResponse.json({
+          error: 'Invoice number already exists for this supplier'
+        }, { status: 409 })
+      }
+    }
+
+    // If financial fields are updated, recalculate totals
+    let recalculatedFields = {}
+    if (updateData.taxRate !== undefined || updateData.shippingCost !== undefined || updateData.discountAmount !== undefined) {
+      // Get current items to recalculate
+      const { data: items } = await supabase
+        .from('purchase_invoice_items')
+        .select('totalAmount')
+        .eq('purchaseInvoiceId', invoiceId)
+
+      if (items) {
+        const subtotal = items.reduce((sum, item) => sum + item.totalAmount, 0)
+        const taxRate = updateData.taxRate !== undefined ? updateData.taxRate : existingInvoice.taxRate || 0
+        const shippingCost = updateData.shippingCost !== undefined ? updateData.shippingCost : existingInvoice.shippingCost || 0
+        const discountAmount = updateData.discountAmount !== undefined ? updateData.discountAmount : existingInvoice.discountAmount || 0
+
+        const taxAmount = subtotal * taxRate / 100
+        const totalAmount = subtotal + taxAmount + shippingCost - discountAmount
+
+        recalculatedFields = {
+          subtotal,
+          taxAmount,
+          totalAmount
+        }
+      }
+    }
+
+    // Update the purchase invoice
+    const { data: updatedInvoice, error } = await supabase
+      .from('purchase_invoices')
+      .update({
+        ...updateData,
+        ...recalculatedFields,
+        updatedAt: new Date().toISOString()
+      })
+      .eq('id', invoiceId)
+      .is('deletedAt', null)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Database error:', error)
+      return NextResponse.json({ error: 'Failed to update purchase invoice' }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: updatedInvoice
+    })
+
+  } catch (error) {
+    console.error('Unexpected error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+// DELETE /api/purchases/invoices/[id] - Cancel purchase invoice (soft delete)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    // Authenticate and authorize
+    const authResult = await authenticateAndAuthorize(request, 'purchase', 'DELETE')
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    }
+
+    const supabase = await createClient()
+    const invoiceId = params.id
+
+    // Check invoice status - can only cancel unpaid invoices
+    const { data: existingInvoice, error: invoiceError } = await supabase
+      .from('purchase_invoices')
+      .select('id, status, paymentStatus, invoiceNumber')
+      .eq('id', invoiceId)
+      .is('deletedAt', null)
+      .single()
+
+    if (invoiceError || !existingInvoice) {
+      return NextResponse.json({ error: 'Purchase invoice not found' }, { status: 404 })
+    }
+
+    if (existingInvoice.paymentStatus === 'PAID' || existingInvoice.paymentStatus === 'PARTIALLY_PAID') {
+      return NextResponse.json({
+        error: 'Cannot cancel paid or partially paid invoices'
+      }, { status: 400 })
+    }
+
+    // Check for pending payments
+    const { data: pendingPayments } = await supabase
+      .from('purchase_payments')
+      .select('id')
+      .eq('purchaseInvoiceId', invoiceId)
+      .eq('status', 'PENDING')
+      .limit(1)
+
+    if (pendingPayments && pendingPayments.length > 0) {
+      return NextResponse.json({
+        error: 'Cannot cancel invoice with pending payments'
+      }, { status: 400 })
+    }
+
+    // Cancel the invoice
+    const { data: cancelledInvoice, error } = await supabase
+      .from('purchase_invoices')
+      .update({
+        status: 'CANCELLED',
+        paymentStatus: 'UNPAID',
+        deletedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })
+      .eq('id', invoiceId)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Database error:', error)
+      return NextResponse.json({ error: 'Failed to cancel purchase invoice' }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        message: `Purchase invoice ${existingInvoice.invoiceNumber} cancelled successfully`,
+        invoice: cancelledInvoice
+      }
+    })
+
+  } catch (error) {
+    console.error('Unexpected error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}

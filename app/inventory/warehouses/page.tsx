@@ -1,411 +1,455 @@
 'use client'
 
 import { useAuth, usePermissions } from '@/lib/hooks/useAuth'
-import { MainLayout } from '@/components/layout/main-layout'
-import { EnhancedCard } from '@/components/ui/enhanced-card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, Building2, Package, MapPin, Users, Filter, Download, Settings } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Plus,
+  Search,
+  Filter,
+  Warehouse,
+  Download,
+  Eye,
+  Edit,
+  Trash2,
+  ArrowLeft,
+  RefreshCw,
+  Loader2,
+  MapPin,
+  Phone,
+  Mail,
+  Package
+} from 'lucide-react'
 import Link from 'next/link'
+import { useState, useEffect, useCallback } from 'react'
 
-export default function InventoryWarehousesPage() {
+interface WarehouseData {
+  id: string
+  name: string
+  code: string
+  description?: string
+  location: string
+  address?: string
+  city?: string
+  state?: string
+  postalCode?: string
+  country?: string
+  contactPerson?: string
+  contactEmail?: string
+  contactPhone?: string
+  capacity?: number
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+  _count?: {
+    product_stock: number
+  }
+}
+
+export default function WarehousesPage() {
   const { user } = useAuth()
-  const { hasFullAccess } = usePermissions()
+  const { hasModuleAccess, hasFullAccess } = usePermissions()
+  const [warehouses, setWarehouses] = useState<WarehouseData[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string>('')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterLocation, setFilterLocation] = useState<string>('')
+  const [filterActive, setFilterActive] = useState<string>('true')
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 0
+  })
+  const [searchDebounce, setSearchDebounce] = useState<NodeJS.Timeout>()
 
-  if (!user) {
-    return null
+  const canManage = hasFullAccess('inventory')
+  const canRead = hasModuleAccess('inventory')
+
+  if (!canRead) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center">
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h1>
+            <p className="text-gray-600">You don't have permission to access the Inventory module.</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const fetchWarehouses = useCallback(async (params: {
+    query?: string
+    location?: string
+    isActive?: string
+    page?: number
+    limit?: number
+  } = {}) => {
+    try {
+      setLoading(true)
+      setError('')
+
+      // Build query string
+      const queryParams = new URLSearchParams()
+      if (params.query) queryParams.set('query', params.query)
+      if (params.location) queryParams.set('location', params.location)
+      if (params.isActive) queryParams.set('isActive', params.isActive)
+      queryParams.set('page', (params.page || 1).toString())
+      queryParams.set('limit', (params.limit || 10).toString())
+
+      const response = await fetch(`/api/inventory/warehouses?${queryParams}`)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to fetch warehouses')
+      }
+
+      const result = await response.json()
+
+      if (result.success) {
+        setWarehouses(result.data || [])
+        setPagination(result.pagination || { page: 1, limit: 10, total: 0, pages: 0 })
+      } else {
+        throw new Error(result.error || 'Failed to fetch warehouses')
+      }
+    } catch (err) {
+      console.error('Error fetching warehouses:', err)
+      setError(err instanceof Error ? err.message : 'Failed to fetch warehouses')
+      setWarehouses([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  // Initial fetch
+  useEffect(() => {
+    fetchWarehouses({
+      page: 1,
+      limit: pagination.limit,
+      isActive: filterActive
+    })
+  }, [fetchWarehouses, filterActive, pagination.limit])
+
+  // Search with debounce
+  useEffect(() => {
+    if (searchDebounce) clearTimeout(searchDebounce)
+
+    const timeout = setTimeout(() => {
+      fetchWarehouses({
+        query: searchTerm,
+        location: filterLocation,
+        isActive: filterActive,
+        page: 1,
+        limit: pagination.limit
+      })
+    }, 500)
+
+    setSearchDebounce(timeout)
+
+    return () => clearTimeout(timeout)
+  }, [searchTerm, filterLocation, fetchWarehouses, pagination.limit])
+
+  const handlePageChange = (newPage: number) => {
+    setPagination(prev => ({ ...prev, page: newPage }))
+    fetchWarehouses({
+      query: searchTerm,
+      location: filterLocation,
+      isActive: filterActive,
+      page: newPage,
+      limit: pagination.limit
+    })
+  }
+
+  const handleRefresh = () => {
+    fetchWarehouses({
+      query: searchTerm,
+      location: filterLocation,
+      isActive: filterActive,
+      page: pagination.page,
+      limit: pagination.limit
+    })
+  }
+
+  const getStatusBadge = (warehouse: WarehouseData) => {
+    return warehouse.isActive
+      ? <Badge variant="default">Active</Badge>
+      : <Badge variant="secondary">Inactive</Badge>
   }
 
   return (
-    <MainLayout user={{ name: `${user.firstName} ${user.lastName}`, email: user.email, role: user.role }}>
-      <div className="bg-gradient-to-br from-white via-orange-50 to-white min-h-full">
-        <div className="py-8 px-6">
-          {/* Header Section */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Warehouses</h1>
-                <p className="text-gray-600 mt-2">Manage warehouse locations, capacity, and inventory distribution</p>
-              </div>
-              {hasFullAccess('inventory') && (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold text-gray-900">Warehouse Management</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              {canManage && (
                 <Link href="/inventory/warehouses/create">
-                  <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white">
-                    <Plus className="h-4 w-4 mr-2" />
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4 mr-2" />
                     Add Warehouse
                   </Button>
                 </Link>
               )}
+              <Link href="/inventory">
+                <Button variant="outline">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Inventory
+                </Button>
+              </Link>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Stats Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Warehouses</p>
-                  <p className="text-2xl font-bold text-gray-900">6</p>
-                </div>
-                <div className="p-3 bg-blue-100 rounded-xl">
-                  <Building2 className="h-6 w-6 text-blue-600" />
-                </div>
-              </div>
-            </EnhancedCard>
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
 
-            <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Capacity</p>
-                  <p className="text-2xl font-bold text-gray-900">50,000</p>
-                  <p className="text-xs text-gray-500">sq ft</p>
-                </div>
-                <div className="p-3 bg-green-100 rounded-xl">
-                  <Package className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </EnhancedCard>
-
-            <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Utilized Space</p>
-                  <p className="text-2xl font-bold text-gray-900">72%</p>
-                </div>
-                <div className="p-3 bg-orange-100 rounded-xl">
-                  <MapPin className="h-6 w-6 text-orange-600" />
-                </div>
-              </div>
-            </EnhancedCard>
-
-            <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Staff Members</p>
-                  <p className="text-2xl font-bold text-gray-900">42</p>
-                </div>
-                <div className="p-3 bg-purple-100 rounded-xl">
-                  <Users className="h-6 w-6 text-purple-600" />
-                </div>
-              </div>
-            </EnhancedCard>
-          </div>
-
-          {/* Search and Filter Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
-              <div className="flex items-center space-x-3">
-                <Search className="h-5 w-5 text-orange-600" />
-                <Input
-                  placeholder="Search warehouses..."
-                  className="border-orange-200 focus:border-orange-400"
-                />
-              </div>
-            </EnhancedCard>
-
-            <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
-              <div className="flex items-center space-x-3">
-                <Filter className="h-5 w-5 text-orange-600" />
-                <select className="w-full border border-orange-200 rounded-lg px-3 py-2 focus:border-orange-400">
-                  <option>All Warehouses</option>
-                  <option>Active</option>
-                  <option>Under Maintenance</option>
-                  <option>Inactive</option>
-                </select>
-              </div>
-            </EnhancedCard>
-
-            <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
-              <div className="flex items-center space-x-3">
-                <MapPin className="h-5 w-5 text-orange-600" />
-                <select className="w-full border border-orange-200 rounded-lg px-3 py-2 focus:border-orange-400">
-                  <option>All Locations</option>
-                  <option>New York</option>
-                  <option>California</option>
-                  <option>Texas</option>
-                  <option>Florida</option>
-                </select>
-              </div>
-            </EnhancedCard>
-          </div>
-
-          {/* Warehouses Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-            <EnhancedCard className="p-6 bg-white border-2 border-orange-100 hover:shadow-lg transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                  <div className="p-2 bg-blue-100 rounded-xl mr-3">
-                    <Building2 className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Main Warehouse</h3>
-                    <p className="text-sm text-gray-500">New York, NY</p>
+          {/* Filters and Search */}
+          <Card className="mb-6">
+            <CardContent className="p-6">
+              <div className="flex flex-col lg:flex-row gap-4">
+                {/* Search */}
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      placeholder="Search warehouses by name, code, or location..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
                   </div>
                 </div>
-                <Badge className="bg-green-100 text-green-800">Active</Badge>
-              </div>
 
-              <div className="space-y-3 mb-4">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Capacity:</span>
-                  <span className="text-sm font-medium">15,000 sq ft</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Utilized:</span>
-                  <span className="text-sm font-medium">85%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Staff:</span>
-                  <span className="text-sm font-medium">12 members</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Manager:</span>
-                  <span className="text-sm font-medium">John Smith</span>
-                </div>
-              </div>
+                {/* Filters */}
+                <div className="flex gap-2 flex-wrap">
+                  <Select value={filterLocation} onValueChange={setFilterLocation}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="All Locations" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All Locations</SelectItem>
+                      {/* You can populate this dynamically from warehouse locations */}
+                      <SelectItem value="Main">Main</SelectItem>
+                      <SelectItem value="Secondary">Secondary</SelectItem>
+                      <SelectItem value="Remote">Remote</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: '85%' }}></div>
-              </div>
+                  <Select value={filterActive} onValueChange={setFilterActive}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All Status</SelectItem>
+                      <SelectItem value="true">Active</SelectItem>
+                      <SelectItem value="false">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-              <div className="flex space-x-2">
-                <Button variant="outline" size="sm" className="flex-1">View Details</Button>
-                <Button variant="outline" size="sm">
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </div>
-            </EnhancedCard>
-
-            <EnhancedCard className="p-6 bg-white border-2 border-orange-100 hover:shadow-lg transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                  <div className="p-2 bg-green-100 rounded-xl mr-3">
-                    <Building2 className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">West Coast Hub</h3>
-                    <p className="text-sm text-gray-500">Los Angeles, CA</p>
-                  </div>
-                </div>
-                <Badge className="bg-green-100 text-green-800">Active</Badge>
-              </div>
-
-              <div className="space-y-3 mb-4">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Capacity:</span>
-                  <span className="text-sm font-medium">12,000 sq ft</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Utilized:</span>
-                  <span className="text-sm font-medium">68%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Staff:</span>
-                  <span className="text-sm font-medium">8 members</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Manager:</span>
-                  <span className="text-sm font-medium">Sarah Wilson</span>
-                </div>
-              </div>
-
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-                <div className="bg-green-600 h-2 rounded-full" style={{ width: '68%' }}></div>
-              </div>
-
-              <div className="flex space-x-2">
-                <Button variant="outline" size="sm" className="flex-1">View Details</Button>
-                <Button variant="outline" size="sm">
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </div>
-            </EnhancedCard>
-
-            <EnhancedCard className="p-6 bg-white border-2 border-orange-100 hover:shadow-lg transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                  <div className="p-2 bg-yellow-100 rounded-xl mr-3">
-                    <Building2 className="h-6 w-6 text-yellow-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">South Distribution</h3>
-                    <p className="text-sm text-gray-500">Houston, TX</p>
-                  </div>
-                </div>
-                <Badge className="bg-yellow-100 text-yellow-800">Maintenance</Badge>
-              </div>
-
-              <div className="space-y-3 mb-4">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Capacity:</span>
-                  <span className="text-sm font-medium">8,500 sq ft</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Utilized:</span>
-                  <span className="text-sm font-medium">45%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Staff:</span>
-                  <span className="text-sm font-medium">6 members</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Manager:</span>
-                  <span className="text-sm font-medium">Mike Johnson</span>
-                </div>
-              </div>
-
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-                <div className="bg-yellow-600 h-2 rounded-full" style={{ width: '45%' }}></div>
-              </div>
-
-              <div className="flex space-x-2">
-                <Button variant="outline" size="sm" className="flex-1">View Details</Button>
-                <Button variant="outline" size="sm">
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </div>
-            </EnhancedCard>
-          </div>
-
-          {/* Detailed Warehouse Table */}
-          <EnhancedCard className="bg-white border-2 border-orange-100">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Warehouse Details</h2>
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" className="border-orange-300 text-orange-600">
-                    <Download className="h-4 w-4 mr-2" />
-                    Export
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRefresh}
+                    disabled={loading}
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                   </Button>
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Table Header */}
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-orange-100">
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Warehouse</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Location</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Capacity</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Utilization</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Products</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Staff</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {/* Sample Data - Replace with real data from Supabase */}
-                    <tr className="border-b border-gray-100 hover:bg-orange-50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <Building2 className="h-4 w-4 text-orange-600 mr-2" />
-                          Main Warehouse
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">New York, NY</td>
-                      <td className="py-3 px-4">15,000 sq ft</td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                            <div className="bg-blue-600 h-2 rounded-full" style={{ width: '85%' }}></div>
-                          </div>
-                          <span className="text-sm font-medium">85%</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">1,247</td>
-                      <td className="py-3 px-4">12</td>
-                      <td className="py-3 px-4">
-                        <Badge className="bg-green-100 text-green-800">Active</Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">View</Button>
-                          <Button variant="outline" size="sm">Edit</Button>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr className="border-b border-gray-100 hover:bg-orange-50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <Building2 className="h-4 w-4 text-orange-600 mr-2" />
-                          West Coast Hub
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">Los Angeles, CA</td>
-                      <td className="py-3 px-4">12,000 sq ft</td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                            <div className="bg-green-600 h-2 rounded-full" style={{ width: '68%' }}></div>
-                          </div>
-                          <span className="text-sm font-medium">68%</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">856</td>
-                      <td className="py-3 px-4">8</td>
-                      <td className="py-3 px-4">
-                        <Badge className="bg-green-100 text-green-800">Active</Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">View</Button>
-                          <Button variant="outline" size="sm">Edit</Button>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr className="border-b border-gray-100 hover:bg-orange-50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <Building2 className="h-4 w-4 text-orange-600 mr-2" />
-                          South Distribution
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">Houston, TX</td>
-                      <td className="py-3 px-4">8,500 sq ft</td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                            <div className="bg-yellow-600 h-2 rounded-full" style={{ width: '45%' }}></div>
-                          </div>
-                          <span className="text-sm font-medium">45%</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">423</td>
-                      <td className="py-3 px-4">6</td>
-                      <td className="py-3 px-4">
-                        <Badge className="bg-yellow-100 text-yellow-800">Maintenance</Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">View</Button>
-                          <Button variant="outline" size="sm">Edit</Button>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+          {/* Error Message */}
+          {error && (
+            <Card className="mb-6 border-red-200">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 text-red-600">
+                  <Warehouse className="w-4 h-4" />
+                  <span>{error}</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-              {/* Empty State for when no data */}
-              <div className="text-center py-12 hidden">
-                <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">No warehouses found</p>
-                <p className="text-gray-400 mt-2">Add your first warehouse to start managing inventory locations</p>
-                {hasFullAccess('inventory') && (
-                  <Link href="/inventory/warehouses/create" className="mt-4 inline-block">
-                    <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add First Warehouse
-                    </Button>
-                  </Link>
+          {/* Warehouses Table */}
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Warehouses</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Showing {warehouses.length} of {pagination.total} warehouses
+                  </p>
+                </div>
+                {canManage && (
+                  <Button asChild>
+                    <Link href="/inventory/warehouses/create">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Warehouse
+                    </Link>
+                  </Button>
                 )}
               </div>
-            </div>
-          </EnhancedCard>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                  <span>Loading warehouses...</span>
+                </div>
+              ) : warehouses.length === 0 ? (
+                <div className="text-center p-8">
+                  <Warehouse className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No warehouses found</h3>
+                  <p className="text-gray-600 mb-4">
+                    {searchTerm || filterLocation
+                      ? 'No warehouses match your current filters. Try adjusting your search criteria.'
+                      : 'Get started by creating your first warehouse.'}
+                  </p>
+                  {canManage && (
+                    <Button asChild>
+                      <Link href="/inventory/warehouses/create">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Warehouse
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {warehouses.map((warehouse) => (
+                    <Card key={warehouse.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {warehouse.name}
+                            </h3>
+                            <p className="text-sm text-gray-500">{warehouse.code}</p>
+                          </div>
+                          {getStatusBadge(warehouse)}
+                        </div>
+
+                        {warehouse.description && (
+                          <p className="text-sm text-gray-600 mb-3 truncate">
+                            {warehouse.description}
+                          </p>
+                        )}
+
+                        <div className="space-y-2 mb-4">
+                          <div className="flex items-center text-sm text-gray-600">
+                            <MapPin className="w-4 h-4 mr-2" />
+                            <span>{warehouse.location}</span>
+                          </div>
+
+                          {warehouse.contactPerson && (
+                            <div className="flex items-center text-sm text-gray-600">
+                              <span className="font-medium mr-2">Contact:</span>
+                              <span>{warehouse.contactPerson}</span>
+                            </div>
+                          )}
+
+                          {warehouse.contactPhone && (
+                            <div className="flex items-center text-sm text-gray-600">
+                              <Phone className="w-4 h-4 mr-2" />
+                              <span>{warehouse.contactPhone}</span>
+                            </div>
+                          )}
+
+                          {warehouse.contactEmail && (
+                            <div className="flex items-center text-sm text-gray-600">
+                              <Mail className="w-4 h-4 mr-2" />
+                              <span>{warehouse.contactEmail}</span>
+                            </div>
+                          )}
+
+                          {warehouse._count && (
+                            <div className="flex items-center text-sm text-gray-600">
+                              <Package className="w-4 h-4 mr-2" />
+                              <span>{warehouse._count.product_stock} products</span>
+                            </div>
+                          )}
+
+                          {warehouse.capacity && (
+                            <div className="flex items-center text-sm text-gray-600">
+                              <span className="font-medium mr-2">Capacity:</span>
+                              <span>{warehouse.capacity.toLocaleString()}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between pt-4 border-t">
+                          <div className="text-xs text-gray-500">
+                            Created: {new Date(warehouse.createdAt).toLocaleDateString()}
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button variant="ghost" size="sm" asChild>
+                              <Link href={`/inventory/warehouses/${warehouse.id}`}>
+                                <Eye className="w-4 h-4" />
+                              </Link>
+                            </Button>
+                            {canManage && (
+                              <Button variant="ghost" size="sm" asChild>
+                                <Link href={`/inventory/warehouses/${warehouse.id}/edit`}>
+                                  <Edit className="w-4 h-4" />
+                                </Link>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              {/* Pagination */}
+              {!loading && warehouses.length > 0 && pagination.pages > 1 && (
+                <div className="mt-6 flex items-center justify-between">
+                  <div className="text-sm text-gray-700">
+                    Showing page {pagination.page} of {pagination.pages}
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(pagination.page - 1)}
+                      disabled={pagination.page <= 1}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(pagination.page + 1)}
+                      disabled={pagination.page >= pagination.pages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
         </div>
-      </div>
-    </MainLayout>
+      </main>
+    </div>
   )
 }

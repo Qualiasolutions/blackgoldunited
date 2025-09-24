@@ -83,6 +83,10 @@ app/
     ├── clients/                # Clients API endpoints
     │   ├── route.ts           # GET (list), POST (create)
     │   └── [id]/route.ts      # GET, PUT, DELETE single client
+    ├── sales/                  # Sales API endpoints
+    │   └── invoices/           # Invoice CRUD operations
+    │       ├── route.ts       # GET (list), POST (create)
+    │       └── [id]/route.ts  # GET, PUT, DELETE single invoice
     └── [future-modules]/      # Additional API modules
 
 components/
@@ -150,6 +154,21 @@ export async function GET(request: NextRequest) {
 // With appropriate HTTP status codes (400, 401, 403, 404, 500)
 ```
 
+#### Invoice API Patterns (NEW!)
+```typescript
+// Invoice with line items structure
+export const invoiceSchema = z.object({
+  clientId: z.string().uuid(),
+  dueDate: z.string().datetime(),
+  items: z.array(invoiceItemSchema).min(1),
+  status: z.enum(['draft', 'sent', 'paid', 'overdue']),
+  taxRate: z.number().min(0).max(100)
+});
+
+// Auto-generated invoice numbers: INV-YYYYMMDD-NNNN
+// Real-time calculations for subtotal, tax, total
+```
+
 ### Module Development Pattern
 When creating new modules:
 1. **API First**: Create `/app/api/[module-name]/` endpoints
@@ -162,16 +181,19 @@ When creating new modules:
 ### Current Development Status
 **📊 REFER TO DEVELOPMENT_PLAN.md FOR EXACT STATUS**
 
-**Current Phase**: Phase 2 - Core Modules Implementation (Week 4 Ready)
-**Current Progress**: 40% Complete (3 weeks done, 11 weeks remaining)
+**Current Phase**: Phase 2 - Core Modules Implementation (Week 6 Ready)
+**Current Progress**: 55% Complete (5 weeks done, 9 weeks remaining)
 - **✅ SECURITY COMPLETE**: All 63 database tables secured with RLS
-- **✅ API INFRASTRUCTURE**: Complete Clients module API with role-based access
+- **✅ API INFRASTRUCTURE**: Complete API layer for Clients, Sales, and Inventory modules
 - **✅ AUTHENTICATION**: Working role-based middleware and permissions
 - **✅ FOUNDATION**: Architecture, auth, UI components, API layer complete
 - **✅ WEEK 3 COMPLETE**: Frontend-Backend Connection - Full Client Management System
+- **✅ WEEK 4 COMPLETE**: Sales Module Foundation - Complete Invoice Management System
+- **✅ WEEK 5 COMPLETE**: Inventory Management System - Product, Stock, and Warehouse Management
+- **✅ INVENTORY MODULE**: Full product CRUD, stock tracking, warehouse management, movement logging
 - **✅ REFERENCE PATTERNS**: Complete CRUD patterns established for all future modules
 
-**Next Steps**: Follow DEVELOPMENT_PLAN.md starting with Task 4.1 (Create invoice API endpoints)
+**Next Steps**: Follow DEVELOPMENT_PLAN.md starting with Week 6 - Purchase Management (Task 6.1: Create supplier API)
 
 ### Environment Variables
 ```bash

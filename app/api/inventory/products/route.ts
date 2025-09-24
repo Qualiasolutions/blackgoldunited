@@ -1,94 +1,124 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
+import { authenticateAndAuthorize } from '@/lib/auth/api-auth'
 
-// GET /api/inventory/products - Get all products
+// Product validation schema
+const productSchema = z.object({
+  productCode: z.string().min(1, 'Product code is required'),
+  name: z.string().min(1, 'Product name is required'),
+  description: z.string().optional(),
+  type: z.enum(['PRODUCT', 'SERVICE']).default('PRODUCT'),
+  categoryId: z.string().uuid().optional(),
+  unit: z.string().min(1, 'Unit is required'),
+  costPrice: z.number().min(0, 'Cost price must be non-negative').optional(),
+  sellingPrice: z.number().min(0, 'Selling price must be non-negative'),
+  minStock: z.number().min(0).optional(),
+  maxStock: z.number().min(0).optional(),
+  reorderLevel: z.number().min(0).optional(),
+  isActive: z.boolean().default(true),
+  isTaxable: z.boolean().default(true),
+  taxRate: z.number().min(0).max(100).default(0),
+  barcode: z.string().optional(),
+  sku: z.string().optional(),
+  weight: z.number().min(0).optional(),
+  dimensions: z.string().optional(),
+  notes: z.string().optional(),
+})
+
+const productUpdateSchema = productSchema.partial()
+
+// GET /api/inventory/products - List products with search and pagination
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Authenticate and authorize
+    const authResult = await authenticateAndAuthorize(request, 'inventory', 'GET')
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
 
-    // Extract query parameters
-    const { searchParams } = new URL(request.url)
-    const search = searchParams.get('search')
-    const categoryId = searchParams.get('categoryId')
-    const type = searchParams.get('type')
-    const lowStock = searchParams.get('lowStock') === 'true'
-    const limit = parseInt(searchParams.get('limit') || '10')
-    const offset = parseInt(searchParams.get('offset') || '0')
+    const supabase = await createClient()
 
-    // Build query with category and stock information
-    let query = supabase
+    const { searchParams } = new URL(request.url)
+
+    // Extract query parameters
+    const query = searchParams.get('query') || ''
+    const category = searchParams.get('category') || ''
+    const type = searchParams.get('type') || ''
+    const isActive = searchParams.get('isActive')
+    const lowStock = searchParams.get('lowStock') === 'true'
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 100)
+    const offset = (page - 1) * limit
+
+    // Build query
+    let queryBuilder = supabase
       .from('products')
       .select(`
         *,
-        category:categories(id, name),
         stocks(
-          id,
+          warehouseId,
           quantity,
           reservedQty,
           warehouse:warehouses(id, name, code)
         )
       `)
-      .eq('deletedAt', null)
-      .order('createdAt', { ascending: false })
+      .is('deletedAt', null)
 
-    // Add filters
-    if (search) {
-      query = query.or(`name.ilike.%${search}%,productCode.ilike.%${search}%,description.ilike.%${search}%`)
+    // Apply filters
+    if (query) {
+      queryBuilder = queryBuilder.or(`name.ilike.%${query}%,productCode.ilike.%${query}%,description.ilike.%${query}%`)
     }
 
-    if (categoryId) {
-      query = query.eq('categoryId', categoryId)
+    if (category) {
+      queryBuilder = queryBuilder.eq('categoryId', category)
     }
 
     if (type) {
-      query = query.eq('type', type)
+      queryBuilder = queryBuilder.eq('type', type)
     }
 
-    // Add pagination
-    query = query.range(offset, offset + limit - 1)
+    if (isActive !== null) {
+      queryBuilder = queryBuilder.eq('isActive', isActive === 'true')
+    }
 
-    const { data: products, error, count } = await query
+    // Get total count for pagination
+    const { count } = await queryBuilder
+
+    // Get paginated results
+    const { data: products, error } = await queryBuilder
+      .order('createdAt', { ascending: false })
+      .range(offset, offset + limit - 1)
 
     if (error) {
       console.error('Database error:', error)
       return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 })
     }
 
-    // Calculate total stock and apply low stock filter if needed
-    const productsWithStock = products?.map(product => {
-      const totalStock = product.stocks?.reduce((sum: number, stock: any) =>
-        sum + (stock.quantity || 0), 0) || 0
-      const reservedStock = product.stocks?.reduce((sum: number, stock: any) =>
-        sum + (stock.reservedQty || 0), 0) || 0
-      const availableStock = totalStock - reservedStock
-
-      return {
-        ...product,
-        totalStock,
-        reservedStock,
-        availableStock,
-        isLowStock: product.reorderLevel ? availableStock <= product.reorderLevel : false,
-        warehouses: product.stocks?.length || 0
-      }
-    }) || []
+    // Calculate total stock for each product
+    const productsWithStock = products?.map(product => ({
+      ...product,
+      totalStock: product.stocks?.reduce((total: number, stock: any) => total + Number(stock.quantity || 0), 0) || 0,
+      totalReserved: product.stocks?.reduce((total: number, stock: any) => total + Number(stock.reservedQty || 0), 0) || 0,
+      availableStock: product.stocks?.reduce((total: number, stock: any) => total + Number(stock.quantity || 0) - Number(stock.reservedQty || 0), 0) || 0,
+      lowStock: product.reorderLevel ?
+        (product.stocks?.reduce((total: number, stock: any) => total + Number(stock.quantity || 0), 0) || 0) <= Number(product.reorderLevel) :
+        false
+    }))
 
     // Filter by low stock if requested
     const filteredProducts = lowStock ?
-      productsWithStock.filter(p => p.isLowStock) :
+      productsWithStock?.filter(p => p.lowStock) :
       productsWithStock
 
     return NextResponse.json({
-      products: filteredProducts,
+      success: true,
+      data: filteredProducts,
       pagination: {
+        page,
         limit,
-        offset,
-        total: count || 0
+        total: count || 0,
+        pages: Math.ceil((count || 0) / limit)
       }
     })
 
@@ -101,26 +131,42 @@ export async function GET(request: NextRequest) {
 // POST /api/inventory/products - Create new product
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Authenticate and authorize
+    const authResult = await authenticateAndAuthorize(request, 'inventory', 'POST')
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
 
+    const supabase = await createClient()
     const body = await request.json()
 
-    // Validate required fields
-    const { name, unit, sellingPrice } = body
-    if (!name || !unit || sellingPrice === undefined) {
+    // Validate request data
+    const validationResult = productSchema.safeParse(body)
+    if (!validationResult.success) {
       return NextResponse.json({
-        error: 'Product name, unit, and selling price are required'
+        error: 'Validation failed',
+        details: validationResult.error.errors
       }, { status: 400 })
     }
 
+    const productData = validationResult.data
+
+    // Check for duplicate product code
+    const { data: existingProduct } = await supabase
+      .from('products')
+      .select('id')
+      .eq('productCode', productData.productCode)
+      .is('deletedAt', null)
+      .single()
+
+    if (existingProduct) {
+      return NextResponse.json({
+        error: 'Product code already exists'
+      }, { status: 409 })
+    }
+
     // Generate product code if not provided
-    if (!body.productCode) {
+    if (!productData.productCode) {
       const { data: lastProduct } = await supabase
         .from('products')
         .select('productCode')
@@ -130,35 +176,50 @@ export async function POST(request: NextRequest) {
 
       const lastNumber = lastProduct?.productCode ?
         parseInt(lastProduct.productCode.replace('PRD-', '')) || 0 : 0
-      body.productCode = `PRD-${String(lastNumber + 1).padStart(6, '0')}`
+      productData.productCode = `PRD-${String(lastNumber + 1).padStart(6, '0')}`
     }
 
-    // Insert new product
+    // Create the product
     const { data: product, error } = await supabase
       .from('products')
-      .insert({
-        ...body,
+      .insert([{
+        ...productData,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
-      })
-      .select(`
-        *,
-        category:categories(id, name)
-      `)
+      }])
+      .select()
       .single()
 
     if (error) {
       console.error('Database error:', error)
-      if (error.code === '23505') {
-        return NextResponse.json({ error: 'Product code already exists' }, { status: 409 })
-      }
       return NextResponse.json({ error: 'Failed to create product' }, { status: 500 })
     }
 
-    return NextResponse.json({ product }, { status: 201 })
+    // Initialize stock entries for all active warehouses
+    const { data: warehouses } = await supabase
+      .from('warehouses')
+      .select('id')
+      .eq('isActive', true)
+
+    if (warehouses && warehouses.length > 0) {
+      const stockEntries = warehouses.map(warehouse => ({
+        productId: product.id,
+        warehouseId: warehouse.id,
+        quantity: 0,
+        reservedQty: 0,
+        updatedAt: new Date().toISOString()
+      }))
+
+      await supabase.from('stocks').insert(stockEntries)
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: product
+    }, { status: 201 })
 
   } catch (error) {
-    console.error('API error:', error)
+    console.error('Unexpected error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

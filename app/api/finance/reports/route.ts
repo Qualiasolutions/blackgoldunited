@@ -55,10 +55,10 @@ export async function GET(request: NextRequest) {
         reportData = await generateTrialBalance(supabase, reportDate)
         break
       case 'general_ledger':
-        reportData = await generateGeneralLedger(supabase, startDate, reportDate)
+        reportData = await generateGeneralLedger(supabase, startDate || getFinancialYearStart(reportDate), reportDate)
         break
       case 'account_summary':
-        reportData = await generateAccountSummary(supabase, startDate, reportDate)
+        reportData = await generateAccountSummary(supabase, startDate || getFinancialYearStart(reportDate), reportDate)
         break
       case 'financial_position':
         reportData = await generateFinancialPosition(supabase, reportDate)
@@ -120,9 +120,9 @@ async function generateBalanceSheet(supabase: any, asOfDate: string) {
     .lte('journal_lines.journal_entry.entry_date', asOfDate)
 
   const balanceSheet = {
-    assets: { current: [], non_current: [], total: 0 },
-    liabilities: { current: [], non_current: [], total: 0 },
-    equity: { items: [], total: 0 },
+    assets: { current: [] as any[], non_current: [] as any[], total: 0 },
+    liabilities: { current: [] as any[], non_current: [] as any[], total: 0 },
+    equity: { items: [] as any[], total: 0 },
     total_assets: 0,
     total_liabilities_equity: 0
   }
@@ -186,8 +186,8 @@ async function generateIncomeStatement(supabase: any, startDate: string, endDate
     .lte('journal_lines.journal_entry.entry_date', endDate)
 
   const incomeStatement = {
-    revenue: { items: [], total: 0 },
-    expenses: { operating: [], non_operating: [], total: 0 },
+    revenue: { items: [] as any[], total: 0 },
+    expenses: { operating: [] as any[], non_operating: [] as any[], total: 0 },
     gross_profit: 0,
     operating_income: 0,
     net_income: 0
@@ -239,7 +239,7 @@ async function generateTrialBalance(supabase: any, asOfDate: string) {
     .lte('journal_lines.journal_entry.entry_date', asOfDate)
 
   const trialBalance = {
-    accounts: [],
+    accounts: [] as any[],
     totals: { debits: 0, credits: 0 }
   }
 

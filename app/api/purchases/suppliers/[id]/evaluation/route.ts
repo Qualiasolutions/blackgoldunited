@@ -17,10 +17,15 @@ const evaluationSchema = z.object({
   nextEvaluationDate: z.string().datetime().optional()
 })
 
+interface RouteParams {
+  params: Promise<{ id: string }>
+}
+
 // GET /api/purchases/suppliers/[id]/evaluation - Get supplier evaluations
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
+) {
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'GET')
@@ -29,7 +34,7 @@ export async function GET(
     }
 
     const supabase = await createClient()
-    const supplierId = params.id
+    const { id: supplierId } = await params
 
     // Get supplier evaluations with evaluator info
     const { data: evaluations, error } = await supabase
@@ -77,7 +82,8 @@ export async function GET(
 // POST /api/purchases/suppliers/[id]/evaluation - Create supplier evaluation
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
+) {
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'POST')
@@ -86,7 +92,7 @@ export async function POST(
     }
 
     const supabase = await createClient()
-    const supplierId = params.id
+    const { id: supplierId } = await params
     const body = await request.json()
 
     // Set evaluatedBy to current user

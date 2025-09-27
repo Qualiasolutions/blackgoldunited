@@ -37,10 +37,15 @@ const purchaseOrderUpdateSchema = z.object({
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional()
 })
 
+interface RouteParams {
+  params: Promise<{ id: string }>
+}
+
 // GET /api/purchases/orders/[id] - Get single purchase order
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
+) {
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'GET')
@@ -49,7 +54,7 @@ export async function GET(
     }
 
     const supabase = await createClient()
-    const orderId = params.id
+    const { id: orderId } = await params
 
     // Get purchase order with all related data
     const { data: purchaseOrder, error } = await supabase
@@ -165,7 +170,8 @@ export async function GET(
 // PUT /api/purchases/orders/[id] - Update purchase order
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
+) {
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'PUT')
@@ -174,7 +180,7 @@ export async function PUT(
     }
 
     const supabase = await createClient()
-    const orderId = params.id
+    const { id: orderId } = await params
     const body = await request.json()
 
     // Validate request data
@@ -291,7 +297,8 @@ export async function PUT(
 // DELETE /api/purchases/orders/[id] - Cancel purchase order (soft delete)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
+) {
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'DELETE')
@@ -300,7 +307,7 @@ export async function DELETE(
     }
 
     const supabase = await createClient()
-    const orderId = params.id
+    const { id: orderId } = await params
 
     // Check PO status - can only cancel DRAFT or SENT orders
     const { data: existingPO, error: poError } = await supabase

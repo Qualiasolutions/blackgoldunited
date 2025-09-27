@@ -45,10 +45,15 @@ const supplierUpdateSchema = z.object({
   notes: z.string().optional(),
 })
 
+interface RouteParams {
+  params: Promise<{ id: string }>
+}
+
 // GET /api/purchases/suppliers/[id] - Get single supplier with performance data
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
+) {
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'GET')
@@ -57,7 +62,7 @@ export async function GET(
     }
 
     const supabase = await createClient()
-    const supplierId = params.id
+    const { id: supplierId } = await params
 
     // Get supplier with performance data
     const { data: supplier, error } = await supabase
@@ -124,7 +129,8 @@ export async function GET(
 // PUT /api/purchases/suppliers/[id] - Update supplier
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
+) {
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'PUT')
@@ -133,7 +139,7 @@ export async function PUT(
     }
 
     const supabase = await createClient()
-    const supplierId = params.id
+    const { id: supplierId } = await params
     const body = await request.json()
 
     // Validate request data
@@ -195,7 +201,8 @@ export async function PUT(
 // DELETE /api/purchases/suppliers/[id] - Soft delete supplier
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
+) {
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'DELETE')
@@ -204,7 +211,7 @@ export async function DELETE(
     }
 
     const supabase = await createClient()
-    const supplierId = params.id
+    const { id: supplierId } = await params
 
     // Check if supplier has active purchase orders
     const { data: activePOs, error: poError } = await supabase

@@ -30,10 +30,15 @@ const receiptSchema = z.object({
   trackingNumber: z.string().optional()
 })
 
+interface RouteParams {
+  params: Promise<{ id: string }>
+}
+
 // POST /api/purchases/orders/[id]/receive - Receive purchase order items and update inventory
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
+) {
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'POST')
@@ -42,7 +47,7 @@ export async function POST(
     }
 
     const supabase = await createClient()
-    const purchaseOrderId = params.id
+    const { id: purchaseOrderId } = await params
     const body = await request.json()
 
     // Set receivedBy to current user
@@ -334,7 +339,8 @@ export async function POST(
 // GET /api/purchases/orders/[id]/receive - Get receipt history for purchase order
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
+) {
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'GET')
@@ -343,7 +349,7 @@ export async function GET(
     }
 
     const supabase = await createClient()
-    const purchaseOrderId = params.id
+    const { id: purchaseOrderId } = await params
 
     // Get all receipts for this PO
     const { data: receipts, error } = await supabase

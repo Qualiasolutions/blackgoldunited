@@ -19,16 +19,15 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context
   try {
     // Authenticate and authorize
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
+    const authResult = await authenticateAndAuthorize(request, 'attendance', 'GET')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
 
     const supabase = await createClient()
-    const attendanceId = params.id
+    const { id: attendanceId } = await context.params
 
     // Get attendance record with employee details
     const { data: attendanceRecord, error } = await supabase
@@ -138,10 +137,9 @@ export async function PUT(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context
   try {
     // Authenticate and authorize
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'PUT')
+    const authResult = await authenticateAndAuthorize(request, 'attendance', 'PUT')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -155,7 +153,7 @@ export async function PUT(
     }
 
     const supabase = await createClient()
-    const attendanceId = params.id
+    const { id: attendanceId } = await context.params
     const body = await request.json()
 
     // Validate request data
@@ -226,12 +224,12 @@ export async function PUT(
           entityType: 'attendance',
           entityId: existingRecord.employeeId,
           action: 'updated',
-          description: `Attendance record updated for ${existingRecord.employee.firstName} ${existingRecord.employee.lastName} on ${existingRecord.date}`,
+          description: `Attendance record updated for ${(existingRecord.employee as any)?.firstName} ${(existingRecord.employee as any)?.lastName} on ${existingRecord.date}`,
           userId: authResult.user.id,
           metadata: {
             attendanceId,
-            employeeNumber: existingRecord.employee.employeeNumber,
-            employeeName: `${existingRecord.employee.firstName} ${existingRecord.employee.lastName}`,
+            employeeNumber: (existingRecord.employee as any)?.employeeNumber,
+            employeeName: `${(existingRecord.employee as any)?.firstName} ${(existingRecord.employee as any)?.lastName}`,
             date: existingRecord.date,
             updatedFields: Object.keys(validatedData)
           },
@@ -258,10 +256,9 @@ export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context
   try {
     // Authenticate and authorize
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'DELETE')
+    const authResult = await authenticateAndAuthorize(request, 'attendance', 'DELETE')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -275,7 +272,7 @@ export async function DELETE(
     }
 
     const supabase = await createClient()
-    const attendanceId = params.id
+    const { id: attendanceId } = await context.params
 
     // Get attendance record details before deletion
     const { data: attendanceRecord, error: checkError } = await supabase
@@ -312,12 +309,12 @@ export async function DELETE(
           entityType: 'attendance',
           entityId: attendanceRecord.employeeId,
           action: 'deleted',
-          description: `Attendance record deleted for ${attendanceRecord.employee.firstName} ${attendanceRecord.employee.lastName} on ${attendanceRecord.date}`,
+          description: `Attendance record deleted for ${(attendanceRecord.employee as any)?.firstName} ${(attendanceRecord.employee as any)?.lastName} on ${attendanceRecord.date}`,
           userId: authResult.user.id,
           metadata: {
             attendanceId,
-            employeeNumber: attendanceRecord.employee.employeeNumber,
-            employeeName: `${attendanceRecord.employee.firstName} ${attendanceRecord.employee.lastName}`,
+            employeeNumber: (attendanceRecord.employee as any)?.employeeNumber,
+            employeeName: `${(attendanceRecord.employee as any)?.firstName} ${(attendanceRecord.employee as any)?.lastName}`,
             date: attendanceRecord.date
           },
           createdAt: new Date().toISOString()
@@ -328,7 +325,7 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: `Attendance record for ${attendanceRecord.employee.firstName} ${attendanceRecord.employee.lastName} on ${attendanceRecord.date} deleted successfully`
+      message: `Attendance record for ${(attendanceRecord.employee as any)?.firstName} ${(attendanceRecord.employee as any)?.lastName} on ${attendanceRecord.date} deleted successfully`
     })
 
   } catch (error) {

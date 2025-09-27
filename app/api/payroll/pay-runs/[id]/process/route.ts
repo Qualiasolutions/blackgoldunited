@@ -137,10 +137,14 @@ async function calculateEmployeeSalary(supabase: any, employee: any, payPeriodSt
   }
 }
 
+interface RouteParams {
+  params: Promise<{ id: string }>
+}
+
 // POST /api/payroll/pay-runs/[id]/process - Process pay run calculations
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
 ) {
   try {
     // Authenticate and authorize
@@ -149,3 +153,195 @@ export async function POST(
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
 
+    const { id } = await params
+    const supabase = await createClient()
+
+    // Check if pay run exists and is in correct status
+    const { data: payRun, error: fetchError } = await supabase
+      .from('pay_runs')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (fetchError) {
+      if (fetchError.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Pay run not found' }, { status: 404 })
+      }
+      return NextResponse.json({ error: 'Failed to fetch pay run' }, { status: 500 })
+    }
+
+    if (payRun.status !== 'DRAFT') {
+      return NextResponse.json({
+        error: 'Can only process pay runs in DRAFT status'
+      }, { status: 400 })
+    }
+
+    // Update pay run status to PROCESSING
+    await supabase
+      .from('pay_runs')
+      .update({ status: 'PROCESSING' })
+      .eq('id', id)
+
+    try {
+      // Get eligible employees for this pay run
+      let employeeQuery = supabase
+        .from('employees')
+        .select(`
+          *,
+          department:departments(id, name),
+          designation:designations(id, title)
+        `)
+        .eq('status', 'ACTIVE')
+
+      // Filter by departments if specified
+      if (payRun.department_ids && payRun.department_ids.length > 0) {
+        employeeQuery = employeeQuery.in('department_id', payRun.department_ids)
+      }
+
+      // Filter by specific employees if specified
+      if (payRun.employee_ids && payRun.employee_ids.length > 0) {
+        employeeQuery = employeeQuery.in('id', payRun.employee_ids)
+      }
+
+      const { data: employees, error: employeeError } = await employeeQuery
+
+      if (employeeError) {
+        throw new Error(`Failed to fetch employees: ${employeeError.message}`)
+      }
+
+      if (!employees || employees.length === 0) {
+        throw new Error('No eligible employees found for this pay run')
+      }
+
+      const processedPaySlips = []
+      const errors = []
+
+      // Process each employee
+      for (const employee of employees) {
+        try {
+          // Check if pay slip already exists
+          const { data: existingPaySlip } = await supabase
+            .from('pay_slips')
+            .select('id')
+            .eq('pay_run_id', id)
+            .eq('employee_id', employee.id)
+            .single()
+
+          if (existingPaySlip) {
+            continue // Skip if already processed
+          }
+
+          // Calculate salary for this employee
+          const salaryCalculation = await calculateEmployeeSalary(
+            supabase,
+            employee,
+            payRun.pay_period_start,
+            payRun.pay_period_end,
+            payRun.include_overtime,
+            payRun.include_loan_deductions
+          )
+
+          // Create pay slip
+          const { data: paySlip, error: paySlipError } = await supabase
+            .from('pay_slips')
+            .insert({
+              pay_run_id: id,
+              employee_id: employee.id,
+              pay_period_start: payRun.pay_period_start,
+              pay_period_end: payRun.pay_period_end,
+              working_days: salaryCalculation.working_days,
+              earnings: salaryCalculation.earnings,
+              deductions: salaryCalculation.deductions,
+              gross_pay: salaryCalculation.gross_pay,
+              total_deductions: salaryCalculation.total_deductions,
+              net_pay: salaryCalculation.net_pay,
+              status: 'PROCESSED',
+              generated_at: new Date().toISOString(),
+              created_by: authResult.user.id
+            })
+            .select()
+            .single()
+
+          if (paySlipError) {
+            errors.push(`Employee ${employee.employee_number}: ${paySlipError.message}`)
+            continue
+          }
+
+          processedPaySlips.push({
+            employee_id: employee.id,
+            employee_number: employee.employee_number,
+            employee_name: `${employee.first_name} ${employee.last_name}`,
+            gross_pay: salaryCalculation.gross_pay,
+            net_pay: salaryCalculation.net_pay,
+            pay_slip_id: paySlip.id
+          })
+
+        } catch (employeeError) {
+          errors.push(`Employee ${employee.employee_number}: ${employeeError.message}`)
+        }
+      }
+
+      // Update pay run status to COMPLETED if successful
+      const finalStatus = errors.length === 0 ? 'COMPLETED' : 'DRAFT'
+      const updateData: any = {
+        status: finalStatus,
+        total_employees: processedPaySlips.length
+      }
+
+      if (finalStatus === 'COMPLETED') {
+        updateData.completed_at = new Date().toISOString()
+        updateData.total_gross_pay = processedPaySlips.reduce((sum, slip) => sum + slip.gross_pay, 0)
+        updateData.total_net_pay = processedPaySlips.reduce((sum, slip) => sum + slip.net_pay, 0)
+      }
+
+      await supabase
+        .from('pay_runs')
+        .update(updateData)
+        .eq('id', id)
+
+      // Log activity
+      await supabase.from('activity_logs').insert({
+        user_id: authResult.user.id,
+        action: 'PROCESS_PAY_RUN',
+        entity_type: 'pay_run',
+        entity_id: id,
+        details: {
+          pay_run_number: payRun.pay_run_number,
+          processed_employees: processedPaySlips.length,
+          errors_count: errors.length,
+          total_gross_pay: processedPaySlips.reduce((sum, slip) => sum + slip.gross_pay, 0)
+        }
+      })
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          processed_count: processedPaySlips.length,
+          total_employees: employees.length,
+          errors_count: errors.length,
+          pay_slips: processedPaySlips,
+          errors: errors,
+          status: finalStatus
+        },
+        message: errors.length === 0
+          ? 'Pay run processed successfully'
+          : `Pay run processed with ${errors.length} errors`
+      })
+
+    } catch (processingError) {
+      // Revert pay run status to DRAFT on error
+      await supabase
+        .from('pay_runs')
+        .update({ status: 'DRAFT' })
+        .eq('id', id)
+
+      throw processingError
+    }
+
+  } catch (error) {
+    console.error('Pay run processing error:', error)
+    return NextResponse.json({
+      error: `Pay run processing failed: ${error.message}`
+    }, { status: 500 })
+  }
+}

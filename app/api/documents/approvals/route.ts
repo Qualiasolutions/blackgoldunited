@@ -310,7 +310,7 @@ async function processApprovalAction(
   } else if (action === 'REQUEST_CHANGES') {
     overallStatus = 'CHANGES_REQUESTED'
     documentStatus = 'DRAFT'
-  } else if (levels?.every(l => l.status === 'APPROVED')) {
+  } else if (levels?.every((l: any) => l.status === 'APPROVED')) {
     overallStatus = 'APPROVED'
     documentStatus = 'APPROVED'
   }

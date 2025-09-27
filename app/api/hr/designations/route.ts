@@ -16,7 +16,7 @@ const designationSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     // Authenticate and authorize - HR module access required
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
+    const authResult = await authenticateAndAuthorize(request, 'organizational', 'GET')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Authenticate and authorize - HR write access required
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'POST')
+    const authResult = await authenticateAndAuthorize(request, 'organizational', 'POST')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -209,7 +209,7 @@ export async function POST(request: NextRequest) {
           userId: authResult.user.id,
           metadata: {
             designationTitle: designation.title,
-            departmentName: designation.department?.name || 'General',
+            departmentName: designation.department ? (designation.department as any).name : 'General',
             levelOrder: designation.levelOrder
           },
           createdAt: new Date().toISOString()

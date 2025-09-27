@@ -19,10 +19,14 @@ const purchaseInvoiceUpdateSchema = z.object({
   attachmentFilename: z.string().optional()
 })
 
+interface RouteParams {
+  params: Promise<{ id: string }>
+}
+
 // GET /api/purchases/invoices/[id] - Get single purchase invoice
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
 ) {
   try {
     // Authenticate and authorize
@@ -32,7 +36,7 @@ export async function GET(
     }
 
     const supabase = await createClient()
-    const invoiceId = params.id
+    const { id: invoiceId } = await params
 
     // Get purchase invoice with all related data
     const { data: invoice, error } = await supabase
@@ -176,7 +180,7 @@ export async function GET(
 // PUT /api/purchases/invoices/[id] - Update purchase invoice
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
 ) {
   try {
     // Authenticate and authorize
@@ -186,7 +190,7 @@ export async function PUT(
     }
 
     const supabase = await createClient()
-    const invoiceId = params.id
+    const { id: invoiceId } = await params
     const body = await request.json()
 
     // Validate request data
@@ -295,7 +299,7 @@ export async function PUT(
 // DELETE /api/purchases/invoices/[id] - Cancel purchase invoice (soft delete)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
 ) {
   try {
     // Authenticate and authorize
@@ -305,7 +309,7 @@ export async function DELETE(
     }
 
     const supabase = await createClient()
-    const invoiceId = params.id
+    const { id: invoiceId } = await params
 
     // Check invoice status - can only cancel unpaid invoices
     const { data: existingInvoice, error: invoiceError } = await supabase

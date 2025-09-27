@@ -20,13 +20,12 @@ export async function GET(
   const { id } = await context.params
   try {
     // Authenticate and authorize
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
+    const authResult = await authenticateAndAuthorize(request, 'organizational', 'GET')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
 
     const supabase = await createClient()
-    const id = id
 
     // Get designation details with related data
     const { data: designation, error } = await supabase
@@ -84,7 +83,7 @@ export async function PUT(
   const { id } = await context.params
   try {
     // Authenticate and authorize
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'PUT')
+    const authResult = await authenticateAndAuthorize(request, 'organizational', 'PUT')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -98,7 +97,6 @@ export async function PUT(
     }
 
     const supabase = await createClient()
-    const id = id
     const body = await request.json()
 
     // Validate request data
@@ -248,7 +246,7 @@ export async function DELETE(
   const { id } = await context.params
   try {
     // Authenticate and authorize
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'DELETE')
+    const authResult = await authenticateAndAuthorize(request, 'organizational', 'DELETE')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -262,7 +260,6 @@ export async function DELETE(
     }
 
     const supabase = await createClient()
-    const id = id
 
     // Check if designation exists and get details
     const { data: designation, error: checkError } = await supabase

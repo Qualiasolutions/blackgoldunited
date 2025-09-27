@@ -86,7 +86,7 @@ async function calculateEmployeeSalary(supabase: any, employee: any, payPeriodSt
       .lte('work_date', payPeriodEnd)
 
     if (overtimeRecords && overtimeRecords.length > 0) {
-      const totalOvertimePay = overtimeRecords.reduce((sum, record) => sum + (record.overtime_pay || 0), 0)
+      const totalOvertimePay = overtimeRecords.reduce((sum: number, record: any) => sum + (record.overtime_pay || 0), 0)
       if (totalOvertimePay > 0) {
         earnings.push({
           component_id: null,
@@ -277,7 +277,7 @@ export async function POST(
           })
 
         } catch (employeeError) {
-          errors.push(`Employee ${employee.employee_number}: ${employeeError.message}`)
+          errors.push(`Employee ${employee.employee_number}: ${(employeeError as Error).message}`)
         }
       }
 
@@ -341,7 +341,7 @@ export async function POST(
   } catch (error) {
     console.error('Pay run processing error:', error)
     return NextResponse.json({
-      error: `Pay run processing failed: ${error.message}`
+      error: `Pay run processing failed: ${(error as Error).message}`
     }, { status: 500 })
   }
 }

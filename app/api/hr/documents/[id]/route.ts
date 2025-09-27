@@ -20,10 +20,10 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { id: id } = await context.params
+  const { id } = await context.params
   try {
     // Authenticate and authorize
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
+    const authResult = await authenticateAndAuthorize(request, 'employees', 'GET')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -90,8 +90,8 @@ export async function GET(
         id: employee.id,
         name: `${employee.firstName} ${employee.lastName}`,
         employeeNumber: employee.employeeNumber,
-        department: employee.department?.name || '',
-        designation: employee.designation?.title || ''
+        department: employee.department ? (employee.department as any).name : '',
+        designation: employee.designation ? (employee.designation as any).title : ''
       },
       documentType: metadata.documentType || 'other',
       documentName: metadata.documentName || '',
@@ -104,8 +104,8 @@ export async function GET(
       isVerified: metadata.isVerified === true,
       tags: metadata.tags || [],
       uploadedBy: documentLog.user ? {
-        name: `${documentLog.user.firstName} ${documentLog.user.lastName}`,
-        email: documentLog.user.email
+        name: `${(documentLog.user as any).firstName} ${(documentLog.user as any).lastName}`,
+        email: (documentLog.user as any).email
       } : null,
       createdAt: documentLog.createdAt,
       updatedAt: documentLog.updatedAt
@@ -125,11 +125,14 @@ export async function GET(
       }
     }
 
-    document.expiryStatus = expiryStatus
+    const documentWithStatus = {
+      ...document,
+      expiryStatus
+    }
 
     return NextResponse.json({
       success: true,
-      data: document
+      data: documentWithStatus
     })
 
   } catch (error) {
@@ -146,7 +149,7 @@ export async function PUT(
   const { id } = await context.params
   try {
     // Authenticate and authorize
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'PUT')
+    const authResult = await authenticateAndAuthorize(request, 'employees', 'PUT')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -298,7 +301,7 @@ export async function DELETE(
   const { id } = await context.params
   try {
     // Authenticate and authorize
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'DELETE')
+    const authResult = await authenticateAndAuthorize(request, 'employees', 'DELETE')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }

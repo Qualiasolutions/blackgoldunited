@@ -26,7 +26,7 @@ const employeeShiftSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     // Authenticate and authorize - HR module access required
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
+    const authResult = await authenticateAndAuthorize(request, 'attendance', 'GET')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Authenticate and authorize - HR write access required
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'POST')
+    const authResult = await authenticateAndAuthorize(request, 'attendance', 'POST')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }

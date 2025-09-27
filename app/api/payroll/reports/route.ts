@@ -383,7 +383,7 @@ export async function GET(request: NextRequest) {
     console.error('Payroll report generation error:', error)
     return NextResponse.json({
       error: 'Failed to generate report',
-      details: error.message
+      details: (error as Error).message
     }, { status: 500 })
   }
 }

@@ -141,15 +141,15 @@ async function generatePurchaseSummaryReport(supabase: any, params: any) {
 
   // Calculate summary metrics
   const totalOrders = purchaseOrders?.length || 0
-  const totalValue = purchaseOrders?.reduce((sum, po) => sum + (po.totalAmount || 0), 0) || 0
+  const totalValue = purchaseOrders?.reduce((sum: number, po: any) => sum + (po.totalAmount || 0), 0) || 0
   const avgOrderValue = totalOrders > 0 ? totalValue / totalOrders : 0
 
-  const statusCounts = purchaseOrders?.reduce((acc: any, po) => {
+  const statusCounts = purchaseOrders?.reduce((acc: any, po: any) => {
     acc[po.status] = (acc[po.status] || 0) + 1
     return acc
   }, {}) || {}
 
-  const supplierCounts = purchaseOrders?.reduce((acc: any, po) => {
+  const supplierCounts = purchaseOrders?.reduce((acc: any, po: any) => {
     const supplierKey = `${po.supplier?.name || 'Unknown'} (${po.supplier?.supplierCode || 'N/A'})`
     acc[supplierKey] = (acc[supplierKey] || 0) + 1
     return acc
@@ -208,7 +208,7 @@ async function generateSupplierPerformanceReport(supabase: any, params: any) {
   if (error) throw error
 
   // Calculate performance metrics for each supplier
-  const performanceData = suppliers?.map(supplier => {
+  const performanceData = suppliers?.map((supplier: any) => {
     const orders = supplier.purchase_orders || []
     const totalOrders = orders.length
     const totalValue = orders.reduce((sum: number, po: any) => sum + (po.totalAmount || 0), 0)
@@ -241,17 +241,17 @@ async function generateSupplierPerformanceReport(supabase: any, params: any) {
   }) || []
 
   // Sort by total value descending
-  performanceData.sort((a, b) => b.metrics.totalValue - a.metrics.totalValue)
+  performanceData.sort((a: any, b: any) => b.metrics.totalValue - a.metrics.totalValue)
 
   return {
     suppliers: performanceData,
     summary: {
       totalSuppliers: performanceData.length,
-      totalSpend: performanceData.reduce((sum, s) => sum + s.metrics.totalValue, 0),
+      totalSpend: performanceData.reduce((sum: number, s: any) => sum + s.metrics.totalValue, 0),
       avgCompletionRate: performanceData.length > 0 ?
-        performanceData.reduce((sum, s) => sum + s.metrics.completionRate, 0) / performanceData.length : 0,
+        performanceData.reduce((sum: number, s: any) => sum + s.metrics.completionRate, 0) / performanceData.length : 0,
       avgOnTimeRate: performanceData.length > 0 ?
-        performanceData.reduce((sum, s) => sum + s.metrics.onTimeDeliveryRate, 0) / performanceData.length : 0
+        performanceData.reduce((sum: number, s: any) => sum + s.metrics.onTimeDeliveryRate, 0) / performanceData.length : 0
     }
   }
 }
@@ -282,7 +282,7 @@ async function generateSpendAnalysisReport(supabase: any, params: any) {
   if (error) throw error
 
   // Group by supplier
-  const supplierSpend = spendData?.reduce((acc: any, po) => {
+  const supplierSpend = spendData?.reduce((acc: any, po: any) => {
     const supplierId = po.supplier?.id || 'unknown'
     const supplierInfo = po.supplier || { name: 'Unknown', supplierCode: 'N/A', category: 'OTHER' }
 
@@ -308,20 +308,20 @@ async function generateSpendAnalysisReport(supabase: any, params: any) {
     .slice(0, limit)
 
   // Group by category
-  const categorySpend = spendData?.reduce((acc: any, po) => {
+  const categorySpend = spendData?.reduce((acc: any, po: any) => {
     const category = po.supplier?.category || 'OTHER'
     acc[category] = (acc[category] || 0) + (po.totalAmount || 0)
     return acc
   }, {}) || {}
 
   // Monthly trend
-  const monthlySpend = spendData?.reduce((acc: any, po) => {
+  const monthlySpend = spendData?.reduce((acc: any, po: any) => {
     const month = new Date(po.orderDate).toISOString().substr(0, 7) // YYYY-MM
     acc[month] = (acc[month] || 0) + (po.totalAmount || 0)
     return acc
   }, {}) || {}
 
-  const totalSpend = spendData?.reduce((sum, po) => sum + (po.totalAmount || 0), 0) || 0
+  const totalSpend = spendData?.reduce((sum: number, po: any) => sum + (po.totalAmount || 0), 0) || 0
 
   return {
     totalSpend,
@@ -356,14 +356,14 @@ async function generatePendingApprovalsReport(supabase: any, params: any) {
   if (error) throw error
 
   // Calculate aging
-  const ordersWithAging = pendingOrders?.map(order => ({
+  const ordersWithAging = pendingOrders?.map((order: any) => ({
     ...order,
     daysWaiting: Math.floor((new Date().getTime() - new Date(order.orderDate).getTime()) / (1000 * 60 * 60 * 24))
   })) || []
 
-  const totalPendingValue = ordersWithAging.reduce((sum, order) => sum + (order.totalAmount || 0), 0)
+  const totalPendingValue = ordersWithAging.reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0)
   const avgWaitTime = ordersWithAging.length > 0 ?
-    ordersWithAging.reduce((sum, order) => sum + order.daysWaiting, 0) / ordersWithAging.length : 0
+    ordersWithAging.reduce((sum: number, order: any) => sum + order.daysWaiting, 0) / ordersWithAging.length : 0
 
   return {
     pendingOrders: ordersWithAging,
@@ -371,8 +371,8 @@ async function generatePendingApprovalsReport(supabase: any, params: any) {
       totalPendingOrders: ordersWithAging.length,
       totalPendingValue,
       avgWaitTime: Math.round(avgWaitTime * 100) / 100,
-      urgentOrders: ordersWithAging.filter(order => order.priority === 'URGENT').length,
-      overdueOrders: ordersWithAging.filter(order => order.daysWaiting > 7).length
+      urgentOrders: ordersWithAging.filter((order: any) => order.priority === 'URGENT').length,
+      overdueOrders: ordersWithAging.filter((order: any) => order.daysWaiting > 7).length
     }
   }
 }
@@ -406,7 +406,7 @@ async function generateOverdueInvoicesReport(supabase: any, params: any) {
   if (error) throw error
 
   // Calculate overdue details
-  const invoicesWithDetails = overdueInvoices?.map(invoice => {
+  const invoicesWithDetails = overdueInvoices?.map((invoice: any) => {
     const paidAmount = (invoice.payments || [])
       .filter((p: any) => p.status === 'COMPLETED')
       .reduce((sum: number, p: any) => sum + p.amount, 0)
@@ -422,9 +422,9 @@ async function generateOverdueInvoicesReport(supabase: any, params: any) {
     }
   }) || []
 
-  const totalOverdueAmount = invoicesWithDetails.reduce((sum, inv) => sum + inv.remainingAmount, 0)
+  const totalOverdueAmount = invoicesWithDetails.reduce((sum: number, inv: any) => sum + inv.remainingAmount, 0)
   const avgDaysOverdue = invoicesWithDetails.length > 0 ?
-    invoicesWithDetails.reduce((sum, inv) => sum + inv.daysOverdue, 0) / invoicesWithDetails.length : 0
+    invoicesWithDetails.reduce((sum: number, inv: any) => sum + inv.daysOverdue, 0) / invoicesWithDetails.length : 0
 
   return {
     overdueInvoices: invoicesWithDetails,
@@ -432,7 +432,7 @@ async function generateOverdueInvoicesReport(supabase: any, params: any) {
       totalOverdueInvoices: invoicesWithDetails.length,
       totalOverdueAmount,
       avgDaysOverdue: Math.round(avgDaysOverdue * 100) / 100,
-      criticalOverdue: invoicesWithDetails.filter(inv => inv.daysOverdue > 30).length
+      criticalOverdue: invoicesWithDetails.filter((inv: any) => inv.daysOverdue > 30).length
     }
   }
 }

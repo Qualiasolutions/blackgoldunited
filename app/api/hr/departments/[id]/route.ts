@@ -20,13 +20,12 @@ export async function GET(
   const { id } = await context.params
   try {
     // Authenticate and authorize
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
+    const authResult = await authenticateAndAuthorize(request, 'organizational', 'GET')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
 
     const supabase = await createClient()
-    const id = params.id
 
     // Get department details with related data
     const { data: department, error } = await supabase
@@ -95,7 +94,7 @@ export async function PUT(
   const { id } = await context.params
   try {
     // Authenticate and authorize
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'PUT')
+    const authResult = await authenticateAndAuthorize(request, 'organizational', 'PUT')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -109,7 +108,6 @@ export async function PUT(
     }
 
     const supabase = await createClient()
-    const id = params.id
     const body = await request.json()
 
     // Validate request data
@@ -266,7 +264,7 @@ export async function PUT(
             departmentName: updatedDepartment.name,
             updatedFields: Object.keys(validatedData),
             managerName: updatedDepartment.manager ?
-              `${updatedDepartment.manager.firstName} ${updatedDepartment.manager.lastName}` : null
+              `${(updatedDepartment.manager as any).firstName} ${(updatedDepartment.manager as any).lastName}` : null
           },
           createdAt: new Date().toISOString()
         }])
@@ -293,7 +291,7 @@ export async function DELETE(
   const { id } = await context.params
   try {
     // Authenticate and authorize
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'DELETE')
+    const authResult = await authenticateAndAuthorize(request, 'organizational', 'DELETE')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -307,7 +305,6 @@ export async function DELETE(
     }
 
     const supabase = await createClient()
-    const id = params.id
 
     // Check if department exists and get details
     const { data: department, error: checkError } = await supabase
@@ -324,7 +321,7 @@ export async function DELETE(
     const { data: employees } = await supabase
       .from('employees')
       .select('id, firstName, lastName')
-      .eq('id', id)
+      .eq('departmentId', id)
       .is('deletedAt', null)
 
     if (employees && employees.length > 0) {

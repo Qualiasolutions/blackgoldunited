@@ -26,7 +26,7 @@ const documentSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     // Authenticate and authorize - HR module access required
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
+    const authResult = await authenticateAndAuthorize(request, 'employees', 'GET')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
         isRequired: metadata.isRequired === true,
         isVerified: metadata.isVerified === true,
         tags: metadata.tags || [],
-        uploadedBy: log.user ? `${log.user.firstName} ${log.user.lastName}` : '',
+        uploadedBy: log.user ? `${(log.user as any).firstName} ${(log.user as any).lastName}` : '',
         createdAt: log.createdAt,
         updatedAt: log.updatedAt
       }
@@ -175,7 +175,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Authenticate and authorize - HR write access required
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'POST')
+    const authResult = await authenticateAndAuthorize(request, 'employees', 'POST')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -287,7 +287,7 @@ export async function POST(request: NextRequest) {
         employeeNumber: employee.employeeNumber
       },
       ...documentMetadata,
-      uploadedBy: documentEntry.user ? `${documentEntry.user.firstName} ${documentEntry.user.lastName}` : '',
+      uploadedBy: documentEntry.user ? `${(documentEntry.user as any).firstName} ${(documentEntry.user as any).lastName}` : '',
       createdAt: documentEntry.createdAt,
       updatedAt: documentEntry.createdAt
     }

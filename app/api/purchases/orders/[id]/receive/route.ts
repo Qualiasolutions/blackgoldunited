@@ -112,7 +112,7 @@ export async function POST(
       const totalReceived = (poItem.receivedQuantity || 0) + receiptItem.receivedQuantity
       if (totalReceived > poItem.quantity) {
         return NextResponse.json({
-          error: `Cannot receive ${receiptItem.receivedQuantity} of ${poItem.product.name}. Only ${poItem.quantity - (poItem.receivedQuantity || 0)} remaining to receive.`
+          error: `Cannot receive ${receiptItem.receivedQuantity} of ${(poItem.product as any)?.name}. Only ${poItem.quantity - (poItem.receivedQuantity || 0)} remaining to receive.`
         }, { status: 400 })
       }
     }
@@ -174,6 +174,10 @@ export async function POST(
 
     for (const receiptItem of receiptItems) {
       const poItem = poItemsMap.get(receiptItem.purchaseOrderItemId)
+      if (!poItem) {
+        console.error(`PO item not found: ${receiptItem.purchaseOrderItemId}`)
+        continue
+      }
 
       // Create receipt item
       const { data: createdReceiptItem, error: receiptItemError } = await supabase
@@ -258,7 +262,7 @@ export async function POST(
               referenceId: receipt.id,
               referenceType: 'purchase_receipt',
               referenceNumber: receiptNumber,
-              notes: `Purchase receipt from PO ${purchaseOrder.poNumber} - ${purchaseOrder.supplier.name}`,
+              notes: `Purchase receipt from PO ${purchaseOrder.poNumber} - ${(purchaseOrder.supplier as any)?.name}`,
               batchNumber: receiptItem.batchNumber,
               expiryDate: receiptItem.expiryDate,
               movementDate: receiptInfo.receivedDate,
@@ -271,7 +275,7 @@ export async function POST(
           } else {
             movementRecords.push({
               productId: poItem.productId,
-              productName: poItem.product.name,
+              productName: (poItem.product as any)?.name,
               warehouseId: receiptItem.warehouseId,
               quantity: receiptItem.receivedQuantity,
               movementType: 'IN'

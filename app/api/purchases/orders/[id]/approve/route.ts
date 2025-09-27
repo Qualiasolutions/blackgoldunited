@@ -31,7 +31,7 @@ export async function POST(
     }
 
     const supabase = await createClient()
-    const orderId = params.id
+    const { id: orderId } = await params
     const body = await request.json()
 
     // Validate request data
@@ -57,7 +57,7 @@ export async function POST(
         requiresApproval,
         approvalThreshold,
         supplierId,
-        supplier:suppliers!inner(name)
+        supplier:suppliers(name)
       `)
       .eq('id', orderId)
       .is('deletedAt', null)
@@ -196,7 +196,7 @@ export async function POST(
           metadata: {
             poNumber: purchaseOrder.poNumber,
             totalAmount: purchaseOrder.totalAmount,
-            supplierName: purchaseOrder.supplier?.name,
+            supplierName: (purchaseOrder.supplier as any)?.name,
             comments
           },
           createdAt: new Date().toISOString()
@@ -234,7 +234,7 @@ export async function GET(
     }
 
     const supabase = await createClient()
-    const orderId = params.id
+    const { id: orderId } = await params
 
     // Get all approvals for this PO
     const { data: approvals, error } = await supabase

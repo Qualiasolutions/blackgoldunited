@@ -258,7 +258,7 @@ export async function PUT(
       entity_type: 'overtime_record',
       entity_id: id,
       details: {
-        employee_name: `${existingRecord.employee.first_name} ${existingRecord.employee.last_name}`,
+        employee_name: `${(existingRecord.employee as any).first_name} ${(existingRecord.employee as any).last_name}`,
         updated_fields: Object.keys(recordUpdateData),
         previous_status: existingRecord.status,
         new_status: updateData.status || existingRecord.status
@@ -336,7 +336,7 @@ export async function DELETE(
       entity_type: 'overtime_record',
       entity_id: id,
       details: {
-        employee_name: `${existingRecord.employee.first_name} ${existingRecord.employee.last_name}`,
+        employee_name: `${(existingRecord.employee as any).first_name} ${(existingRecord.employee as any).last_name}`,
         work_date: existingRecord.work_date
       }
     })

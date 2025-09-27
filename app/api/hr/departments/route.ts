@@ -16,7 +16,7 @@ const departmentSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     // Authenticate and authorize - HR module access required
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
+    const authResult = await authenticateAndAuthorize(request, 'organizational', 'GET')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Authenticate and authorize - HR write access required
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'POST')
+    const authResult = await authenticateAndAuthorize(request, 'organizational', 'POST')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -272,8 +272,8 @@ export async function POST(request: NextRequest) {
           metadata: {
             departmentName: department.name,
             managerName: department.manager ?
-              `${department.manager.firstName} ${department.manager.lastName}` : null,
-            parentDepartment: department.parent?.name || null
+              `${(department.manager as any).firstName} ${(department.manager as any).lastName}` : null,
+            parentDepartment: department.parent ? (department.parent as any).name : null
           },
           createdAt: new Date().toISOString()
         }])

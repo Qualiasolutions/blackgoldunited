@@ -86,15 +86,15 @@ export async function GET(
 
     // Group earnings and deductions by type
     const earningsBreakdown = {
-      basic: paySlip.earnings?.filter(e => e.component_name.toLowerCase().includes('basic')) || [],
-      allowances: paySlip.earnings?.filter(e => !e.component_name.toLowerCase().includes('basic') && !e.component_name.toLowerCase().includes('overtime')) || [],
-      overtime: paySlip.earnings?.filter(e => e.component_name.toLowerCase().includes('overtime')) || []
+      basic: paySlip.earnings?.filter((e: any) => e.component_name.toLowerCase().includes('basic')) || [],
+      allowances: paySlip.earnings?.filter((e: any) => !e.component_name.toLowerCase().includes('basic') && !e.component_name.toLowerCase().includes('overtime')) || [],
+      overtime: paySlip.earnings?.filter((e: any) => e.component_name.toLowerCase().includes('overtime')) || []
     }
 
     const deductionsBreakdown = {
-      tax: paySlip.deductions?.filter(d => d.component_name.toLowerCase().includes('tax')) || [],
-      loans: paySlip.deductions?.filter(d => d.component_name.toLowerCase().includes('loan')) || [],
-      others: paySlip.deductions?.filter(d => !d.component_name.toLowerCase().includes('tax') && !d.component_name.toLowerCase().includes('loan')) || []
+      tax: paySlip.deductions?.filter((d: any) => d.component_name.toLowerCase().includes('tax')) || [],
+      loans: paySlip.deductions?.filter((d: any) => d.component_name.toLowerCase().includes('loan')) || [],
+      others: paySlip.deductions?.filter((d: any) => !d.component_name.toLowerCase().includes('tax') && !d.component_name.toLowerCase().includes('loan')) || []
     }
 
     const paySlipInfo = {
@@ -345,7 +345,7 @@ export async function DELETE(
       entity_type: 'pay_slip',
       entity_id: id,
       details: {
-        employee_name: `${existingPaySlip.employee.first_name} ${existingPaySlip.employee.last_name}`
+        employee_name: `${(existingPaySlip.employee as any)?.first_name} ${(existingPaySlip.employee as any)?.last_name}`
       }
     })
 

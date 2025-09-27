@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const offset = (page - 1) * limit
 
-    const pendingApprovals = []
+    const pendingApprovals: any[] = []
 
     // Get pending pay runs
     if (!entityType || entityType === 'pay_run') {
@@ -90,8 +90,8 @@ export async function GET(request: NextRequest) {
           pendingApprovals.push({
             entity_type: 'pay_slip',
             entity_id: paySlip.id,
-            title: `Pay Slip: ${paySlip.employee.first_name} ${paySlip.employee.last_name}`,
-            description: `Employee: ${paySlip.employee.employee_number} | Period: ${paySlip.pay_period_start} to ${paySlip.pay_period_end}`,
+            title: `Pay Slip: ${(paySlip.employee as any).first_name} ${(paySlip.employee as any).last_name}`,
+            description: `Employee: ${(paySlip.employee as any).employee_number} | Period: ${paySlip.pay_period_start} to ${paySlip.pay_period_end}`,
             amount: paySlip.net_pay,
             employee_count: 1,
             created_at: paySlip.created_at,
@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
           pendingApprovals.push({
             entity_type: 'overtime_record',
             entity_id: record.id,
-            title: `Overtime: ${record.employee.first_name} ${record.employee.last_name}`,
+            title: `Overtime: ${(record.employee as any).first_name} ${(record.employee as any).last_name}`,
             description: `${record.overtime_hours} hours on ${record.work_date} (${record.overtime_type})`,
             amount: record.overtime_pay,
             employee_count: 1,
@@ -160,7 +160,7 @@ export async function GET(request: NextRequest) {
             entity_type: 'employee_loan',
             entity_id: loan.id,
             title: `Loan: ${loan.loan_number}`,
-            description: `${loan.employee.first_name} ${loan.employee.last_name} (${loan.employee.employee_number}) - ${loan.loan_type}`,
+            description: `${(loan.employee as any).first_name} ${(loan.employee as any).last_name} (${(loan.employee as any).employee_number}) - ${loan.loan_type}`,
             amount: loan.loan_amount,
             employee_count: 1,
             created_at: loan.created_at,
@@ -173,8 +173,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Sort by priority and creation date
-    const priorityOrder = { high: 3, medium: 2, low: 1 }
-    pendingApprovals.sort((a, b) => {
+    const priorityOrder: { [key: string]: number } = { high: 3, medium: 2, low: 1 }
+    pendingApprovals.sort((a: any, b: any) => {
       const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority]
       if (priorityDiff !== 0) return priorityDiff
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()

@@ -15,7 +15,7 @@ const employeeShiftSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     // Authenticate and authorize - HR module access required
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
+    const authResult = await authenticateAndAuthorize(request, 'attendance', 'GET')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -75,8 +75,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (isActive === 'true') {
-      query = query.is('effectiveTo', null)
-        .or('effectiveTo', 'gte', new Date().toISOString().split('T')[0])
+      query = query.or(`effectiveTo.is.null,effectiveTo.gte.${new Date().toISOString().split('T')[0]}`)
     } else if (isActive === 'false') {
       query = query.not('effectiveTo', 'is', null)
         .lt('effectiveTo', new Date().toISOString().split('T')[0])
@@ -95,8 +94,8 @@ export async function GET(request: NextRequest) {
     // Filter by department if specified (client-side filtering)
     let filteredAssignments = assignments || []
     if (departmentId) {
-      filteredAssignments = filteredAssignments.filter(assignment =>
-        assignment.employee?.department?.id === departmentId
+      filteredAssignments = filteredAssignments.filter((assignment: any) =>
+        (assignment.employee as any)?.department ? (assignment.employee as any).department.id === departmentId : false
       )
     }
 
@@ -141,7 +140,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Authenticate and authorize - HR write access required
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'POST')
+    const authResult = await authenticateAndAuthorize(request, 'attendance', 'POST')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }

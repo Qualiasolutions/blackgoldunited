@@ -19,7 +19,7 @@ export async function GET(
   const { employeeId } = await context.params
   try {
     // Authenticate and authorize
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
+    const authResult = await authenticateAndAuthorize(request, 'employees', 'GET')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -170,7 +170,7 @@ export async function PUT(
   const { employeeId } = await context.params
   try {
     // Authenticate and authorize
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'PUT')
+    const authResult = await authenticateAndAuthorize(request, 'employees', 'PUT')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }

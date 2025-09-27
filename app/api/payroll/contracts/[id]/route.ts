@@ -308,7 +308,7 @@ export async function DELETE(
       entity_id: id,
       details: {
         contract_number: existingContract.contract_number,
-        employee_name: `${existingContract.employee.first_name} ${existingContract.employee.last_name}`
+        employee_name: `${(existingContract.employee as any).first_name} ${(existingContract.employee as any).last_name}`
       }
     })
 

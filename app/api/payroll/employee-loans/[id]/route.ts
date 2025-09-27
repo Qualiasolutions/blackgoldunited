@@ -333,7 +333,7 @@ export async function DELETE(
       entity_id: id,
       details: {
         loan_number: existingLoan.loan_number,
-        employee_name: `${existingLoan.employee.first_name} ${existingLoan.employee.last_name}`
+        employee_name: `${(existingLoan.employee as any).first_name} ${(existingLoan.employee as any).last_name}`
       }
     })
 

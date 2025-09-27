@@ -30,7 +30,7 @@ const reportSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     // Authenticate and authorize - HR module access required
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
+    const authResult = await authenticateAndAuthorize(request, 'employees', 'GET')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Authenticate and authorize - HR write access required
-    const authResult = await authenticateAndAuthorize(request, 'hr', 'POST')
+    const authResult = await authenticateAndAuthorize(request, 'employees', 'POST')
     if (!authResult.success) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
@@ -254,8 +254,8 @@ async function generateEmployeeSummaryReport(supabase: any, filters: any = {}) {
   return {
     summary: {
       totalEmployees: employees?.length || 0,
-      activeEmployees: employees?.filter(emp => emp.isActive).length || 0,
-      inactiveEmployees: employees?.filter(emp => !emp.isActive).length || 0
+      activeEmployees: employees?.filter((emp: any) => emp.isActive).length || 0,
+      inactiveEmployees: employees?.filter((emp: any) => !emp.isActive).length || 0
     },
     employees: employees || []
   }
@@ -280,7 +280,7 @@ async function generateDepartmentBreakdownReport(supabase: any) {
 
   if (error) throw error
 
-  const breakdown = departments?.map(dept => {
+  const breakdown = departments?.map((dept: any) => {
     const employees = dept.employees || []
     const activeEmployees = employees.filter((emp: any) => emp.isActive)
     const totalSalary = activeEmployees.reduce((sum: number, emp: any) => sum + (emp.salary || 0), 0)
@@ -300,8 +300,8 @@ async function generateDepartmentBreakdownReport(supabase: any) {
   return {
     summary: {
       totalDepartments: breakdown.length,
-      totalEmployees: breakdown.reduce((sum, dept) => sum + dept.totalEmployees, 0),
-      totalSalaryBudget: breakdown.reduce((sum, dept) => sum + dept.totalSalaryBudget, 0)
+      totalEmployees: breakdown.reduce((sum: number, dept: any) => sum + dept.totalEmployees, 0),
+      totalSalaryBudget: breakdown.reduce((sum: number, dept: any) => sum + dept.totalSalaryBudget, 0)
     },
     departments: breakdown
   }
@@ -358,8 +358,8 @@ async function generateProbationStatusReport(supabase: any) {
 
   if (error) throw error
 
-  const probationEmployees = employees?.filter(emp => !emp.confirmationDate) || []
-  const confirmedEmployees = employees?.filter(emp => emp.confirmationDate) || []
+  const probationEmployees = employees?.filter((emp: any) => !emp.confirmationDate) || []
+  const confirmedEmployees = employees?.filter((emp: any) => emp.confirmationDate) || []
 
   return {
     summary: {
@@ -387,10 +387,10 @@ async function generateDocumentComplianceReport(supabase: any) {
     .eq('entityType', 'employee_document')
     .not('metadata->deletedAt', 'is', null)
 
-  const employeeDocuments = employees?.map(emp => {
-    const empDocs = documentLogs?.filter(log => log.entityId === emp.id) || []
-    const verifiedDocs = empDocs.filter(log => log.metadata?.isVerified === true)
-    const requiredDocs = empDocs.filter(log => log.metadata?.isRequired === true)
+  const employeeDocuments = employees?.map((emp: any) => {
+    const empDocs = documentLogs?.filter((log: any) => log.entityId === emp.id) || []
+    const verifiedDocs = empDocs.filter((log: any) => log.metadata?.isVerified === true)
+    const requiredDocs = empDocs.filter((log: any) => log.metadata?.isRequired === true)
 
     return {
       ...emp,
@@ -405,9 +405,9 @@ async function generateDocumentComplianceReport(supabase: any) {
   return {
     summary: {
       totalEmployees: employeeDocuments.length,
-      fullyCompliant: employeeDocuments.filter(emp => emp.compliancePercentage === 100).length,
-      partiallyCompliant: employeeDocuments.filter(emp => emp.compliancePercentage > 0 && emp.compliancePercentage < 100).length,
-      nonCompliant: employeeDocuments.filter(emp => emp.compliancePercentage === 0).length
+      fullyCompliant: employeeDocuments.filter((emp: any) => emp.compliancePercentage === 100).length,
+      partiallyCompliant: employeeDocuments.filter((emp: any) => emp.compliancePercentage > 0 && emp.compliancePercentage < 100).length,
+      nonCompliant: employeeDocuments.filter((emp: any) => emp.compliancePercentage === 0).length
     },
     employeeCompliance: employeeDocuments
   }
@@ -435,16 +435,16 @@ async function generateOnboardingStatusReport(supabase: any) {
   if (error) throw error
 
   // Get onboarding tasks for these employees
-  const employeeIds = recentHires?.map(emp => emp.id) || []
+  const employeeIds = recentHires?.map((emp: any) => emp.id) || []
   const { data: onboardingLogs } = await supabase
     .from('activity_logs')
     .select('entityId, metadata')
     .eq('entityType', 'onboarding_task')
     .in('entityId', employeeIds)
 
-  const onboardingStatus = recentHires?.map(emp => {
-    const empTasks = onboardingLogs?.filter(log => log.entityId === emp.id) || []
-    const completedTasks = empTasks.filter(log => log.metadata?.status === 'completed')
+  const onboardingStatus = recentHires?.map((emp: any) => {
+    const empTasks = onboardingLogs?.filter((log: any) => log.entityId === emp.id) || []
+    const completedTasks = empTasks.filter((log: any) => log.metadata?.status === 'completed')
 
     const daysSinceHire = Math.floor((Date.now() - new Date(emp.hireDate).getTime()) / (1000 * 60 * 60 * 24))
     const progressPercentage = empTasks.length > 0 ?
@@ -468,10 +468,10 @@ async function generateOnboardingStatusReport(supabase: any) {
   return {
     summary: {
       totalNewHires: onboardingStatus.length,
-      completed: onboardingStatus.filter(emp => emp.status === 'completed').length,
-      inProgress: onboardingStatus.filter(emp => emp.status === 'in_progress').length,
-      overdue: onboardingStatus.filter(emp => emp.status === 'overdue').length,
-      pending: onboardingStatus.filter(emp => emp.status === 'pending').length
+      completed: onboardingStatus.filter((emp: any) => emp.status === 'completed').length,
+      inProgress: onboardingStatus.filter((emp: any) => emp.status === 'in_progress').length,
+      overdue: onboardingStatus.filter((emp: any) => emp.status === 'overdue').length,
+      pending: onboardingStatus.filter((emp: any) => emp.status === 'pending').length
     },
     employeeOnboarding: onboardingStatus
   }
@@ -498,14 +498,14 @@ async function generateSalaryRangesReport(supabase: any, filters: any = {}) {
 
   if (error) throw error
 
-  const salaries = employees?.map(emp => emp.salary).filter(Boolean) || []
-  const avgSalary = salaries.length > 0 ? salaries.reduce((sum, sal) => sum + sal, 0) / salaries.length : 0
+  const salaries = employees?.map((emp: any) => emp.salary).filter(Boolean) || []
+  const avgSalary = salaries.length > 0 ? salaries.reduce((sum: number, sal: number) => sum + sal, 0) / salaries.length : 0
   const minSalary = Math.min(...salaries)
   const maxSalary = Math.max(...salaries)
 
   // Group by department
-  const departmentSalaries = employees?.reduce((acc: any, emp) => {
-    const deptName = emp.department?.name || 'Unassigned'
+  const departmentSalaries = employees?.reduce((acc: any, emp: any) => {
+    const deptName = emp.department ? (emp.department as any).name : 'Unassigned'
     if (!acc[deptName]) {
       acc[deptName] = []
     }
@@ -533,7 +533,7 @@ async function generateSalaryRangesReport(supabase: any, filters: any = {}) {
       averageSalary: Math.round(avgSalary),
       minSalary,
       maxSalary,
-      totalSalaryBudget: salaries.reduce((sum, sal) => sum + sal, 0)
+      totalSalaryBudget: salaries.reduce((sum: number, sal: number) => sum + sal, 0)
     },
     departmentBreakdown: departmentStats,
     employees: employees || []

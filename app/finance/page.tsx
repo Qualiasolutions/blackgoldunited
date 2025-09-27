@@ -3,12 +3,25 @@
 import { useAuth, usePermissions } from '@/lib/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Plus, DollarSign, TrendingUp, TrendingDown, CreditCard, Wallet } from 'lucide-react'
+import { DollarSign, TrendingUp, TrendingDown, PieChart, BarChart3, Calculator, FileText, CreditCard } from 'lucide-react'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
 export default function FinancePage() {
   const { user } = useAuth()
   const { hasModuleAccess, hasFullAccess } = usePermissions()
+  const [financialData, setFinancialData] = useState({
+    totalAssets: 2450000,
+    totalLiabilities: 890000,
+    totalEquity: 1560000,
+    monthlyRevenue: 485200,
+    monthlyExpenses: 342800,
+    netIncome: 142400,
+    cashFlow: 98500,
+    accountsReceivable: 234500,
+    accountsPayable: 156700,
+    bankBalance: 456200
+  })
 
   if (!hasModuleAccess('finance')) {
     return (
@@ -32,13 +45,13 @@ export default function FinancePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">Financial Management</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Finance & Accounting</h1>
             </div>
             <div className="flex items-center space-x-4">
               {canCreate && (
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Transaction
+                <Button className="bg-green-600 hover:bg-green-700">
+                  <Calculator className="w-4 h-4 mr-2" />
+                  New Journal Entry
                 </Button>
               )}
               <Link href="/dashboard">
@@ -57,90 +70,80 @@ export default function FinancePage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                <DollarSign className="h-4 w-4 text-green-600" />
+                <CardTitle className="text-sm font-medium">Total Assets</CardTitle>
+                <TrendingUp className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">$324,000</div>
-                <p className="text-xs text-muted-foreground flex items-center">
-                  <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
-                  +12% from last month
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
-                <CreditCard className="h-4 w-4 text-red-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">$186,400</div>
-                <p className="text-xs text-muted-foreground flex items-center">
-                  <TrendingDown className="h-3 w-3 mr-1 text-green-600" />
-                  -5% from last month
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
-                <TrendingUp className="h-4 w-4 text-blue-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">$137,600</div>
+                <div className="text-2xl font-bold text-green-600">
+                  ${financialData.totalAssets.toLocaleString()}
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  42.5% profit margin
+                  Current + Non-current
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Cash Flow</CardTitle>
-                <Wallet className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Total Liabilities</CardTitle>
+                <TrendingDown className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">$89,200</div>
+                <div className="text-2xl font-bold text-red-600">
+                  ${financialData.totalLiabilities.toLocaleString()}
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  Available cash
+                  Current + Long-term
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Equity</CardTitle>
+                <BarChart3 className="h-4 w-4 text-blue-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">
+                  ${financialData.totalEquity.toLocaleString()}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Owner's equity
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Net Income</CardTitle>
+                <DollarSign className="h-4 w-4 text-emerald-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-emerald-600">
+                  ${financialData.netIncome.toLocaleString()}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  This month
                 </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Financial Actions */}
+          {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Link href="/accounting">
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-4">
-                    <div className="bg-blue-100 p-3 rounded-lg">
-                      <DollarSign className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">Chart of Accounts</h3>
-                      <p className="text-sm text-gray-600">Manage accounting structure</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-4">
                   <div className="bg-green-100 p-3 rounded-lg">
-                    <CreditCard className="h-6 w-6 text-green-600" />
+                    <Calculator className="h-6 w-6 text-green-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">Transactions</h3>
+                    <h3 className="font-semibold">Journal Entries</h3>
                     <p className="text-sm text-gray-600">Record financial transactions</p>
                     {canCreate && (
                       <Button size="sm" className="mt-2">
-                        <Plus className="w-3 h-3 mr-1" />
-                        New Transaction
+                        <Calculator className="w-3 h-3 mr-1" />
+                        Create Entry
                       </Button>
                     )}
                   </div>
@@ -151,12 +154,34 @@ export default function FinancePage() {
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-4">
+                  <div className="bg-blue-100 p-3 rounded-lg">
+                    <PieChart className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Chart of Accounts</h3>
+                    <p className="text-sm text-gray-600">Manage account structure</p>
+                    <Button size="sm" className="mt-2" variant="outline">
+                      <BarChart3 className="w-3 h-3 mr-1" />
+                      View Accounts
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
                   <div className="bg-purple-100 p-3 rounded-lg">
-                    <TrendingUp className="h-6 w-6 text-purple-600" />
+                    <FileText className="h-6 w-6 text-purple-600" />
                   </div>
                   <div>
                     <h3 className="font-semibold">Financial Reports</h3>
-                    <p className="text-sm text-gray-600">P&L, Balance Sheet, Cash Flow</p>
+                    <p className="text-sm text-gray-600">Generate statements and reports</p>
+                    <Button size="sm" className="mt-2" variant="outline">
+                      <FileText className="w-3 h-3 mr-1" />
+                      View Reports
+                    </Button>
                   </div>
                 </div>
               </CardContent>

@@ -467,10 +467,10 @@ async function generateInventoryReceiptsReport(supabase: any, params: any) {
 
   // Calculate summary
   const totalReceipts = receipts?.length || 0
-  const totalItemsReceived = receipts?.reduce((sum, receipt) =>
+  const totalItemsReceived = receipts?.reduce((sum: number, receipt: any) =>
     sum + (receipt.items?.reduce((itemSum: number, item: any) => itemSum + item.receivedQuantity, 0) || 0), 0) || 0
 
-  const qualityStatus = receipts?.reduce((acc: any, receipt) => {
+  const qualityStatus = receipts?.reduce((acc: any, receipt: any) => {
     receipt.items?.forEach((item: any) => {
       acc[item.qualityStatus] = (acc[item.qualityStatus] || 0) + item.receivedQuantity
     })
@@ -502,7 +502,7 @@ async function generatePurchaseTrendsReport(supabase: any, params: any) {
   if (error) throw error
 
   // Group by month
-  const monthlyTrends = trendData?.reduce((acc: any, po) => {
+  const monthlyTrends = trendData?.reduce((acc: any, po: any) => {
     const month = new Date(po.orderDate).toISOString().substr(0, 7) // YYYY-MM
     if (!acc[month]) {
       acc[month] = { month, orders: 0, value: 0, statuses: {} }

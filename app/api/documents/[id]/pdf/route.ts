@@ -5,8 +5,9 @@ import { authenticateAndAuthorize } from '@/lib/auth/api-auth'
 // GET /api/documents/[id]/pdf - Generate PDF for document
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'templates', 'GET')

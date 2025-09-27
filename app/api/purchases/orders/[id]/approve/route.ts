@@ -13,7 +13,7 @@ const approvalSchema = z.object({
 // POST /api/purchases/orders/[id]/approve - Approve or reject purchase order
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Authenticate and authorize - require management or procurement roles
@@ -224,7 +224,7 @@ export async function POST(
 // GET /api/purchases/orders/[id]/approve - Get approval history
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Authenticate and authorize

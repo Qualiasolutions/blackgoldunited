@@ -15,9 +15,9 @@ const updateAccountSchema = z.object({
 // GET /api/finance/chart-of-accounts/[id] - Get single account
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context
+  const { id } = await context.params
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'finance', 'GET')
@@ -25,7 +25,6 @@ export async function GET(
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
 
-    const { id } = params
     const supabase = await createClient()
 
     // Fetch account with full details
@@ -82,9 +81,9 @@ export async function GET(
 // PUT /api/finance/chart-of-accounts/[id] - Update account
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context
+  const { id } = await context.params
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'finance', 'PUT')
@@ -92,7 +91,6 @@ export async function PUT(
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
 
-    const { id } = params
     const body = await request.json()
     const validation = updateAccountSchema.safeParse(body)
 
@@ -199,9 +197,9 @@ export async function PUT(
 // DELETE /api/finance/chart-of-accounts/[id] - Delete account
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context
+  const { id } = await context.params
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'finance', 'DELETE')
@@ -209,7 +207,6 @@ export async function DELETE(
       return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
 
-    const { id } = params
     const supabase = await createClient()
 
     // Check if account exists and get details for logging

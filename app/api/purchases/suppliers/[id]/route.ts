@@ -48,8 +48,7 @@ const supplierUpdateSchema = z.object({
 // GET /api/purchases/suppliers/[id] - Get single supplier with performance data
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'GET')
@@ -125,8 +124,7 @@ export async function GET(
 // PUT /api/purchases/suppliers/[id] - Update supplier
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'PUT')
@@ -197,8 +195,7 @@ export async function PUT(
 // DELETE /api/purchases/suppliers/[id] - Soft delete supplier
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'DELETE')

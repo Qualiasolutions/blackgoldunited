@@ -22,7 +22,7 @@ const purchaseInvoiceUpdateSchema = z.object({
 // GET /api/purchases/invoices/[id] - Get single purchase invoice
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Authenticate and authorize
@@ -176,7 +176,7 @@ export async function GET(
 // PUT /api/purchases/invoices/[id] - Update purchase invoice
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Authenticate and authorize
@@ -295,7 +295,7 @@ export async function PUT(
 // DELETE /api/purchases/invoices/[id] - Cancel purchase invoice (soft delete)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Authenticate and authorize

@@ -20,8 +20,7 @@ const evaluationSchema = z.object({
 // GET /api/purchases/suppliers/[id]/evaluation - Get supplier evaluations
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'GET')
@@ -78,8 +77,7 @@ export async function GET(
 // POST /api/purchases/suppliers/[id]/evaluation - Create supplier evaluation
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'POST')

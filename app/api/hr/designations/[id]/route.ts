@@ -15,9 +15,9 @@ const designationUpdateSchema = z.object({
 // GET /api/hr/designations/[id] - Get single designation with details
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context
+  const { id } = await context.params
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
@@ -26,7 +26,7 @@ export async function GET(
     }
 
     const supabase = await createClient()
-    const designationId = params.id
+    const id = id
 
     // Get designation details with related data
     const { data: designation, error } = await supabase
@@ -38,7 +38,7 @@ export async function GET(
           name,
           description
         ),
-        employees!employees_designationId_fkey(
+        employees!employees_id_fkey(
           id,
           firstName,
           lastName,
@@ -48,7 +48,7 @@ export async function GET(
           department:departments(id, name)
         )
       `)
-      .eq('id', designationId)
+      .eq('id', id)
       .single()
 
     if (error || !designation) {
@@ -79,9 +79,9 @@ export async function GET(
 // PUT /api/hr/designations/[id] - Update designation
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context
+  const { id } = await context.params
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'PUT')
@@ -98,7 +98,7 @@ export async function PUT(
     }
 
     const supabase = await createClient()
-    const designationId = params.id
+    const id = id
     const body = await request.json()
 
     // Validate request data
@@ -116,7 +116,7 @@ export async function PUT(
     const { data: existingDesignation, error: checkError } = await supabase
       .from('designations')
       .select('id, title, departmentId')
-      .eq('id', designationId)
+      .eq('id', id)
       .single()
 
     if (checkError || !existingDesignation) {
@@ -135,7 +135,7 @@ export async function PUT(
           .from('designations')
           .select('id')
           .eq('title', newTitle)
-          .neq('id', designationId)
+          .neq('id', id)
 
         if (newDepartmentId) {
           duplicateQuery = duplicateQuery.eq('departmentId', newDepartmentId)
@@ -187,7 +187,7 @@ export async function PUT(
     const { data: updatedDesignation, error: updateError } = await supabase
       .from('designations')
       .update(updateData)
-      .eq('id', designationId)
+      .eq('id', id)
       .select(`
         *,
         department:departments(
@@ -214,7 +214,7 @@ export async function PUT(
         .from('activity_logs')
         .insert([{
           entityType: 'designation',
-          entityId: designationId,
+          entityId: id,
           action: 'updated',
           description: `Designation "${updatedDesignation.title}" updated`,
           userId: authResult.user.id,
@@ -243,9 +243,9 @@ export async function PUT(
 // DELETE /api/hr/designations/[id] - Delete designation
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context
+  const { id } = await context.params
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'DELETE')
@@ -262,13 +262,13 @@ export async function DELETE(
     }
 
     const supabase = await createClient()
-    const designationId = params.id
+    const id = id
 
     // Check if designation exists and get details
     const { data: designation, error: checkError } = await supabase
       .from('designations')
       .select('id, title')
-      .eq('id', designationId)
+      .eq('id', id)
       .single()
 
     if (checkError || !designation) {
@@ -279,7 +279,7 @@ export async function DELETE(
     const { data: employees } = await supabase
       .from('employees')
       .select('id, firstName, lastName')
-      .eq('designationId', designationId)
+      .eq('id', id)
       .is('deletedAt', null)
 
     if (employees && employees.length > 0) {
@@ -293,7 +293,7 @@ export async function DELETE(
     const { error: deleteError } = await supabase
       .from('designations')
       .delete()
-      .eq('id', designationId)
+      .eq('id', id)
 
     if (deleteError) {
       console.error('Database error:', deleteError)
@@ -306,7 +306,7 @@ export async function DELETE(
         .from('activity_logs')
         .insert([{
           entityType: 'designation',
-          entityId: designationId,
+          entityId: id,
           action: 'deleted',
           description: `Designation "${designation.title}" deleted`,
           userId: authResult.user.id,

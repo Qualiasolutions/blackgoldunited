@@ -17,7 +17,7 @@ const attendanceUpdateSchema = z.object({
 // GET /api/hr/attendance/[id] - Get single attendance record
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   const { params } = context
   try {
@@ -136,7 +136,7 @@ export async function GET(
 // PUT /api/hr/attendance/[id] - Update attendance record
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   const { params } = context
   try {
@@ -256,7 +256,7 @@ export async function PUT(
 // DELETE /api/hr/attendance/[id] - Delete attendance record
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   const { params } = context
   try {

@@ -40,9 +40,9 @@ const employeeUpdateSchema = z.object({
 // GET /api/hr/employees/[id] - Get single employee with full details
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context
+  const { id: employeeId } = await context.params
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
@@ -51,7 +51,6 @@ export async function GET(
     }
 
     const supabase = await createClient()
-    const employeeId = params.id
 
     // Get employee details with all related data
     const { data: employee, error } = await supabase
@@ -99,9 +98,9 @@ export async function GET(
 // PUT /api/hr/employees/[id] - Update employee
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context
+  const { id: employeeId } = await context.params
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'PUT')
@@ -118,7 +117,6 @@ export async function PUT(
     }
 
     const supabase = await createClient()
-    const employeeId = params.id
     const body = await request.json()
 
     // Validate request data
@@ -240,9 +238,9 @@ export async function PUT(
 // DELETE /api/hr/employees/[id] - Soft delete employee
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context
+  const { id: employeeId } = await context.params
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'DELETE')
@@ -259,7 +257,6 @@ export async function DELETE(
     }
 
     const supabase = await createClient()
-    const employeeId = params.id
 
     // Check if employee exists and get details
     const { data: employee, error: checkError } = await supabase

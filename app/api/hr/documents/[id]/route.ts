@@ -18,9 +18,9 @@ const documentUpdateSchema = z.object({
 // GET /api/hr/documents/[id] - Get single document details
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context
+  const { id: id } = await context.params
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
@@ -29,7 +29,6 @@ export async function GET(
     }
 
     const supabase = await createClient()
-    const documentId = params.id
 
     // Get document from activity_logs
     const { data: documentLog, error } = await supabase
@@ -45,7 +44,7 @@ export async function GET(
         user:users!activity_logs_userId_fkey(firstName, lastName, email)
       `)
       .eq('entityType', 'employee_document')
-      .eq('id', documentId)
+      .eq('id', id)
       .single()
 
     if (error || !documentLog) {
@@ -142,9 +141,9 @@ export async function GET(
 // PUT /api/hr/documents/[id] - Update document
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context
+  const { id } = await context.params
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'PUT')
@@ -153,7 +152,6 @@ export async function PUT(
     }
 
     const supabase = await createClient()
-    const documentId = params.id
     const body = await request.json()
 
     // Validate request data
@@ -172,7 +170,7 @@ export async function PUT(
       .from('activity_logs')
       .select('id, entityId, metadata, userId')
       .eq('entityType', 'employee_document')
-      .eq('id', documentId)
+      .eq('id', id)
       .single()
 
     if (findError || !existingDoc) {
@@ -227,7 +225,7 @@ export async function PUT(
         metadata: updatedMetadata,
         updatedAt: new Date().toISOString()
       })
-      .eq('id', documentId)
+      .eq('id', id)
 
     if (updateError) {
       console.error('Database error:', updateError)
@@ -246,7 +244,7 @@ export async function PUT(
         description: updateDescription,
         userId: authResult.user.id,
         metadata: {
-          documentId,
+          id,
           documentName: updatedMetadata.documentName,
           updatedFields: Object.keys(validatedData),
           employeeName: `${employee.firstName} ${employee.lastName}`
@@ -260,7 +258,7 @@ export async function PUT(
 
     // Return updated document
     const updatedDocument = {
-      id: documentId,
+      id: id,
       employeeId: existingDoc.entityId,
       employee: {
         name: `${employee.firstName} ${employee.lastName}`,
@@ -295,9 +293,9 @@ export async function PUT(
 // DELETE /api/hr/documents/[id] - Delete document
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context
+  const { id } = await context.params
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'DELETE')
@@ -314,14 +312,13 @@ export async function DELETE(
     }
 
     const supabase = await createClient()
-    const documentId = params.id
 
     // Get document details before deletion
     const { data: documentLog, error: findError } = await supabase
       .from('activity_logs')
       .select('id, entityId, metadata')
       .eq('entityType', 'employee_document')
-      .eq('id', documentId)
+      .eq('id', id)
       .single()
 
     if (findError || !documentLog) {
@@ -349,7 +346,7 @@ export async function DELETE(
         },
         updatedAt: new Date().toISOString()
       })
-      .eq('id', documentId)
+      .eq('id', id)
 
     if (deleteError) {
       console.error('Database error:', deleteError)
@@ -367,7 +364,7 @@ export async function DELETE(
           description: `Document "${metadata.documentName}" deleted for ${employee.firstName} ${employee.lastName}`,
           userId: authResult.user.id,
           metadata: {
-            documentId,
+            id,
             documentName: metadata.documentName,
             documentType: metadata.documentType,
             employeeName: `${employee.firstName} ${employee.lastName}`

@@ -15,9 +15,9 @@ const departmentUpdateSchema = z.object({
 // GET /api/hr/departments/[id] - Get single department with hierarchy
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context
+  const { id } = await context.params
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
@@ -26,7 +26,7 @@ export async function GET(
     }
 
     const supabase = await createClient()
-    const departmentId = params.id
+    const id = params.id
 
     // Get department details with related data
     const { data: department, error } = await supabase
@@ -51,7 +51,7 @@ export async function GET(
           description,
           isActive
         ),
-        employees!employees_departmentId_fkey(
+        employees!employees_id_fkey(
           id,
           firstName,
           lastName,
@@ -59,7 +59,7 @@ export async function GET(
           designation:designations(id, title)
         )
       `)
-      .eq('id', departmentId)
+      .eq('id', id)
       .single()
 
     if (error || !department) {
@@ -90,9 +90,9 @@ export async function GET(
 // PUT /api/hr/departments/[id] - Update department
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context
+  const { id } = await context.params
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'PUT')
@@ -109,7 +109,7 @@ export async function PUT(
     }
 
     const supabase = await createClient()
-    const departmentId = params.id
+    const id = params.id
     const body = await request.json()
 
     // Validate request data
@@ -127,7 +127,7 @@ export async function PUT(
     const { data: existingDepartment, error: checkError } = await supabase
       .from('departments')
       .select('id, name')
-      .eq('id', departmentId)
+      .eq('id', id)
       .single()
 
     if (checkError || !existingDepartment) {
@@ -140,7 +140,7 @@ export async function PUT(
         .from('departments')
         .select('id')
         .eq('name', validatedData.name)
-        .neq('id', departmentId)
+        .neq('id', id)
         .single()
 
       if (duplicateDepartment) {
@@ -152,7 +152,7 @@ export async function PUT(
 
     // Validate parent department exists if provided and prevent circular reference
     if (validatedData.parentId) {
-      if (validatedData.parentId === departmentId) {
+      if (validatedData.parentId === id) {
         return NextResponse.json({
           error: 'A department cannot be its own parent'
         }, { status: 400 })
@@ -174,7 +174,7 @@ export async function PUT(
       let currentParentId = parentDepartment.parentId
       let depth = 0
       while (currentParentId && depth < 10) { // Max depth to prevent infinite loop
-        if (currentParentId === departmentId) {
+        if (currentParentId === id) {
           return NextResponse.json({
             error: 'Circular reference detected - department cannot be a parent of its ancestor'
           }, { status: 400 })
@@ -224,7 +224,7 @@ export async function PUT(
     const { data: updatedDepartment, error: updateError } = await supabase
       .from('departments')
       .update(updateData)
-      .eq('id', departmentId)
+      .eq('id', id)
       .select(`
         *,
         manager:employees!departments_managerId_fkey(
@@ -258,7 +258,7 @@ export async function PUT(
         .from('activity_logs')
         .insert([{
           entityType: 'department',
-          entityId: departmentId,
+          entityId: id,
           action: 'updated',
           description: `Department "${updatedDepartment.name}" updated`,
           userId: authResult.user.id,
@@ -288,9 +288,9 @@ export async function PUT(
 // DELETE /api/hr/departments/[id] - Delete department
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context
+  const { id } = await context.params
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'DELETE')
@@ -307,13 +307,13 @@ export async function DELETE(
     }
 
     const supabase = await createClient()
-    const departmentId = params.id
+    const id = params.id
 
     // Check if department exists and get details
     const { data: department, error: checkError } = await supabase
       .from('departments')
       .select('id, name')
-      .eq('id', departmentId)
+      .eq('id', id)
       .single()
 
     if (checkError || !department) {
@@ -324,7 +324,7 @@ export async function DELETE(
     const { data: employees } = await supabase
       .from('employees')
       .select('id, firstName, lastName')
-      .eq('departmentId', departmentId)
+      .eq('id', id)
       .is('deletedAt', null)
 
     if (employees && employees.length > 0) {
@@ -338,7 +338,7 @@ export async function DELETE(
     const { data: subdepartments } = await supabase
       .from('departments')
       .select('id, name')
-      .eq('parentId', departmentId)
+      .eq('parentId', id)
 
     if (subdepartments && subdepartments.length > 0) {
       return NextResponse.json({
@@ -351,7 +351,7 @@ export async function DELETE(
     const { error: deleteError } = await supabase
       .from('departments')
       .delete()
-      .eq('id', departmentId)
+      .eq('id', id)
 
     if (deleteError) {
       console.error('Database error:', deleteError)
@@ -364,7 +364,7 @@ export async function DELETE(
         .from('activity_logs')
         .insert([{
           entityType: 'department',
-          entityId: departmentId,
+          entityId: id,
           action: 'deleted',
           description: `Department "${department.name}" deleted`,
           userId: authResult.user.id,

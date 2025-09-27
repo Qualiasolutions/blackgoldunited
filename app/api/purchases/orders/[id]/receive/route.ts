@@ -33,8 +33,7 @@ const receiptSchema = z.object({
 // POST /api/purchases/orders/[id]/receive - Receive purchase order items and update inventory
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'POST')
@@ -335,8 +334,7 @@ export async function POST(
 // GET /api/purchases/orders/[id]/receive - Get receipt history for purchase order
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'GET')

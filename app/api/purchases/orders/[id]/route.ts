@@ -40,8 +40,7 @@ const purchaseOrderUpdateSchema = z.object({
 // GET /api/purchases/orders/[id] - Get single purchase order
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'GET')
@@ -166,8 +165,7 @@ export async function GET(
 // PUT /api/purchases/orders/[id] - Update purchase order
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'PUT')
@@ -293,8 +291,7 @@ export async function PUT(
 // DELETE /api/purchases/orders/[id] - Cancel purchase order (soft delete)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'purchase', 'DELETE')

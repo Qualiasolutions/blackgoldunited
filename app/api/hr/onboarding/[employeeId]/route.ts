@@ -14,9 +14,9 @@ const updateTaskSchema = z.object({
 // GET /api/hr/onboarding/[employeeId] - Get employee onboarding details
 export async function GET(
   request: NextRequest,
-  context: { params: { employeeId: string } }
+  context: { params: Promise<{ employeeId: string }> }
 ) {
-  const { params } = context
+  const { employeeId } = await context.params
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
@@ -25,7 +25,6 @@ export async function GET(
     }
 
     const supabase = await createClient()
-    const employeeId = params.employeeId
 
     // Get employee details
     const { data: employee, error: empError } = await supabase
@@ -166,9 +165,9 @@ export async function GET(
 // PUT /api/hr/onboarding/[employeeId] - Update onboarding task status
 export async function PUT(
   request: NextRequest,
-  context: { params: { employeeId: string } }
+  context: { params: Promise<{ employeeId: string }> }
 ) {
-  const { params } = context
+  const { employeeId } = await context.params
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'PUT')
@@ -177,7 +176,6 @@ export async function PUT(
     }
 
     const supabase = await createClient()
-    const employeeId = params.employeeId
     const body = await request.json()
 
     // Validate request data

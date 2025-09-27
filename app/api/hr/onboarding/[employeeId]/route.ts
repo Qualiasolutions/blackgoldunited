@@ -14,8 +14,9 @@ const updateTaskSchema = z.object({
 // GET /api/hr/onboarding/[employeeId] - Get employee onboarding details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { employeeId: string } }
+  context: { params: { employeeId: string } }
 ) {
+  const { params } = context
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
@@ -165,8 +166,9 @@ export async function GET(
 // PUT /api/hr/onboarding/[employeeId] - Update onboarding task status
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { employeeId: string } }
+  context: { params: { employeeId: string } }
 ) {
+  const { params } = context
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'PUT')

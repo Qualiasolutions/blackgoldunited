@@ -17,8 +17,9 @@ const attendanceUpdateSchema = z.object({
 // GET /api/hr/attendance/[id] - Get single attendance record
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
@@ -135,8 +136,9 @@ export async function GET(
 // PUT /api/hr/attendance/[id] - Update attendance record
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'PUT')
@@ -254,8 +256,9 @@ export async function PUT(
 // DELETE /api/hr/attendance/[id] - Delete attendance record
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'DELETE')

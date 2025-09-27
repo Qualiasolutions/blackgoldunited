@@ -40,8 +40,9 @@ const employeeUpdateSchema = z.object({
 // GET /api/hr/employees/[id] - Get single employee with full details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
@@ -98,8 +99,9 @@ export async function GET(
 // PUT /api/hr/employees/[id] - Update employee
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'PUT')
@@ -238,8 +240,9 @@ export async function PUT(
 // DELETE /api/hr/employees/[id] - Soft delete employee
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'DELETE')

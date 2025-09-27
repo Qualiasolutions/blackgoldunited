@@ -15,8 +15,9 @@ const designationUpdateSchema = z.object({
 // GET /api/hr/designations/[id] - Get single designation with details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
@@ -78,8 +79,9 @@ export async function GET(
 // PUT /api/hr/designations/[id] - Update designation
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'PUT')
@@ -241,8 +243,9 @@ export async function PUT(
 // DELETE /api/hr/designations/[id] - Delete designation
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'DELETE')

@@ -15,8 +15,9 @@ const departmentUpdateSchema = z.object({
 // GET /api/hr/departments/[id] - Get single department with hierarchy
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'GET')
@@ -89,8 +90,9 @@ export async function GET(
 // PUT /api/hr/departments/[id] - Update department
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'PUT')
@@ -286,8 +288,9 @@ export async function PUT(
 // DELETE /api/hr/departments/[id] - Delete department
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context
   try {
     // Authenticate and authorize
     const authResult = await authenticateAndAuthorize(request, 'hr', 'DELETE')

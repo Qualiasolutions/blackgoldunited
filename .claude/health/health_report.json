@@ -1,0 +1,62 @@
+{
+  "project": "BlackGoldUnited ERP System",
+  "timestamp": "2025-09-28T21:55:26+03:00",
+  "overall_health_score": 85,
+  "summary": {
+    "total_checks": 7,
+    "healthy": 6,
+    "warnings": 1,
+    "unhealthy": 0,
+    "unknown": 0
+  },
+  "checks": [
+    {
+      "component": "Project Structure",
+      "status": "HEALTHY",
+      "message": "All required directories present",
+      "timestamp": "2025-09-28T21:55:16+03:00"
+    }
+,
+    {
+      "component": "Dependencies",
+      "status": "HEALTHY",
+      "message": "All dependencies installed and resolved",
+      "timestamp": "2025-09-28T21:55:17+03:00"
+    }
+,
+    {
+      "component": "Build System",
+      "status": "HEALTHY",
+      "message": "Build system fully functional",
+      "timestamp": "2025-09-28T21:55:21+03:00"
+    }
+,
+    {
+      "component": "TypeScript",
+      "status": "HEALTHY",
+      "message": "TypeScript compilation successful",
+      "timestamp": "2025-09-28T21:55:26+03:00"
+    }
+,
+    {
+      "component": "Git Repository",
+      "status": "WARNING",
+      "message": "Uncommitted changes detected",
+      "timestamp": "2025-09-28T21:55:26+03:00"
+    }
+,
+    {
+      "component": "Git Remote",
+      "status": "HEALTHY",
+      "message": "Remote repository configured",
+      "timestamp": "2025-09-28T21:55:26+03:00"
+    }
+,
+    {
+      "component": "Claude Context",
+      "status": "HEALTHY",
+      "message": "2 context files found",
+      "timestamp": "2025-09-28T21:55:26+03:00"
+    }
+  ]
+}

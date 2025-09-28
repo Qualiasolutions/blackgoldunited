@@ -80,6 +80,12 @@ export function useDashboardStats() {
     fetchDashboardStats()
   }, [fetchDashboardStats])
 
+  // Auto-refresh stats every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(fetchDashboardStats, 5 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [fetchDashboardStats])
+
   const refreshStats = useCallback(() => {
     fetchDashboardStats()
   }, [fetchDashboardStats])
@@ -88,6 +94,7 @@ export function useDashboardStats() {
     stats,
     loading,
     error,
-    refreshStats
+    refreshStats,
+    lastUpdated: new Date().toISOString()
   }
 }

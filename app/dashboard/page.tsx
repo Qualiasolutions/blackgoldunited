@@ -2,6 +2,8 @@
 
 import { useAuth, usePermissions } from '@/lib/hooks/useAuth'
 import { useDashboardStats } from '@/lib/hooks/useDashboardStats'
+import { useDashboardActivity } from '@/lib/hooks/useDashboardActivity'
+import { useGlobalSearch } from '@/lib/hooks/useGlobalSearch'
 import Link from 'next/link'
 import { useState } from 'react'
 import {
@@ -22,7 +24,9 @@ import {
   AlertCircle,
   Loader2,
   Package,
-  ShoppingCart
+  ShoppingCart,
+  Building2,
+  ExternalLink
 } from 'lucide-react'
 import { StatsCard } from '@/components/ui/stats-card'
 import { EnhancedCard } from '@/components/ui/enhanced-card'
@@ -34,9 +38,9 @@ import { MainLayout } from '@/components/layout/main-layout'
 export default function DashboardPage() {
   const { user } = useAuth()
   const { hasModuleAccess, hasFullAccess } = usePermissions()
-  const { stats, loading, error, refreshStats } = useDashboardStats()
-  const [invoiceSearch, setInvoiceSearch] = useState('')
-  const [clientSearch, setClientSearch] = useState('')
+  const { stats, loading, error, refreshStats, lastUpdated } = useDashboardStats()
+  const { data: activityData, loading: activityLoading, error: activityError } = useDashboardActivity()
+  const { results: searchResults, loading: searchLoading, query: searchQuery, setQuery: setSearchQuery, clearSearch } = useGlobalSearch()
 
   if (!user) {
     return null
@@ -48,6 +52,73 @@ export default function DashboardPage() {
     month: '2-digit',
     year: 'numeric'
   })
+
+  // Utility functions
+  const formatCurrency = (amount: number) => {
+    return `AED ${Math.abs(amount).toLocaleString()}`
+  }
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
+
+    if (diffInMinutes < 1) return 'Just now'
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`
+
+    const diffInHours = Math.floor(diffInMinutes / 60)
+    if (diffInHours < 24) return `${diffInHours}h ago`
+
+    const diffInDays = Math.floor(diffInHours / 24)
+    return `${diffInDays}d ago`
+  }
+
+  const getTransactionIcon = (type: string) => {
+    switch (type) {
+      case 'invoice_payment':
+        return FileText
+      case 'purchase_order':
+        return ShoppingCart
+      case 'expense':
+        return DollarSign
+      default:
+        return FileText
+    }
+  }
+
+  const getActivityIcon = (module: string) => {
+    switch (module) {
+      case 'clients':
+        return Users
+      case 'sales':
+        return TrendingUp
+      case 'purchase':
+        return ShoppingCart
+      case 'inventory':
+        return Package
+      case 'finance':
+        return BarChart3
+      default:
+        return FileText
+    }
+  }
+
+  const getSearchResultIcon = (type: string) => {
+    switch (type) {
+      case 'client':
+        return Users
+      case 'invoice':
+        return FileText
+      case 'product':
+        return Package
+      case 'purchase_order':
+        return ShoppingCart
+      case 'supplier':
+        return Building2
+      default:
+        return FileText
+    }
+  }
 
   return (
     <MainLayout user={{ name: `${user.firstName} ${user.lastName}`, email: user.email, role: user.role }}>
@@ -74,7 +145,12 @@ export default function DashboardPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">Last Updated</p>
-                  <p className="text-sm font-medium">Just now</p>
+                  <div className="flex items-center space-x-2">
+                    <p className="text-sm font-medium">{formatTimeAgo(lastUpdated)}</p>
+                    <Button variant="ghost" size="sm" onClick={refreshStats} disabled={loading}>
+                      <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -166,15 +242,64 @@ export default function DashboardPage() {
               <Search className="h-5 w-5 text-muted-foreground" />
             </div>
             <div className="space-y-3">
-              <Input
-                placeholder="Search invoices, clients, orders..."
-                value={invoiceSearch}
-                onChange={(e) => setInvoiceSearch(e.target.value)}
-                className="w-full"
-              />
-              <Button className="w-full" size="sm">
-                Search All Modules
-              </Button>
+              <div className="relative">
+                <Input
+                  placeholder="Search invoices, clients, orders..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full"
+                />
+                {searchLoading && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
+                  </div>
+                )}
+              </div>
+
+              {/* Search Results */}
+              {searchResults.length > 0 && (
+                <div className="max-h-60 overflow-y-auto border rounded-lg bg-background">
+                  <div className="p-2 border-b bg-muted/50">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Found {searchResults.length} results
+                    </p>
+                  </div>
+                  {searchResults.map((result) => {
+                    const IconComponent = getSearchResultIcon(result.type)
+
+                    return (
+                      <Link key={result.id} href={result.href}>
+                        <div className="flex items-center space-x-3 p-3 hover:bg-accent transition-colors cursor-pointer">
+                          <div className="h-8 w-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <IconComponent className="h-4 w-4 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{result.title}</p>
+                            <p className="text-xs text-muted-foreground truncate">{result.description}</p>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Badge variant="outline" className="text-xs">{result.module}</Badge>
+                            <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                          </div>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+
+              {searchQuery && searchResults.length === 0 && !searchLoading && (
+                <div className="p-4 text-center text-muted-foreground border rounded-lg">
+                  <Search className="h-8 w-8 mx-auto mb-2" />
+                  <p className="text-sm">No results found for "{searchQuery}"</p>
+                </div>
+              )}
+
+              {!searchQuery && (
+                <Button className="w-full" size="sm" disabled>
+                  Search All Modules
+                </Button>
+              )}
             </div>
           </EnhancedCard>
 
@@ -347,23 +472,59 @@ export default function DashboardPage() {
               <Button variant="ghost" size="sm">View All</Button>
             </div>
             <div className="space-y-3">
-              {[1, 2, 3].map((item) => (
-                <div key={item} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="h-8 w-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <FileText className="h-4 w-4 text-primary" />
+              {activityLoading ? (
+                <>
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="animate-pulse p-3 bg-muted/20 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-8 w-8 bg-gray-300 rounded-lg"></div>
+                        <div className="flex-1">
+                          <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                          <div className="h-3 bg-gray-300 rounded w-2/3"></div>
+                        </div>
+                        <div className="w-20 h-4 bg-gray-300 rounded"></div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">Invoice #INV-2024-{1000 + item}</p>
-                      <p className="text-xs text-muted-foreground">Client Payment Received</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-success">+AED {(Math.random() * 10000 + 5000).toFixed(0)}</p>
-                    <p className="text-xs text-muted-foreground">Today</p>
-                  </div>
+                  ))}
+                </>
+              ) : activityError ? (
+                <div className="p-4 text-center text-red-600">
+                  <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+                  <p className="text-sm">Failed to load transactions</p>
                 </div>
-              ))}
+              ) : !activityData?.recentTransactions?.length ? (
+                <div className="p-4 text-center text-muted-foreground">
+                  <FileText className="h-8 w-8 mx-auto mb-2" />
+                  <p className="text-sm">No recent transactions</p>
+                </div>
+              ) : (
+                activityData.recentTransactions.slice(0, 3).map((transaction) => {
+                  const IconComponent = getTransactionIcon(transaction.type)
+                  const isPositive = transaction.amount > 0
+
+                  return (
+                    <div key={transaction.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg hover:bg-muted/30 transition-colors">
+                      <div className="flex items-center space-x-3">
+                        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+                          isPositive ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                        }`}>
+                          <IconComponent className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{transaction.title}</p>
+                          <p className="text-xs text-muted-foreground">{transaction.description}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-sm font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                          {isPositive ? '+' : '-'}{formatCurrency(transaction.amount)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{formatTimeAgo(transaction.created_at)}</p>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
             </div>
           </EnhancedCard>
 
@@ -373,21 +534,56 @@ export default function DashboardPage() {
               <Button variant="ghost" size="sm">View Logs</Button>
             </div>
             <div className="space-y-3">
-              {[
-                { action: "New client registered", time: "5 minutes ago", icon: Users },
-                { action: "Invoice payment processed", time: "12 minutes ago", icon: DollarSign },
-                { action: "Report generated", time: "25 minutes ago", icon: BarChart3 },
-              ].map((activity, index) => (
-                <div key={index} className="flex items-center space-x-3 p-3 bg-muted/20 rounded-lg">
-                  <div className="h-8 w-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <activity.icon className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{activity.action}</p>
-                    <p className="text-xs text-muted-foreground">{activity.time}</p>
-                  </div>
+              {activityLoading ? (
+                <>
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="animate-pulse p-3 bg-muted/20 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-8 w-8 bg-gray-300 rounded-lg"></div>
+                        <div className="flex-1">
+                          <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                          <div className="h-3 bg-gray-300 rounded w-2/3"></div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              ) : activityError ? (
+                <div className="p-4 text-center text-red-600">
+                  <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+                  <p className="text-sm">Failed to load activity</p>
                 </div>
-              ))}
+              ) : !activityData?.systemActivity?.length ? (
+                <div className="p-4 text-center text-muted-foreground">
+                  <BarChart3 className="h-8 w-8 mx-auto mb-2" />
+                  <p className="text-sm">No recent activity</p>
+                </div>
+              ) : (
+                activityData.systemActivity.slice(0, 3).map((activity) => {
+                  const IconComponent = getActivityIcon(activity.module)
+
+                  return (
+                    <div key={activity.id} className="flex items-center space-x-3 p-3 bg-muted/20 rounded-lg hover:bg-muted/30 transition-colors">
+                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+                        activity.type === 'success' ? 'bg-green-100 text-green-600' :
+                        activity.type === 'warning' ? 'bg-yellow-100 text-yellow-600' :
+                        activity.type === 'error' ? 'bg-red-100 text-red-600' :
+                        'bg-blue-100 text-blue-600'
+                      }`}>
+                        <IconComponent className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{activity.action}</p>
+                        <p className="text-xs text-muted-foreground">{activity.description}</p>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-xs text-muted-foreground">{formatTimeAgo(activity.created_at)}</p>
+                          <span className="text-xs font-medium text-muted-foreground capitalize">{activity.module}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
             </div>
           </EnhancedCard>
         </div>

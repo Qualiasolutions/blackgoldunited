@@ -68,7 +68,7 @@ export async function authenticateAndAuthorize(
     // Get user profile with role
     const { data: userProfile, error: profileError } = await supabase
       .from('users')
-      .select('id, email, role, firstName, lastName, isActive')
+      .select('id, email, role, first_name, last_name, is_active')
       .eq('id', authUser.id)
       .single();
 
@@ -78,7 +78,7 @@ export async function authenticateAndAuthorize(
     }
 
     // Check if user is active
-    if (!userProfile.isActive) {
+    if (!userProfile.is_active) {
       return { success: false, error: 'Account is deactivated', status: 403 };
     }
 
@@ -100,8 +100,8 @@ export async function authenticateAndAuthorize(
         id: userProfile.id,
         email: userProfile.email,
         role: userRole,
-        firstName: userProfile.firstName,
-        lastName: userProfile.lastName,
+        firstName: userProfile.first_name,
+        lastName: userProfile.last_name,
       }
     };
 
@@ -127,7 +127,7 @@ export async function authenticateUser(request: NextRequest): Promise<{ success:
     // Get user profile with role
     const { data: userProfile, error: profileError } = await supabase
       .from('users')
-      .select('id, email, role, firstName, lastName, isActive')
+      .select('id, email, role, first_name, last_name, is_active')
       .eq('id', authUser.id)
       .single();
 
@@ -137,7 +137,7 @@ export async function authenticateUser(request: NextRequest): Promise<{ success:
     }
 
     // Check if user is active
-    if (!userProfile.isActive) {
+    if (!userProfile.is_active) {
       return { success: false, error: 'Account is deactivated', status: 403 };
     }
 
@@ -147,8 +147,8 @@ export async function authenticateUser(request: NextRequest): Promise<{ success:
         id: userProfile.id,
         email: userProfile.email,
         role: userProfile.role as UserRole,
-        firstName: userProfile.firstName,
-        lastName: userProfile.lastName,
+        firstName: userProfile.first_name,
+        lastName: userProfile.last_name,
       }
     };
 

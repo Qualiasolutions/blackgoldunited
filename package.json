@@ -26,7 +26,6 @@
     "health:check": "curl -f https://$(vercel ls --scope=team 2>/dev/null | grep production | awk '{print $2}' | head -1)/api/health || echo 'Deploy first: npm run deploy'"
   },
   "dependencies": {
-    "@checkly/cli": "^0.4.14",
     "@hookform/resolvers": "^5.2.2",
     "@novu/node": "^2.6.6",
     "@novu/notification-center": "^2.0.0",

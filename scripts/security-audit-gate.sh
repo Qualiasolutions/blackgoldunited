@@ -86,8 +86,9 @@ SENSITIVE_PATTERNS=(
 SENSITIVE_FILES_FOUND=0
 
 for pattern in "${SENSITIVE_PATTERNS[@]}"; do
-    # Check if pattern matches files that are tracked in git
-    if git ls-files | grep -q -E "$(echo "$pattern" | sed 's/\*/.*/')"; then
+    # Check if pattern matches files that are tracked in git (more precise matching)
+    pattern_regex="$(echo "$pattern" | sed 's/\*/[^\/]*/g' | sed 's/\./\\./g')"
+    if git ls-files | grep -q -E "^${pattern_regex}$"; then
         SENSITIVE_FILES_FOUND=$((SENSITIVE_FILES_FOUND + 1))
         log_security_finding "HIGH" "Sensitive Files" "Found tracked files matching pattern: $pattern"
     fi

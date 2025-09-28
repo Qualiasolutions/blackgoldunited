@@ -35,50 +35,7 @@ const getStatusBadge = (status: Client['status']) => {
 }
 
 export function ClientList({ clients = [] }: ClientListProps) {
-  // Mock data for demonstration
-  const mockClients: Client[] = [
-    {
-      id: '1',
-      name: 'ABC Corporation',
-      email: 'contact@abc-corp.com',
-      phone: '+1-555-0123',
-      address: '123 Business Ave, NY 10001',
-      contactPerson: 'John Smith',
-      status: 'ACTIVE',
-      creditLimit: 50000,
-      paymentTerms: 'Net 30',
-      createdAt: new Date('2024-01-15'),
-      updatedAt: new Date('2024-01-20')
-    },
-    {
-      id: '2',
-      name: 'XYZ Industries',
-      email: 'info@xyz-industries.com',
-      phone: '+1-555-0456',
-      address: '456 Industrial Blvd, CA 90210',
-      contactPerson: 'Sarah Johnson',
-      status: 'ACTIVE',
-      creditLimit: 75000,
-      paymentTerms: 'Net 15',
-      createdAt: new Date('2024-01-10'),
-      updatedAt: new Date('2024-01-25')
-    },
-    {
-      id: '3',
-      name: 'Tech Solutions Ltd',
-      email: 'hello@techsolutions.com',
-      phone: '+1-555-0789',
-      address: '789 Tech Park, TX 75001',
-      contactPerson: 'Mike Wilson',
-      status: 'PENDING',
-      creditLimit: 25000,
-      paymentTerms: 'Net 30',
-      createdAt: new Date('2024-02-01'),
-      updatedAt: new Date('2024-02-01')
-    }
-  ]
-
-  const data = clients.length > 0 ? clients : mockClients
+  const data = clients
 
   const columns: ColumnDef<Client>[] = [
     {

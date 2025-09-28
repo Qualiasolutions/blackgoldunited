@@ -35,55 +35,7 @@ const getStatusBadge = (status: Supplier['status']) => {
 }
 
 export function SupplierList({ suppliers = [] }: SupplierListProps) {
-  // Mock data for demonstration
-  const mockSuppliers: Supplier[] = [
-    {
-      id: '1',
-      name: 'Industrial Equipment Co.',
-      email: 'orders@industrial-eq.com',
-      phone: '+1-555-1234',
-      address: '456 Industrial Park, Detroit, MI 48201',
-      contactPerson: 'Robert Miller',
-      status: 'ACTIVE',
-      paymentTerms: 'Net 30',
-      createdAt: new Date('2024-01-10')
-    },
-    {
-      id: '2',
-      name: 'Steel Dynamics Inc',
-      email: 'purchasing@steeldynamics.com',
-      phone: '+1-555-5678',
-      address: '789 Steel Mill Rd, Pittsburgh, PA 15201',
-      contactPerson: 'Jennifer Davis',
-      status: 'ACTIVE',
-      paymentTerms: 'Net 15',
-      createdAt: new Date('2024-01-15')
-    },
-    {
-      id: '3',
-      name: 'Global Tech Solutions',
-      email: 'supply@globaltech.com',
-      phone: '+1-555-9012',
-      address: '321 Tech Valley, San Jose, CA 95101',
-      contactPerson: 'Michael Chang',
-      status: 'INACTIVE',
-      paymentTerms: 'Net 45',
-      createdAt: new Date('2023-12-20')
-    },
-    {
-      id: '4',
-      name: 'Unreliable Supplies Ltd',
-      email: 'contact@unreliable.com',
-      phone: '+1-555-0000',
-      address: '999 Problem St, Nowhere, TX 00000',
-      contactPerson: 'John Doe',
-      status: 'BLACKLISTED',
-      paymentTerms: 'COD',
-      createdAt: new Date('2023-11-01')
-    }
-  ]
-
-  const data = suppliers.length > 0 ? suppliers : mockSuppliers
+  const data = suppliers
 
   const columns: ColumnDef<Supplier>[] = [
     {

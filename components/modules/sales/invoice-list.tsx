@@ -39,44 +39,7 @@ const getStatusBadge = (status: Invoice['status']) => {
 export function InvoiceList({ invoices = [] }: InvoiceListProps) {
   const [selectedInvoices, setSelectedInvoices] = useState<Invoice[]>([])
 
-  // Mock data for demonstration
-  const mockInvoices: Invoice[] = [
-    {
-      id: '1',
-      invoiceNumber: 'INV-001',
-      clientId: '1',
-      clientName: 'ABC Corporation',
-      amount: 15000,
-      status: 'PAID',
-      issueDate: new Date('2024-01-15'),
-      dueDate: new Date('2024-02-15'),
-      items: []
-    },
-    {
-      id: '2',
-      invoiceNumber: 'INV-002',
-      clientId: '2',
-      clientName: 'XYZ Industries',
-      amount: 25000,
-      status: 'SENT',
-      issueDate: new Date('2024-01-20'),
-      dueDate: new Date('2024-02-20'),
-      items: []
-    },
-    {
-      id: '3',
-      invoiceNumber: 'INV-003',
-      clientId: '3',
-      clientName: 'Tech Solutions Ltd',
-      amount: 8500,
-      status: 'OVERDUE',
-      issueDate: new Date('2024-01-10'),
-      dueDate: new Date('2024-02-10'),
-      items: []
-    }
-  ]
-
-  const data = invoices.length > 0 ? invoices : mockInvoices
+  const data = invoices
 
   const columns: ColumnDef<Invoice>[] = [
     {

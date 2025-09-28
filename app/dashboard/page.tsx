@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth, usePermissions } from '@/lib/hooks/useAuth'
+import { useDashboardStats } from '@/lib/hooks/useDashboardStats'
 import Link from 'next/link'
 import { useState } from 'react'
 import {
@@ -16,7 +17,12 @@ import {
   ArrowRight,
   Bell,
   Settings,
-  Filter
+  Filter,
+  RefreshCw,
+  AlertCircle,
+  Loader2,
+  Package,
+  ShoppingCart
 } from 'lucide-react'
 import { StatsCard } from '@/components/ui/stats-card'
 import { EnhancedCard } from '@/components/ui/enhanced-card'
@@ -28,6 +34,7 @@ import { MainLayout } from '@/components/layout/main-layout'
 export default function DashboardPage() {
   const { user } = useAuth()
   const { hasModuleAccess, hasFullAccess } = usePermissions()
+  const { stats, loading, error, refreshStats } = useDashboardStats()
   const [invoiceSearch, setInvoiceSearch] = useState('')
   const [clientSearch, setClientSearch] = useState('')
 
@@ -76,38 +83,79 @@ export default function DashboardPage() {
 
         {/* Executive KPI Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatsCard
-            title="Total Revenue"
-            value="AED 2,847,650"
-            description="This Month"
-            icon={TrendingUp}
-            trend={{ value: 12.5, label: "from last month", isPositive: true }}
-            colorScheme="green"
-          />
-          <StatsCard
-            title="Active Clients"
-            value="1,247"
-            description="Total Active"
-            icon={Users}
-            trend={{ value: 8.2, label: "from last month", isPositive: true }}
-            colorScheme="blue"
-          />
-          <StatsCard
-            title="Outstanding Invoices"
-            value="AED 485,200"
-            description="Pending Collection"
-            icon={FileText}
-            trend={{ value: 5.3, label: "from last month", isPositive: false }}
-            colorScheme="orange"
-          />
-          <StatsCard
-            title="Operational Efficiency"
-            value="94.2%"
-            description="System Performance"
-            icon={BarChart3}
-            trend={{ value: 2.1, label: "from last month", isPositive: true }}
-            colorScheme="emerald"
-          />
+          {loading ? (
+            <>
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-32 bg-gray-200 rounded-xl"></div>
+                </div>
+              ))}
+            </>
+          ) : error ? (
+            <div className="col-span-4">
+              <EnhancedCard className="p-6 bg-red-50 border-red-200">
+                <div className="flex items-center space-x-3">
+                  <AlertCircle className="h-5 w-5 text-red-600" />
+                  <span className="text-red-800">{error}</span>
+                  <Button variant="outline" size="sm" onClick={refreshStats}>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Retry
+                  </Button>
+                </div>
+              </EnhancedCard>
+            </div>
+          ) : (
+            <>
+              <StatsCard
+                title="Total Revenue"
+                value={`AED ${(stats?.totalRevenue?.value || 0).toLocaleString()}`}
+                description="This Month"
+                icon={TrendingUp}
+                trend={{
+                  value: stats?.totalRevenue?.change?.value || 0,
+                  label: "from last month",
+                  isPositive: stats?.totalRevenue?.change?.isPositive ?? true
+                }}
+                colorScheme="green"
+              />
+              <StatsCard
+                title="Active Clients"
+                value={(stats?.activeClients?.value || 0).toLocaleString()}
+                description="Total Active"
+                icon={Users}
+                trend={{
+                  value: stats?.activeClients?.change?.value || 0,
+                  label: "from last month",
+                  isPositive: stats?.activeClients?.change?.isPositive ?? true
+                }}
+                colorScheme="blue"
+              />
+              <StatsCard
+                title="Products in Stock"
+                value={(stats?.productsInStock?.value || 0).toLocaleString()}
+                description="Available Products"
+                icon={Package}
+                trend={{
+                  value: stats?.productsInStock?.change?.value || 0,
+                  label: "from last month",
+                  isPositive: stats?.productsInStock?.change?.isPositive ?? true
+                }}
+                colorScheme="orange"
+              />
+              <StatsCard
+                title="Pending Orders"
+                value={(stats?.pendingOrders?.value || 0).toLocaleString()}
+                description="Awaiting Processing"
+                icon={ShoppingCart}
+                trend={{
+                  value: stats?.pendingOrders?.change?.value || 0,
+                  label: "from last month",
+                  isPositive: stats?.pendingOrders?.change?.isPositive ?? false
+                }}
+                colorScheme="emerald"
+              />
+            </>
+          )}
         </div>
 
         {/* Executive Search Section */}

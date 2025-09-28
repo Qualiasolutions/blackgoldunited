@@ -45,71 +45,7 @@ const getStockStatus = (stock: number, minStock: number) => {
 }
 
 export function ProductList({ products = [] }: ProductListProps) {
-  // Mock data for demonstration
-  const mockProducts: Product[] = [
-    {
-      id: '1',
-      sku: 'PRD-001',
-      name: 'Industrial Safety Helmet',
-      description: 'High-quality safety helmet for industrial use',
-      category: 'Safety Equipment',
-      unitPrice: 45.99,
-      cost: 25.00,
-      stock: 150,
-      minStock: 20,
-      maxStock: 500,
-      unit: 'pcs',
-      status: 'ACTIVE',
-      warehouseId: '1'
-    },
-    {
-      id: '2',
-      sku: 'PRD-002',
-      name: 'Heavy Duty Drilling Machine',
-      description: 'Professional drilling machine for heavy operations',
-      category: 'Machinery',
-      unitPrice: 1299.99,
-      cost: 850.00,
-      stock: 8,
-      minStock: 5,
-      maxStock: 25,
-      unit: 'units',
-      status: 'ACTIVE',
-      warehouseId: '1'
-    },
-    {
-      id: '3',
-      sku: 'PRD-003',
-      name: 'Steel Pipe 6 inch',
-      description: 'High-grade steel pipe for construction',
-      category: 'Construction Materials',
-      unitPrice: 89.50,
-      cost: 60.00,
-      stock: 0,
-      minStock: 10,
-      maxStock: 200,
-      unit: 'meters',
-      status: 'ACTIVE',
-      warehouseId: '2'
-    },
-    {
-      id: '4',
-      sku: 'PRD-004',
-      name: 'Electronic Control Panel',
-      description: 'Advanced control panel for automation',
-      category: 'Electronics',
-      unitPrice: 750.00,
-      cost: 500.00,
-      stock: 3,
-      minStock: 5,
-      maxStock: 30,
-      unit: 'units',
-      status: 'ACTIVE',
-      warehouseId: '1'
-    }
-  ]
-
-  const data = products.length > 0 ? products : mockProducts
+  const data = products
 
   const columns: ColumnDef<Product>[] = [
     {

@@ -100,16 +100,18 @@ export async function GET(request: NextRequest) {
 
     // Department breakdown
     const departmentBreakdown = employees?.reduce((acc, emp) => {
-      if (emp.departments?.name) {
-        acc[emp.departments.name] = (acc[emp.departments.name] || 0) + 1
+      const dept = emp.departments as any
+      if (dept?.name) {
+        acc[dept.name] = (acc[dept.name] || 0) + 1
       }
       return acc
     }, {} as Record<string, number>) || {}
 
     // Designation breakdown
     const designationBreakdown = employees?.reduce((acc, emp) => {
-      if (emp.designations?.title) {
-        acc[emp.designations.title] = (acc[emp.designations.title] || 0) + 1
+      const designation = emp.designations as any
+      if (designation?.title) {
+        acc[designation.title] = (acc[designation.title] || 0) + 1
       }
       return acc
     }, {} as Record<string, number>) || {}

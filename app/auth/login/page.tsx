@@ -73,7 +73,7 @@ function LoginForm() {
           </p>
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 text-center border border-white/10">
-              <Building2 className="h-5 w-5 text-primary mx-auto mb-2" />
+              <Building className="h-5 w-5 text-primary mx-auto mb-2" />
               <p className="text-sm text-slate-300 font-medium">14 Modules</p>
               <p className="text-xs text-slate-400">Comprehensive</p>
             </div>
@@ -222,7 +222,7 @@ function LoginForm() {
               ) : (
                 <>
                   Sign in to BGU
-                  <Building2 className="h-4 w-4" />
+                  <Building className="h-4 w-4" />
                 </>
               )}
             </button>

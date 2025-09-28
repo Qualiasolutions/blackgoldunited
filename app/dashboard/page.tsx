@@ -79,34 +79,34 @@ export default function DashboardPage() {
           <StatsCard
             title="Total Revenue"
             value="AED 2,847,650"
-            change="+12.5%"
-            changeType="positive"
+            description="This Month"
             icon={TrendingUp}
-            period="This Month"
+            trend={{ value: 12.5, label: "from last month", isPositive: true }}
+            colorScheme="green"
           />
           <StatsCard
             title="Active Clients"
             value="1,247"
-            change="+8.2%"
-            changeType="positive"
+            description="Total Active"
             icon={Users}
-            period="Total Active"
+            trend={{ value: 8.2, label: "from last month", isPositive: true }}
+            colorScheme="blue"
           />
           <StatsCard
             title="Outstanding Invoices"
             value="AED 485,200"
-            change="-5.3%"
-            changeType="negative"
+            description="Pending Collection"
             icon={FileText}
-            period="Pending Collection"
+            trend={{ value: 5.3, label: "from last month", isPositive: false }}
+            colorScheme="orange"
           />
           <StatsCard
             title="Operational Efficiency"
             value="94.2%"
-            change="+2.1%"
-            changeType="positive"
+            description="System Performance"
             icon={BarChart3}
-            period="System Performance"
+            trend={{ value: 2.1, label: "from last month", isPositive: true }}
+            colorScheme="emerald"
           />
         </div>
 
@@ -342,7 +342,6 @@ export default function DashboardPage() {
               ))}
             </div>
           </EnhancedCard>
-        </div>
         </div>
       </div>
     </MainLayout>

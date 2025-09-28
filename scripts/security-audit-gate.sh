@@ -86,9 +86,10 @@ SENSITIVE_PATTERNS=(
 SENSITIVE_FILES_FOUND=0
 
 for pattern in "${SENSITIVE_PATTERNS[@]}"; do
-    if find . -name "$pattern" -not -path "./.git/*" -not -path "./node_modules/*" | grep -q .; then
+    # Check if pattern matches files that are tracked in git
+    if git ls-files | grep -q -E "$(echo "$pattern" | sed 's/\*/.*/')"; then
         SENSITIVE_FILES_FOUND=$((SENSITIVE_FILES_FOUND + 1))
-        log_security_finding "HIGH" "Sensitive Files" "Found files matching pattern: $pattern"
+        log_security_finding "HIGH" "Sensitive Files" "Found tracked files matching pattern: $pattern"
     fi
 done
 
@@ -160,7 +161,7 @@ if [[ -f "next.config.ts" ]] || [[ -f "next.config.js" ]]; then
         log_security_finding "MEDIUM" "Next.js Security" "No security headers configured"
     fi
 
-    if grep -q "contentSecurityPolicy" "$CONFIG_FILE"; then
+    if grep -q -E "(contentSecurityPolicy|Content-Security-Policy)" "$CONFIG_FILE"; then
         log_security_finding "INFO" "Next.js Security" "Content Security Policy configured"
     else
         log_security_finding "MEDIUM" "Next.js Security" "Content Security Policy not configured"
@@ -173,9 +174,19 @@ fi
 echo ""
 echo "📊 Generating security summary..."
 
-HIGH_ISSUES=$(grep -c "\[HIGH\]" .claude/security/audit.log || echo "0")
-MEDIUM_ISSUES=$(grep -c "\[MEDIUM\]" .claude/security/audit.log || echo "0")
-LOW_ISSUES=$(grep -c "\[LOW\]" .claude/security/audit.log || echo "0")
+HIGH_ISSUES=$(grep -c "\[HIGH\]" .claude/security/audit.log 2>/dev/null || echo "0")
+MEDIUM_ISSUES=$(grep -c "\[MEDIUM\]" .claude/security/audit.log 2>/dev/null || echo "0")
+LOW_ISSUES=$(grep -c "\[LOW\]" .claude/security/audit.log 2>/dev/null || echo "0")
+
+# Ensure variables are numeric
+HIGH_ISSUES=${HIGH_ISSUES//[^0-9]/}
+MEDIUM_ISSUES=${MEDIUM_ISSUES//[^0-9]/}
+LOW_ISSUES=${LOW_ISSUES//[^0-9]/}
+
+# Set defaults if empty
+HIGH_ISSUES=${HIGH_ISSUES:-0}
+MEDIUM_ISSUES=${MEDIUM_ISSUES:-0}
+LOW_ISSUES=${LOW_ISSUES:-0}
 
 cat > .claude/security/summary.json << EOF
 {
@@ -185,7 +196,7 @@ cat > .claude/security/summary.json << EOF
     "high_severity": $HIGH_ISSUES,
     "medium_severity": $MEDIUM_ISSUES,
     "low_severity": $LOW_ISSUES,
-    "total_issues": $((HIGH_ISSUES + MEDIUM_ISSUES + LOW_ISSUES))
+    "total_issues": $(($HIGH_ISSUES + $MEDIUM_ISSUES + $LOW_ISSUES))
   },
   "recommendations": [
     "Regularly update dependencies to patch vulnerabilities",

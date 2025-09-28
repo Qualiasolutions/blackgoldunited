@@ -66,7 +66,7 @@ export async function authenticateAndAuthorize(
     }
 
     // Get user profile with role
-    const { data: userProfile, error: profileError } = await supabase
+    let { data: userProfile, error: profileError } = await supabase
       .from('users')
       .select('id, email, role, first_name, last_name, is_active')
       .eq('id', authUser.id)
@@ -74,7 +74,33 @@ export async function authenticateAndAuthorize(
 
     if (profileError || !userProfile) {
       console.error('Profile fetch error:', profileError);
-      return { success: false, error: 'User profile not found', status: 404 };
+
+      // Create a default user profile if it doesn't exist
+      const defaultProfile = {
+        id: authUser.id,
+        email: authUser.email || '',
+        role: 'MANAGEMENT' as UserRole, // Default to MANAGEMENT role
+        first_name: authUser.user_metadata?.first_name || 'User',
+        last_name: authUser.user_metadata?.last_name || '',
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // Try to insert the default profile
+      const { data: newProfile, error: insertError } = await supabase
+        .from('users')
+        .insert([defaultProfile])
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('Failed to create user profile:', insertError);
+        return { success: false, error: 'User profile setup failed', status: 500 };
+      }
+
+      // Use the newly created profile
+      userProfile = newProfile;
     }
 
     // Check if user is active

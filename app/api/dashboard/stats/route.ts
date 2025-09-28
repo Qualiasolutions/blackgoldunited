@@ -119,16 +119,36 @@ export async function GET() {
       }))
     ].sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 5)
 
-    // Top products by price (simplified)
+    // Try to get stock data for products
+    let stockData: any[] = []
+    try {
+      const { data: stocks, error: stocksError } = await supabase
+        .from('stocks')
+        .select('product_id, quantity, warehouse_id')
+
+      if (!stocksError) {
+        stockData = stocks || []
+      }
+    } catch (err) {
+      console.log('Stocks table not accessible:', err)
+    }
+
+    // Top products by price with real stock data
     const topProducts = products
-      .map((product: any) => ({
-        id: product.id,
-        name: product.name,
-        code: product.productCode,
-        price: Number(product.sellingPrice) || 0,
-        totalStock: 100, // Mock stock data
-        warehouses: 1
-      }))
+      .map((product: any) => {
+        const productStocks = stockData.filter((stock: any) => stock.product_id === product.id)
+        const totalStock = productStocks.reduce((sum: number, stock: any) => sum + (Number(stock.quantity) || 0), 0)
+        const warehouses = new Set(productStocks.map((stock: any) => stock.warehouse_id)).size
+
+        return {
+          id: product.id,
+          name: product.name,
+          code: product.productCode,
+          price: Number(product.sellingPrice) || 0,
+          totalStock,
+          warehouses: warehouses || 0
+        }
+      })
       .sort((a: any, b: any) => b.price - a.price)
       .slice(0, 5)
 

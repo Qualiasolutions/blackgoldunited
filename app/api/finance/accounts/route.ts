@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-// For now, we'll create a simple mock API since chart of accounts table is not yet in the database
-// In a real implementation, this would connect to an accounts table
+// DEMO API: Chart of accounts demonstration endpoint
+// This provides sample chart of accounts data for development and testing.
+// In production, this would be replaced with queries to a real accounts table.
 
 // GET /api/finance/accounts - Get chart of accounts
 export async function GET(request: NextRequest) {
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Mock chart of accounts data - in real implementation this would come from database
+    // Sample chart of accounts data for demonstration - in production this would come from database
     const accounts = [
       {
         id: '1',

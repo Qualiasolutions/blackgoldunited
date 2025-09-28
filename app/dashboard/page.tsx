@@ -296,9 +296,13 @@ export default function DashboardPage() {
               )}
 
               {!searchQuery && (
-                <Button className="w-full" size="sm" disabled>
-                  Search All Modules
-                </Button>
+                <div className="p-4 text-center text-muted-foreground">
+                  <Search className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm">Start typing to search across all modules</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Search invoices, clients, products, and more...
+                  </p>
+                </div>
               )}
             </div>
           </EnhancedCard>
@@ -309,22 +313,30 @@ export default function DashboardPage() {
               <Plus className="h-5 w-5 text-muted-foreground" />
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" size="sm" className="h-auto py-3 flex flex-col">
-                <FileText className="h-4 w-4 mb-1" />
-                <span className="text-xs">New Invoice</span>
-              </Button>
-              <Button variant="outline" size="sm" className="h-auto py-3 flex flex-col">
-                <Users className="h-4 w-4 mb-1" />
-                <span className="text-xs">Add Client</span>
-              </Button>
-              <Button variant="outline" size="sm" className="h-auto py-3 flex flex-col">
-                <BarChart3 className="h-4 w-4 mb-1" />
-                <span className="text-xs">View Reports</span>
-              </Button>
-              <Button variant="outline" size="sm" className="h-auto py-3 flex flex-col">
-                <Settings className="h-4 w-4 mb-1" />
-                <span className="text-xs">Settings</span>
-              </Button>
+              <Link href="/sales/invoices/create">
+                <Button variant="outline" size="sm" className="h-auto py-3 flex flex-col w-full">
+                  <FileText className="h-4 w-4 mb-1" />
+                  <span className="text-xs">New Invoice</span>
+                </Button>
+              </Link>
+              <Link href="/clients/create">
+                <Button variant="outline" size="sm" className="h-auto py-3 flex flex-col w-full">
+                  <Users className="h-4 w-4 mb-1" />
+                  <span className="text-xs">Add Client</span>
+                </Button>
+              </Link>
+              <Link href="/reports">
+                <Button variant="outline" size="sm" className="h-auto py-3 flex flex-col w-full">
+                  <BarChart3 className="h-4 w-4 mb-1" />
+                  <span className="text-xs">View Reports</span>
+                </Button>
+              </Link>
+              <Link href="/settings">
+                <Button variant="outline" size="sm" className="h-auto py-3 flex flex-col w-full">
+                  <Settings className="h-4 w-4 mb-1" />
+                  <span className="text-xs">Settings</span>
+                </Button>
+              </Link>
             </div>
           </EnhancedCard>
         </div>
@@ -404,60 +416,87 @@ export default function DashboardPage() {
           <div className="lg:col-span-2">
             <EnhancedCard className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-foreground">Financial Overview</h3>
-                <div className="flex items-center space-x-2">
+                <h3 className="text-lg font-semibold text-foreground">Financial Summary</h3>
+                <Link href="/reports">
                   <Button variant="outline" size="sm">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    This Month
+                    <BarChart3 className="h-4 w-4 mr-1" />
+                    View Details
                   </Button>
-                  <Button variant="outline" size="sm">
-                    <Filter className="h-4 w-4 mr-1" />
-                    Filter
-                  </Button>
-                </div>
+                </Link>
               </div>
-              <div className="h-64 bg-muted/20 rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <BarChart3 className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Analytics Dashboard</p>
-                  <p className="text-xs text-muted-foreground mt-1">Revenue trends and forecasting</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-4 bg-muted/20 rounded-lg">
+                  <p className="text-2xl font-bold text-green-600">
+                    AED {(stats?.totalRevenue?.value || 0).toLocaleString()}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Total Revenue</p>
+                  <p className="text-xs text-green-600 mt-1">
+                    {stats?.totalRevenue?.change?.isPositive ? '+' : ''}{stats?.totalRevenue?.change?.value || 0}%
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-muted/20 rounded-lg">
+                  <p className="text-2xl font-bold text-blue-600">
+                    {(stats?.activeClients?.value || 0).toLocaleString()}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Active Clients</p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    {stats?.activeClients?.change?.isPositive ? '+' : ''}{stats?.activeClients?.change?.value || 0}%
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-muted/20 rounded-lg">
+                  <p className="text-2xl font-bold text-orange-600">
+                    {(stats?.productsInStock?.value || 0).toLocaleString()}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Products</p>
+                  <p className="text-xs text-orange-600 mt-1">
+                    {stats?.productsInStock?.change?.isPositive ? '+' : ''}{stats?.productsInStock?.change?.value || 0}%
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-muted/20 rounded-lg">
+                  <p className="text-2xl font-bold text-emerald-600">
+                    {(stats?.pendingOrders?.value || 0).toLocaleString()}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Orders</p>
+                  <p className="text-xs text-emerald-600 mt-1">
+                    {stats?.pendingOrders?.change?.isPositive ? '+' : ''}{stats?.pendingOrders?.change?.value || 0}%
+                  </p>
                 </div>
               </div>
             </EnhancedCard>
           </div>
 
-          {/* Business Insights */}
+          {/* System Status */}
           <EnhancedCard className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-foreground">Business Insights</h3>
+              <h3 className="text-lg font-semibold text-foreground">System Status</h3>
               <BarChart3 className="h-5 w-5 text-muted-foreground" />
             </div>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Invoice Processing</span>
-                  <span className="font-medium">98.2%</span>
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-center space-x-2">
+                  <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-green-800">Database</span>
                 </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div className="bg-primary h-2 rounded-full" style={{ width: '98.2%' }}></div>
-                </div>
+                <span className="text-xs text-green-600 font-medium">Online</span>
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Client Satisfaction</span>
-                  <span className="font-medium">94.7%</span>
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-center space-x-2">
+                  <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-green-800">API Services</span>
                 </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div className="bg-success h-2 rounded-full" style={{ width: '94.7%' }}></div>
-                </div>
+                <span className="text-xs text-green-600 font-medium">Operational</span>
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">System Uptime</span>
-                  <span className="font-medium">99.9%</span>
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-center space-x-2">
+                  <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-green-800">Real-time Updates</span>
                 </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div className="bg-primary h-2 rounded-full" style={{ width: '99.9%' }}></div>
+                <span className="text-xs text-green-600 font-medium">Active</span>
+              </div>
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="text-center">
+                  <p className="text-xs text-blue-600 font-medium">Last Updated</p>
+                  <p className="text-sm text-blue-800">{formatTimeAgo(lastUpdated)}</p>
                 </div>
               </div>
             </div>

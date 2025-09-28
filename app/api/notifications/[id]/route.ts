@@ -19,13 +19,27 @@ export async function PATCH(
     const params = await context.params
     const notificationId = params.id
 
-    // For now, just return success
-    // In production, this would update: UPDATE notifications SET read = $1, updated_at = NOW() WHERE id = $2 AND user_id = $3
+    // Update notification in database
+    const { data: notification, error: updateError } = await supabase
+      .from('notifications')
+      .update({ read })
+      .eq('id', notificationId)
+      .eq('user_id', user.id)
+      .select()
+      .single()
+
+    if (updateError) {
+      console.error('Error updating notification:', updateError)
+      return NextResponse.json({ error: 'Failed to update notification' }, { status: 500 })
+    }
+
+    if (!notification) {
+      return NextResponse.json({ error: 'Notification not found' }, { status: 404 })
+    }
 
     return NextResponse.json({
       success: true,
-      id: notificationId,
-      read: read
+      notification
     })
 
   } catch (error) {
@@ -51,8 +65,17 @@ export async function DELETE(
     const params = await context.params
     const notificationId = params.id
 
-    // For now, just return success
-    // In production, this would delete: DELETE FROM notifications WHERE id = $1 AND user_id = $2
+    // Delete notification from database
+    const { error: deleteError } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('id', notificationId)
+      .eq('user_id', user.id)
+
+    if (deleteError) {
+      console.error('Error deleting notification:', deleteError)
+      return NextResponse.json({ error: 'Failed to delete notification' }, { status: 500 })
+    }
 
     return NextResponse.json({
       success: true,

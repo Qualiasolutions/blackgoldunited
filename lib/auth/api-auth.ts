@@ -104,12 +104,12 @@ export async function authenticateAndAuthorize(
     }
 
     // Check if user is active
-    if (!userProfile.is_active) {
+    if (!userProfile?.is_active) {
       return { success: false, error: 'Account is deactivated', status: 403 };
     }
 
     // Check role-based permissions
-    const userRole = userProfile.role as UserRole;
+    const userRole = userProfile?.role as UserRole;
     const hasPermission = hasHTTPPermission(userRole, module, method);
 
     if (!hasPermission) {
@@ -123,11 +123,11 @@ export async function authenticateAndAuthorize(
     return {
       success: true,
       user: {
-        id: userProfile.id,
-        email: userProfile.email,
+        id: userProfile?.id || '',
+        email: userProfile?.email || '',
         role: userRole,
-        firstName: userProfile.first_name,
-        lastName: userProfile.last_name,
+        firstName: userProfile?.first_name || '',
+        lastName: userProfile?.last_name || '',
       }
     };
 
@@ -151,7 +151,7 @@ export async function authenticateUser(request: NextRequest): Promise<{ success:
     }
 
     // Get user profile with role
-    const { data: userProfile, error: profileError } = await supabase
+    let { data: userProfile, error: profileError } = await supabase
       .from('users')
       .select('id, email, role, first_name, last_name, is_active')
       .eq('id', authUser.id)

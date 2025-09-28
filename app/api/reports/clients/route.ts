@@ -136,8 +136,8 @@ export async function GET(request: NextRequest) {
     // Client activity trends (mock for now, would need historical data)
     const trends = {
       newClientsTrend: '+' + Math.max(0, newClients - 3),
-      revenueTrend: '+12.5%', // Mock data
-      paymentTrend: '+2.1%'   // Mock data
+      revenueTrend: totalRevenue > 0 ? 'Positive' : 'No data',
+      paymentTrend: paymentRate > 0 ? `${paymentRate.toFixed(1)}% paid` : 'No data'
     }
 
     return NextResponse.json({

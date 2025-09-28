@@ -108,12 +108,51 @@ export async function GET(request: NextRequest) {
         }, 0) / inventoryData.length : 0
     }
 
-    // Calculate growth rates (mock data for now - in real implementation, compare with previous period)
+    // Calculate growth rates based on data comparison with previous period
+    const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
+
+    // Get previous month's data for comparison
+    const { data: previousSalesData } = await supabase
+      .from('invoices')
+      .select('total_amount')
+      .gte('issue_date', previousMonth.toISOString().split('T')[0])
+      .lte('issue_date', previousMonthEnd.toISOString().split('T')[0])
+
+    const { data: previousPurchaseData } = await supabase
+      .from('purchase_orders')
+      .select('total_amount')
+      .gte('order_date', previousMonth.toISOString().split('T')[0])
+      .lte('order_date', previousMonthEnd.toISOString().split('T')[0])
+
+    const { data: previousClientsData } = await supabase
+      .from('clients')
+      .select('id')
+      .gte('created_at', previousMonth.toISOString())
+      .lt('created_at', currentMonth.toISOString())
+
+    const { data: previousEmployeesData } = await supabase
+      .from('employees')
+      .select('id')
+      .gte('hire_date', previousMonth.toISOString().split('T')[0])
+      .lte('hire_date', previousMonthEnd.toISOString().split('T')[0])
+
+    // Calculate actual growth rates
+    const previousSalesTotal = previousSalesData?.reduce((sum, inv) => sum + parseFloat(inv.total_amount?.toString() || '0'), 0) || 0
+    const previousPurchaseTotal = previousPurchaseData?.reduce((sum, po) => sum + parseFloat(po.total_amount?.toString() || '0'), 0) || 0
+    const previousClientsCount = previousClientsData?.length || 0
+    const previousEmployeesCount = previousEmployeesData?.length || 0
+
+    const currentSalesTotal = salesAnalytics.totalRevenue
+    const currentPurchaseTotal = purchaseAnalytics.totalSpend
+    const currentClientsCount = clientAnalytics.newClientsThisMonth
+    const currentEmployeesCount = employeeAnalytics.newHiresThisMonth
+
     const growthRates = {
-      salesGrowth: 12.5,
-      purchaseGrowth: -5.2,
-      clientGrowth: 8.3,
-      employeeGrowth: 3.1
+      salesGrowth: previousSalesTotal > 0 ? ((currentSalesTotal - previousSalesTotal) / previousSalesTotal) * 100 : 0,
+      purchaseGrowth: previousPurchaseTotal > 0 ? ((currentPurchaseTotal - previousPurchaseTotal) / previousPurchaseTotal) * 100 : 0,
+      clientGrowth: previousClientsCount > 0 ? ((currentClientsCount - previousClientsCount) / previousClientsCount) * 100 : 0,
+      employeeGrowth: previousEmployeesCount > 0 ? ((currentEmployeesCount - previousEmployeesCount) / previousEmployeesCount) * 100 : 0
     }
 
     // Return comprehensive dashboard data

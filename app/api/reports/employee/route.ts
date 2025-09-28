@@ -116,11 +116,30 @@ export async function GET(request: NextRequest) {
       return acc
     }, {} as Record<string, number>) || {}
 
-    // Calculate recent trends (mock for now, would need historical data)
+    // Calculate recent trends based on actual data
+    const previousMonthAttendance = await supabase
+      .from('attendance_logs')
+      .select('id, status')
+      .gte('date', previousMonth.toISOString().split('T')[0])
+      .lt('date', currentMonth.toISOString().split('T')[0])
+
+    const currentMonthAttendance = await supabase
+      .from('attendance_logs')
+      .select('id, status')
+      .gte('date', currentMonth.toISOString().split('T')[0])
+
+    const prevAttendanceRate = previousMonthAttendance.data?.length ?
+      (previousMonthAttendance.data.filter(log => log.status === 'PRESENT').length / previousMonthAttendance.data.length) * 100 : 0
+
+    const currentAttendanceRate = currentMonthAttendance.data?.length ?
+      (currentMonthAttendance.data.filter(log => log.status === 'PRESENT').length / currentMonthAttendance.data.length) * 100 : 0
+
+    const attendanceTrendValue = prevAttendanceRate > 0 ? currentAttendanceRate - prevAttendanceRate : 0
+
     const trends = {
       headcountGrowth: newHires > terminated ? '+' + (newHires - terminated) : (newHires - terminated).toString(),
-      attendanceTrend: '+2.3%', // Mock data - would calculate from historical attendance
-      salaryTrend: '+5.8%' // Mock data - would calculate from historical payroll
+      attendanceTrend: attendanceTrendValue >= 0 ? `+${attendanceTrendValue.toFixed(1)}%` : `${attendanceTrendValue.toFixed(1)}%`,
+      salaryTrend: averageSalary > 0 ? 'Stable' : 'No data'
     }
 
     return NextResponse.json({

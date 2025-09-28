@@ -51,66 +51,73 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-black via-gray-900 to-black items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 via-transparent to-yellow-500/5"></div>
-        <div className="relative z-10 text-center px-8">
+      {/* Left Side - Corporate Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10"></div>
+        <div className="relative z-10 text-center px-8 max-w-md">
           <div className="mx-auto mb-8">
             <Image
               src="/united-logo-white.webp"
               alt="BlackGoldUnited"
-              width={200}
-              height={80}
+              width={160}
+              height={64}
               className="mx-auto"
               priority
             />
           </div>
-          <h1 className="text-4xl font-bold text-white mb-4">
+          <h1 className="text-3xl font-bold text-white mb-3">
             BlackGoldUnited
           </h1>
-          <p className="text-xl text-gray-300 mb-8">
+          <p className="text-lg text-slate-300 mb-8 leading-relaxed">
             Enterprise Resource Planning System
           </p>
-          <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
-              <Users className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-300">14 Modules</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 text-center border border-white/10">
+              <Building2 className="h-5 w-5 text-primary mx-auto mb-2" />
+              <p className="text-sm text-slate-300 font-medium">14 Modules</p>
+              <p className="text-xs text-slate-400">Comprehensive</p>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
-              <Shield className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-300">Role-Based Access</p>
+            <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 text-center border border-white/10">
+              <Shield className="h-5 w-5 text-primary mx-auto mb-2" />
+              <p className="text-sm text-slate-300 font-medium">Secure Access</p>
+              <p className="text-xs text-slate-400">Role-Based</p>
             </div>
+          </div>
+          <div className="mt-8 pt-6 border-t border-white/10">
+            <p className="text-xs text-slate-400">
+              Trusted by enterprises worldwide
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Right Side - Login Form */}
-      <div className="flex-1 flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
+      {/* Right Side - Corporate Login Form */}
+      <div className="flex-1 flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full">
+          <div className="text-center mb-8">
             <div className="lg:hidden mx-auto mb-6">
               <Image
                 src="/united-logo-white.webp"
                 alt="BlackGoldUnited"
-                width={120}
-                height={48}
+                width={96}
+                height={38}
                 className="mx-auto filter brightness-0"
                 priority
               />
             </div>
-            <h2 className="text-3xl font-extrabold text-gray-900">
+            <h2 className="text-2xl font-bold text-foreground mb-2">
               Welcome back
             </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Sign in to access your BGU dashboard
+            <p className="text-muted-foreground">
+              Sign in to your enterprise dashboard
             </p>
           </div>
 
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div className="space-y-5">
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="space-y-4">
               {/* Email */}
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="space-y-2">
+                <label htmlFor="email" className="block text-sm font-medium text-foreground">
                   Email address
                 </label>
                 <input
@@ -121,14 +128,14 @@ function LoginForm() {
                   required
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors sm:text-sm"
+                  className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200"
                   placeholder="Enter your email address"
                 />
               </div>
 
               {/* Password */}
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="space-y-2">
+                <label htmlFor="password" className="block text-sm font-medium text-foreground">
                   Password
                 </label>
                 <div className="relative">
@@ -140,62 +147,60 @@ function LoginForm() {
                     required
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="appearance-none relative block w-full px-4 py-3 pr-12 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors sm:text-sm"
+                    className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 pr-12 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200"
                     placeholder="Enter your password"
                   />
                   <button
                     type="button"
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center hover:text-gray-600 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground transition-colors"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400" />
+                      <EyeOff className="h-4 w-4" />
                     ) : (
-                      <Eye className="h-5 w-5 text-gray-400" />
+                      <Eye className="h-4 w-4" />
                     )}
                   </button>
                 </div>
               </div>
 
               {/* Remember Me */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center space-x-2">
                   <input
                     id="rememberMe"
                     name="rememberMe"
                     type="checkbox"
                     checked={formData.rememberMe}
                     onChange={handleInputChange}
-                    className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded transition-colors"
+                    className="h-4 w-4 text-primary focus:ring-primary border-border rounded transition-colors"
                   />
-                  <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
+                  <label htmlFor="rememberMe" className="text-sm text-muted-foreground">
                     Remember me for 30 days
                   </label>
                 </div>
 
-                <div className="text-sm">
-                  <Link
-                    href="/auth/forgot-password"
-                    className="font-medium text-yellow-600 hover:text-yellow-500 transition-colors"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                >
+                  Forgot password?
+                </Link>
               </div>
             </div>
 
             {/* Error Messages */}
             {(error || authError) && (
-              <div className="rounded-lg bg-red-50 border border-red-200 p-4">
+              <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-4">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <AlertCircle className="h-5 w-5 text-red-400" />
+                    <AlertCircle className="h-4 w-4 text-destructive" />
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">
+                    <h3 className="text-sm font-medium text-destructive">
                       {error || 'Authentication failed'}
                     </h3>
-                    <p className="text-xs text-red-600 mt-1">
+                    <p className="text-xs text-destructive/80 mt-1">
                       Please check your credentials and try again.
                     </p>
                   </div>
@@ -204,45 +209,43 @@ function LoginForm() {
             )}
 
             {/* Submit Button */}
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-black bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-200"
-              >
-                {isLoading ? (
-                  <div className="flex items-center">
-                    <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5" />
-                    Signing in...
-                  </div>
-                ) : (
-                  <span className="flex items-center">
-                    Sign in to BGU
-                    <Building className="ml-2 h-4 w-4" />
-                  </span>
-                )}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold tracking-wide ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg active:scale-[0.98] h-11 px-8"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  Sign in to BGU
+                  <Building2 className="h-4 w-4" />
+                </>
+              )}
+            </button>
 
             {/* Admin Contact Info */}
-            <div className="text-center pt-4 border-t border-gray-200">
-              <p className="text-sm text-gray-600">
+            <div className="text-center pt-6 border-t border-border">
+              <p className="text-sm text-muted-foreground">
                 Account access is managed by administrators.
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 For account creation or issues, contact your system administrator.
               </p>
             </div>
 
             {/* Powered by Qualia Solutions */}
-            <div className="text-center pt-6">
-              <p className="text-xs text-gray-500">
+            <div className="text-center pt-4">
+              <p className="text-xs text-muted-foreground">
                 Powered by{' '}
                 <a
                   href="https://qualiasolutions.net"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-medium text-yellow-600 hover:text-yellow-500 transition-colors"
+                  className="font-medium text-primary hover:text-primary/80 transition-colors"
                 >
                   Qualia Solutions
                 </a>

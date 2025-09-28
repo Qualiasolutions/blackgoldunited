@@ -44,230 +44,305 @@ export default function DashboardPage() {
 
   return (
     <MainLayout user={{ name: `${user.firstName} ${user.lastName}`, email: user.email, role: user.role }}>
-      <div className="bg-gradient-to-br from-white via-orange-50 to-white min-h-full">
-        {/* Main Dashboard Content */}
-        <div className="py-8 px-6">
-          {/* Welcome Section - Subtle with Orange Accents */}
-          <div className="mb-10">
-            <div className="bg-white border-2 border-orange-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">
-                Hi {user.firstName}, Welcome Back! 👋
-              </h2>
-              <p className="text-gray-600 text-lg font-medium">
-                {currentDate} • Your BGU Dashboard Overview
-              </p>
-              <div className="mt-4 h-1 w-20 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full"></div>
+      <div className="bg-background min-h-full space-y-6">
+        {/* Executive Dashboard Header */}
+        <div className="mb-8">
+          <div className="bg-card border rounded-lg p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-foreground mb-1">
+                  Welcome back, {user.firstName}
+                </h1>
+                <p className="text-muted-foreground">
+                  {currentDate} • Executive Dashboard Overview
+                </p>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">System Status</p>
+                  <div className="flex items-center space-x-1">
+                    <div className="h-2 w-2 bg-success rounded-full"></div>
+                    <span className="text-sm font-medium text-success">Operational</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Last Updated</p>
+                  <p className="text-sm font-medium">Just now</p>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* Search Section with Orange Theme */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-            {/* Invoice Search */}
-            <EnhancedCard className="p-8 bg-white border-2 border-orange-100 shadow-lg hover:shadow-xl transition-all duration-300">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">Invoice Search</h3>
-                <div className="p-2 bg-orange-100 rounded-xl">
-                  <Search className="h-6 w-6 text-orange-600" />
-                </div>
+        {/* Executive KPI Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatsCard
+            title="Total Revenue"
+            value="AED 2,847,650"
+            change="+12.5%"
+            changeType="positive"
+            icon={TrendingUp}
+            period="This Month"
+          />
+          <StatsCard
+            title="Active Clients"
+            value="1,247"
+            change="+8.2%"
+            changeType="positive"
+            icon={Users}
+            period="Total Active"
+          />
+          <StatsCard
+            title="Outstanding Invoices"
+            value="AED 485,200"
+            change="-5.3%"
+            changeType="negative"
+            icon={FileText}
+            period="Pending Collection"
+          />
+          <StatsCard
+            title="Operational Efficiency"
+            value="94.2%"
+            change="+2.1%"
+            changeType="positive"
+            icon={BarChart3}
+            period="System Performance"
+          />
+        </div>
+
+        {/* Executive Search Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <EnhancedCard className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-foreground">Global Search</h3>
+              <Search className="h-5 w-5 text-muted-foreground" />
             </div>
-              <div className="space-y-4">
-                <Input
-                  placeholder="Search invoices by number, client..."
-                  value={invoiceSearch}
-                  onChange={(e) => setInvoiceSearch(e.target.value)}
-                  className="w-full h-12 border-orange-200 focus:border-orange-400 focus:ring-orange-200 rounded-xl"
-                />
-                <Button className="w-full h-12 bg-white border-2 border-orange-500 text-orange-600 hover:bg-orange-50 hover:border-orange-600 font-semibold rounded-xl shadow-lg transition-all duration-300">
-                  SEARCH INVOICES
-                </Button>
+            <div className="space-y-3">
+              <Input
+                placeholder="Search invoices, clients, orders..."
+                value={invoiceSearch}
+                onChange={(e) => setInvoiceSearch(e.target.value)}
+                className="w-full"
+              />
+              <Button className="w-full" size="sm">
+                Search All Modules
+              </Button>
             </div>
           </EnhancedCard>
 
-          {/* Client Search */}
-            <EnhancedCard className="p-8 bg-white border-2 border-orange-100 shadow-lg hover:shadow-xl transition-all duration-300">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">Client Search</h3>
-                <div className="p-2 bg-orange-100 rounded-xl">
-                  <Search className="h-6 w-6 text-orange-600" />
-                </div>
+          <EnhancedCard className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-foreground">Quick Actions</h3>
+              <Plus className="h-5 w-5 text-muted-foreground" />
             </div>
-              <div className="space-y-4">
-                <Input
-                  placeholder="Search clients by name, company..."
-                  value={clientSearch}
-                  onChange={(e) => setClientSearch(e.target.value)}
-                  className="w-full h-12 border-orange-200 focus:border-orange-400 focus:ring-orange-200 rounded-xl"
-                />
-                <Button className="w-full h-12 bg-white border-2 border-orange-500 text-orange-600 hover:bg-orange-50 hover:border-orange-600 font-semibold rounded-xl shadow-lg transition-all duration-300">
-                  SEARCH CLIENTS
-                </Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" size="sm" className="h-auto py-3 flex flex-col">
+                <FileText className="h-4 w-4 mb-1" />
+                <span className="text-xs">New Invoice</span>
+              </Button>
+              <Button variant="outline" size="sm" className="h-auto py-3 flex flex-col">
+                <Users className="h-4 w-4 mb-1" />
+                <span className="text-xs">Add Client</span>
+              </Button>
+              <Button variant="outline" size="sm" className="h-auto py-3 flex flex-col">
+                <BarChart3 className="h-4 w-4 mb-1" />
+                <span className="text-xs">View Reports</span>
+              </Button>
+              <Button variant="outline" size="sm" className="h-auto py-3 flex flex-col">
+                <Settings className="h-4 w-4 mb-1" />
+                <span className="text-xs">Settings</span>
+              </Button>
             </div>
           </EnhancedCard>
-          </div>
+        </div>
 
-          {/* Quick Actions Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Link href="/sales/invoices/create">
-            <EnhancedCard
-              variant="interactive"
-              colorScheme="blue"
-              className="h-32 flex flex-col items-center justify-center text-center hover:shadow-lg transition-all duration-200"
-            >
-              <div className="bg-blue-100 p-3 rounded-lg mb-2">
-                <Plus className="h-6 w-6 text-blue-600" />
+        {/* Executive Module Access Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
+          <Link href="/sales">
+            <EnhancedCard className="p-4 hover:shadow-md transition-all duration-200 cursor-pointer group">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                </div>
+                <span className="text-sm font-medium text-foreground">Sales</span>
               </div>
-              <span className="font-medium text-blue-900">Create Invoice</span>
-            </EnhancedCard>
-          </Link>
-
-          <Link href="/sales/invoices">
-            <EnhancedCard
-              variant="interactive"
-              colorScheme="green"
-              className="h-32 flex flex-col items-center justify-center text-center hover:shadow-lg transition-all duration-200"
-            >
-              <div className="bg-green-100 p-3 rounded-lg mb-2">
-                <FileText className="h-6 w-6 text-green-600" />
-              </div>
-              <span className="font-medium text-green-900">Invoices</span>
             </EnhancedCard>
           </Link>
 
           <Link href="/clients">
-            <EnhancedCard
-              variant="interactive"
-              colorScheme="purple"
-              className="h-32 flex flex-col items-center justify-center text-center hover:shadow-lg transition-all duration-200"
-            >
-              <div className="bg-purple-100 p-3 rounded-lg mb-2">
-                <Users className="h-6 w-6 text-purple-600" />
+            <EnhancedCard className="p-4 hover:shadow-md transition-all duration-200 cursor-pointer group">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+                <span className="text-sm font-medium text-foreground">Clients</span>
               </div>
-              <span className="font-medium text-purple-900">Clients</span>
             </EnhancedCard>
           </Link>
 
-          <Link href="/clients/create">
-            <EnhancedCard
-              variant="interactive"
-              colorScheme="orange"
-              className="h-32 flex flex-col items-center justify-center text-center hover:shadow-lg transition-all duration-200"
-            >
-              <div className="bg-orange-100 p-3 rounded-lg mb-2">
-                <Plus className="h-6 w-6 text-orange-600" />
+          <Link href="/inventory">
+            <EnhancedCard className="p-4 hover:shadow-md transition-all duration-200 cursor-pointer group">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                  <DollarSign className="h-5 w-5 text-primary" />
+                </div>
+                <span className="text-sm font-medium text-foreground">Inventory</span>
               </div>
-              <span className="font-medium text-orange-900">New Client</span>
             </EnhancedCard>
           </Link>
-          </div>
 
-          {/* Sales Section */}
-          <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-gray-900">Sales</h3>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                All Invoices
-              </Button>
-              <Button variant="outline" size="sm">
-                Profit & Loss
-              </Button>
-              <Button variant="outline" size="sm">
-                Recent Invoices
-              </Button>
-              <Button variant="outline" size="sm">
-                Overdue Invoices
-              </Button>
-            </div>
-          </div>
-
-          {/* Date Range */}
-          <div className="mb-6">
-            <div className="flex items-center space-x-4 text-sm">
-              <span className="text-gray-600">Invoices from</span>
-              <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                18/09/2025 to 18/09/2025
-              </Badge>
-              <Button size="sm" variant="ghost" className="text-blue-600">
-                Today
-              </Button>
-            </div>
-          </div>
-
-          {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Line Chart Placeholder */}
-            <EnhancedCard className="p-6">
-              <div className="h-64 bg-gradient-to-br from-green-50 to-blue-50 rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500">No data available</p>
-                  <p className="text-sm text-gray-400">Sales chart will appear here</p>
+          <Link href="/purchase">
+            <EnhancedCard className="p-4 hover:shadow-md transition-all duration-200 cursor-pointer group">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                  <FileText className="h-5 w-5 text-primary" />
                 </div>
+                <span className="text-sm font-medium text-foreground">Purchase</span>
               </div>
             </EnhancedCard>
+          </Link>
 
-            {/* Pie Chart Placeholder */}
-            <EnhancedCard className="p-6">
-              <div className="h-64 bg-gradient-to-br from-yellow-50 to-red-50 rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <PieChart className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500">No data available</p>
-                  <p className="text-sm text-gray-400">Revenue breakdown chart</p>
+          <Link href="/finance">
+            <EnhancedCard className="p-4 hover:shadow-md transition-all duration-200 cursor-pointer group">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                  <BarChart3 className="h-5 w-5 text-primary" />
                 </div>
+                <span className="text-sm font-medium text-foreground">Finance</span>
               </div>
             </EnhancedCard>
-          </div>
-          </div>
+          </Link>
 
-          {/* Payments Section */}
-          <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-gray-900">Payments</h3>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" className="text-green-600 border-green-200 hover:bg-green-50">
-                Successful
-              </Button>
-              <Button variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50">
-                Recent Payments
-              </Button>
-              <Button variant="outline" size="sm" className="text-purple-600 border-purple-200 hover:bg-purple-50">
-                View All
-              </Button>
-            </div>
-          </div>
-
-          {/* Payment Chart Placeholder */}
-          <EnhancedCard className="p-6">
-            <div className="h-32 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <p className="text-gray-500 text-sm">Payments from 18/09/2025 to 18/09/2025</p>
-                <p className="text-xs text-gray-400 mt-1">Payment tracking chart will appear here</p>
+          <Link href="/reports">
+            <EnhancedCard className="p-4 hover:shadow-md transition-all duration-200 cursor-pointer group">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                  <PieChart className="h-5 w-5 text-primary" />
+                </div>
+                <span className="text-sm font-medium text-foreground">Reports</span>
               </div>
-            </div>
-          </EnhancedCard>
-          </div>
+            </EnhancedCard>
+          </Link>
+        </div>
 
-          {/* Recent Activity */}
-          <div>
-          <h3 className="text-xl font-bold text-gray-900 mb-6">Recent Activity</h3>
-          <EnhancedCard className="p-6">
-            <div className="text-center py-8">
-              <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No recent activity</p>
-              <p className="text-sm text-gray-400 mt-1">
-                Your recent transactions and updates will appear here
-              </p>
-              {hasFullAccess('sales') && (
-                <Link href="/sales/invoices/create" className="mt-4 inline-block">
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                    Create First Invoice
+        {/* Executive Analytics & Reports */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Financial Overview */}
+          <div className="lg:col-span-2">
+            <EnhancedCard className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-foreground">Financial Overview</h3>
+                <div className="flex items-center space-x-2">
+                  <Button variant="outline" size="sm">
+                    <Calendar className="h-4 w-4 mr-1" />
+                    This Month
                   </Button>
-                </Link>
-              )}
+                  <Button variant="outline" size="sm">
+                    <Filter className="h-4 w-4 mr-1" />
+                    Filter
+                  </Button>
+                </div>
+              </div>
+              <div className="h-64 bg-muted/20 rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <BarChart3 className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Analytics Dashboard</p>
+                  <p className="text-xs text-muted-foreground mt-1">Revenue trends and forecasting</p>
+                </div>
+              </div>
+            </EnhancedCard>
+          </div>
+
+          {/* Business Insights */}
+          <EnhancedCard className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-foreground">Business Insights</h3>
+              <BarChart3 className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Invoice Processing</span>
+                  <span className="font-medium">98.2%</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div className="bg-primary h-2 rounded-full" style={{ width: '98.2%' }}></div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Client Satisfaction</span>
+                  <span className="font-medium">94.7%</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div className="bg-success h-2 rounded-full" style={{ width: '94.7%' }}></div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">System Uptime</span>
+                  <span className="font-medium">99.9%</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div className="bg-primary h-2 rounded-full" style={{ width: '99.9%' }}></div>
+                </div>
+              </div>
             </div>
           </EnhancedCard>
-          </div>
+        </div>
+
+        {/* Recent Transactions & Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <EnhancedCard className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-foreground">Recent Transactions</h3>
+              <Button variant="ghost" size="sm">View All</Button>
+            </div>
+            <div className="space-y-3">
+              {[1, 2, 3].map((item) => (
+                <div key={item} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-8 w-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <FileText className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Invoice #INV-2024-{1000 + item}</p>
+                      <p className="text-xs text-muted-foreground">Client Payment Received</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-success">+AED {(Math.random() * 10000 + 5000).toFixed(0)}</p>
+                    <p className="text-xs text-muted-foreground">Today</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </EnhancedCard>
+
+          <EnhancedCard className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-foreground">System Activity</h3>
+              <Button variant="ghost" size="sm">View Logs</Button>
+            </div>
+            <div className="space-y-3">
+              {[
+                { action: "New client registered", time: "5 minutes ago", icon: Users },
+                { action: "Invoice payment processed", time: "12 minutes ago", icon: DollarSign },
+                { action: "Report generated", time: "25 minutes ago", icon: BarChart3 },
+              ].map((activity, index) => (
+                <div key={index} className="flex items-center space-x-3 p-3 bg-muted/20 rounded-lg">
+                  <div className="h-8 w-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <activity.icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{activity.action}</p>
+                    <p className="text-xs text-muted-foreground">{activity.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </EnhancedCard>
+        </div>
         </div>
       </div>
     </MainLayout>

@@ -3,6 +3,9 @@
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
+import { AlertCircle, Loader2, ArrowLeft, Building, Shield, XCircle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 const AUTH_ERRORS = {
   Configuration: {
@@ -40,61 +43,125 @@ function AuthErrorContent() {
   const errorConfig = AUTH_ERRORS[errorType as keyof typeof AUTH_ERRORS] || AUTH_ERRORS.Default
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="mx-auto h-12 w-12 flex items-center justify-center bg-red-500 text-white rounded-lg">
-            <span className="text-xl font-bold">!</span>
+    <div className="min-h-screen flex">
+      {/* Left Side - Corporate Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10"></div>
+        <div className="relative z-10 text-center px-8 max-w-md">
+          <div className="mx-auto mb-8">
+            <Image
+              src="/united-logo-white.webp"
+              alt="BlackGoldUnited"
+              width={160}
+              height={64}
+              className="mx-auto"
+              priority
+            />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            {errorConfig.title}
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            BlackGoldUnited ERP System
+          <h1 className="text-3xl font-bold text-white mb-3">
+            BlackGoldUnited
+          </h1>
+          <p className="text-lg text-slate-300 mb-8 leading-relaxed">
+            Enterprise Resource Planning System
           </p>
-        </div>
-
-        <div className="rounded-md bg-red-50 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 text-center border border-white/10">
+              <Building className="h-5 w-5 text-primary mx-auto mb-2" />
+              <p className="text-sm text-slate-300 font-medium">Secure Access</p>
+              <p className="text-xs text-slate-400">Enterprise Security</p>
             </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">
-                {errorConfig.message}
-              </h3>
-              <div className="mt-2 text-sm text-red-700">
-                <p>{errorConfig.description}</p>
-              </div>
+            <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 text-center border border-white/10">
+              <Shield className="h-5 w-5 text-primary mx-auto mb-2" />
+              <p className="text-sm text-slate-300 font-medium">Protected</p>
+              <p className="text-xs text-slate-400">Authentication System</p>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="flex flex-col space-y-3">
-          <Link
-            href="/auth/login"
-            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-          >
-            Back to Login
-          </Link>
-
-          <button
-            onClick={() => router.back()}
-            className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-          >
-            Go Back
-          </button>
-        </div>
-
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-3 bg-gray-100 rounded-md">
-            <p className="text-xs text-gray-600">
-              <strong>Debug Info:</strong> Error type: {errorType}
+      {/* Right Side - Error Message */}
+      <div className="flex-1 flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full">
+          <div className="text-center mb-8">
+            <div className="lg:hidden mx-auto mb-6">
+              <Image
+                src="/united-logo-white.webp"
+                alt="BlackGoldUnited"
+                width={96}
+                height={38}
+                className="mx-auto filter brightness-0"
+                priority
+              />
+            </div>
+            <div className="mx-auto h-16 w-16 flex items-center justify-center bg-destructive/10 rounded-full mb-6">
+              <XCircle className="h-8 w-8 text-destructive" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              {errorConfig.title}
+            </h2>
+            <p className="text-muted-foreground mb-6">
+              BlackGoldUnited ERP System
             </p>
           </div>
-        )}
+
+          <div className="space-y-6">
+            <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <AlertCircle className="h-4 w-4 text-destructive" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-destructive">
+                    {errorConfig.message}
+                  </h3>
+                  <div className="mt-2 text-xs text-destructive/80">
+                    <p>{errorConfig.description}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col space-y-3">
+              <Button className="w-full" asChild>
+                <Link href="/auth/login">
+                  Back to Login
+                </Link>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => router.back()}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Go Back
+              </Button>
+            </div>
+
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-4 p-3 bg-muted rounded-lg">
+                <p className="text-xs text-muted-foreground">
+                  <strong>Debug Info:</strong> Error type: {errorType}
+                </p>
+              </div>
+            )}
+
+            {/* Powered by Qualia Solutions */}
+            <div className="text-center pt-4">
+              <p className="text-xs text-muted-foreground">
+                Powered by{' '}
+                <a
+                  href="https://qualiasolutions.net"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-primary hover:text-primary/80 transition-colors"
+                >
+                  Qualia Solutions
+                </a>
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -103,14 +170,48 @@ function AuthErrorContent() {
 export default function AuthErrorPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full space-y-8 text-center">
-          <div className="mx-auto h-12 w-12 flex items-center justify-center bg-red-500 text-white rounded-lg">
-            <span className="text-xl font-bold">!</span>
+      <div className="min-h-screen flex">
+        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 items-center justify-center">
+          <div className="mx-auto">
+            <Image
+              src="/united-logo-white.webp"
+              alt="BlackGoldUnited"
+              width={200}
+              height={80}
+              className="mx-auto"
+            />
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Loading...
-          </h2>
+        </div>
+        <div className="flex-1 flex items-center justify-center bg-background">
+          <div className="text-center">
+            <div className="lg:hidden mx-auto mb-4">
+              <Image
+                src="/united-logo-white.webp"
+                alt="BlackGoldUnited"
+                width={120}
+                height={48}
+                className="mx-auto filter brightness-0"
+              />
+            </div>
+            <div className="mx-auto h-12 w-12 flex items-center justify-center bg-destructive/10 rounded-full mb-4">
+              <XCircle className="h-6 w-6 text-destructive" />
+            </div>
+            <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-foreground">Loading...</h2>
+            <div className="mt-6">
+              <p className="text-xs text-muted-foreground">
+                Powered by{' '}
+                <a
+                  href="https://qualiasolutions.net"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-primary hover:text-primary/80 transition-colors"
+                >
+                  Qualia Solutions
+                </a>
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     }>

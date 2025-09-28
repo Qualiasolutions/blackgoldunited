@@ -282,10 +282,10 @@ export function Sidebar({ className }: SidebarProps) {
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
 
   const SidebarContent = () => (
-    <div className="flex h-full flex-col bg-gradient-to-b from-gray-900 via-black to-gray-900">
-      {/* Enhanced Navigation - No Header (unified with main header) */}
-      <ScrollArea className="flex-1 px-3 py-4">
-        <div className="space-y-1">
+    <div className="flex h-full flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700">
+      {/* Corporate Navigation */}
+      <ScrollArea className="flex-1 px-3 py-6">
+        <div className="space-y-2">
           {/* Module Navigation */}
           {bguNavigationModules.map((module) => {
             const IconComponent = iconMap[module.icon as keyof typeof iconMap]
@@ -299,58 +299,58 @@ export function Sidebar({ className }: SidebarProps) {
                   <button
                     onClick={() => toggleModule(module.id)}
                     className={cn(
-                      "flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 group",
+                      "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group",
                       moduleActive
-                        ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg border-l-4 border-orange-300"
-                        : "text-gray-300 hover:bg-gradient-to-r hover:from-orange-500/20 hover:to-orange-600/20 hover:text-white hover:shadow-md"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
                     )}
                   >
                     <div className="flex items-center space-x-3">
                       {IconComponent && (
                         <IconComponent className={cn(
-                          "h-5 w-5 transition-colors duration-300",
-                          moduleActive ? "text-white" : "text-orange-400 group-hover:text-white"
+                          "h-4 w-4 transition-colors duration-200",
+                          moduleActive ? "text-primary-foreground" : "text-slate-400 group-hover:text-white"
                         )} />
                       )}
-                      <span className="font-semibold tracking-wide">{module.title}</span>
+                      <span className="font-medium">{module.title}</span>
                     </div>
                     {expanded ? (
-                      <ChevronDown className="h-4 w-4 text-orange-200" />
+                      <ChevronDown className="h-4 w-4 text-slate-400" />
                     ) : (
-                      <ChevronRight className="h-4 w-4 text-orange-200" />
+                      <ChevronRight className="h-4 w-4 text-slate-400" />
                     )}
                   </button>
                 ) : (
                   <Link href={module.href}>
                     <div className={cn(
-                      "flex items-center space-x-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 group",
+                      "flex items-center space-x-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group",
                       moduleActive
-                        ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg border-l-4 border-orange-300"
-                        : "text-gray-300 hover:bg-gradient-to-r hover:from-orange-500/20 hover:to-orange-600/20 hover:text-white hover:shadow-md"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
                     )}>
                       {IconComponent && (
                         <IconComponent className={cn(
-                          "h-5 w-5 transition-colors duration-300",
-                          moduleActive ? "text-white" : "text-orange-400 group-hover:text-white"
+                          "h-4 w-4 transition-colors duration-200",
+                          moduleActive ? "text-primary-foreground" : "text-slate-400 group-hover:text-white"
                         )} />
                       )}
-                      <span className="font-semibold tracking-wide">{module.title}</span>
+                      <span className="font-medium">{module.title}</span>
                     </div>
                   </Link>
                 )}
 
-                {/* Enhanced Submenu with Orange Theme */}
+                {/* Corporate Submenu */}
                 {expanded && hasSubModules && (
-                  <div className="ml-6 space-y-1 border-l-2 border-orange-600/30 pl-4 py-2 bg-black/20 rounded-lg mr-2">
+                  <div className="ml-7 space-y-1 border-l border-slate-600 pl-4 py-1">
                     {module.subModules.map((subModule) => (
                       <Link key={subModule.id} href={subModule.href}>
                         <div className={cn(
-                          "flex items-center rounded-lg px-3 py-2.5 text-sm transition-all duration-300 group",
+                          "flex items-center rounded-md px-3 py-2 text-xs transition-all duration-200 group",
                           isActive(subModule.href)
-                            ? "bg-gradient-to-r from-orange-400 to-orange-500 text-white font-semibold shadow-md border-r-3 border-orange-300"
-                            : "text-gray-400 hover:bg-orange-500/10 hover:text-orange-200 hover:border-r-2 hover:border-orange-400"
+                            ? "bg-primary/10 text-primary font-medium border-r-2 border-primary"
+                            : "text-slate-400 hover:bg-slate-700/30 hover:text-slate-200"
                         )}>
-                          <span className="font-medium tracking-wide">{subModule.title}</span>
+                          <span className="truncate">{subModule.title}</span>
                         </div>
                       </Link>
                     ))}
@@ -362,25 +362,25 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
       </ScrollArea>
 
-      {/* Enhanced Footer with User Info - Orange Theme */}
-      <div className="border-t border-orange-800/30 p-4 bg-gradient-to-r from-gray-900 to-black">
+      {/* Corporate Footer with User Info */}
+      <div className="border-t border-slate-700 p-4 bg-slate-800/50">
         {user && (
           <div className="flex items-center space-x-3 mb-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg ring-2 ring-orange-300/20">
-              <span className="text-white text-sm font-bold">
+            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center shadow-sm">
+              <span className="text-primary-foreground text-sm font-semibold">
                 {user.firstName?.charAt(0) || 'U'}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white truncate">
+              <p className="text-sm font-medium text-white truncate">
                 {user.firstName} {user.lastName}
               </p>
-              <p className="text-xs text-orange-300 truncate font-medium">{user.role}</p>
+              <p className="text-xs text-slate-400 truncate">{user.role}</p>
             </div>
           </div>
         )}
-        <div className="text-xs text-orange-400 text-center font-medium">
-          BGU Portal v2.0 • Enterprise
+        <div className="text-xs text-slate-500 text-center">
+          BGU ERP v2.0 • Enterprise
         </div>
       </div>
     </div>

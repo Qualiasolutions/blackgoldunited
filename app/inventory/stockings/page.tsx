@@ -6,16 +6,52 @@ import { EnhancedCard } from '@/components/ui/enhanced-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, Package, TrendingUp, TrendingDown, ArrowUpDown, Filter, Download, AlertTriangle } from 'lucide-react'
+import { Plus, Search, Package, TrendingUp, TrendingDown, ArrowUpDown, Filter, Download, AlertTriangle, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
 export default function InventoryStockingsPage() {
   const { user } = useAuth()
   const { hasFullAccess } = usePermissions()
+  const [adjustments, setAdjustments] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+
+  useEffect(() => {
+    fetchAdjustments()
+  }, [])
+
+  const fetchAdjustments = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/inventory/stock-adjustments')
+      if (response.ok) {
+        const result = await response.json()
+        setAdjustments(result.data || [])
+      }
+    } catch (error) {
+      console.error('Error fetching stock adjustments:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (!user) {
     return null
   }
+
+  const filteredAdjustments = adjustments.filter(adj =>
+    adj.adjustmentReference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    adj.productName?.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const totalAdjustments = adjustments.length
+  const recentAdjustments = adjustments.filter(a => {
+    const date = new Date(a.adjustmentDate)
+    const weekAgo = new Date()
+    weekAgo.setDate(weekAgo.getDate() - 7)
+    return date >= weekAgo
+  }).length
 
   return (
     <MainLayout user={{ name: `${user.firstName} ${user.lastName}`, email: user.email, role: user.role }}>
@@ -50,8 +86,12 @@ export default function InventoryStockingsPage() {
             <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Products</p>
-                  <p className="text-2xl font-bold text-gray-900">1,247</p>
+                  <p className="text-sm font-medium text-gray-600">Total Adjustments</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">{totalAdjustments}</p>
+                  )}
                 </div>
                 <div className="p-3 bg-blue-100 rounded-xl">
                   <Package className="h-6 w-6 text-blue-600" />
@@ -62,8 +102,12 @@ export default function InventoryStockingsPage() {
             <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Low Stock Alerts</p>
-                  <p className="text-2xl font-bold text-gray-900">23</p>
+                  <p className="text-sm font-medium text-gray-600">This Week</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">{recentAdjustments}</p>
+                  )}
                 </div>
                 <div className="p-3 bg-red-100 rounded-xl">
                   <AlertTriangle className="h-6 w-6 text-red-600" />
@@ -74,8 +118,12 @@ export default function InventoryStockingsPage() {
             <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Stock Value</p>
-                  <p className="text-2xl font-bold text-gray-900">$2.4M</p>
+                  <p className="text-sm font-medium text-gray-600">Increases</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">{adjustments.filter(a => (a.quantityChange || 0) > 0).length}</p>
+                  )}
                 </div>
                 <div className="p-3 bg-green-100 rounded-xl">
                   <TrendingUp className="h-6 w-6 text-green-600" />
@@ -86,8 +134,12 @@ export default function InventoryStockingsPage() {
             <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Out of Stock</p>
-                  <p className="text-2xl font-bold text-gray-900">8</p>
+                  <p className="text-sm font-medium text-gray-600">Decreases</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">{adjustments.filter(a => (a.quantityChange || 0) < 0).length}</p>
+                  )}
                 </div>
                 <div className="p-3 bg-orange-100 rounded-xl">
                   <TrendingDown className="h-6 w-6 text-orange-600" />
@@ -103,6 +155,8 @@ export default function InventoryStockingsPage() {
                 <Search className="h-5 w-5 text-orange-600" />
                 <Input
                   placeholder="Search products, SKU..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="border-orange-200 focus:border-orange-400"
                 />
               </div>

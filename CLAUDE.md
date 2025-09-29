@@ -33,6 +33,46 @@ The application consists of 14 main modules accessible via the sidebar navigatio
 **Total Pages**: 61 pages across all modules
 **Status**: ~45 pages fully functional with backend integration, remaining pages use placeholder/template structure
 
+**⚠️ Known Missing Pages**:
+Some modules have subpages defined in the schema but not yet implemented in the frontend:
+
+- **Finance Module** (Currently only main page exists):
+  - Missing: `/finance/expenses` - Expense management page
+  - Missing: `/finance/incomes` - Income tracking page
+  - Missing: `/finance/treasuries` - Bank accounts and treasuries page
+  - Missing: `/finance/settings` - Finance module settings
+  - Note: Main finance dashboard (`/finance/page.tsx`) is fully functional with API integration
+
+- **Accounting Module** (Currently only main page exists):
+  - Missing: `/accounting/journal-entries` - Journal entry management page
+  - Missing: `/accounting/chart-of-accounts` - Account management page
+  - Missing: `/accounting/cost-centers` - Cost center configuration
+  - Missing: `/accounting/assets` - Asset management
+  - Missing: `/accounting/settings` - Accounting module settings
+  - Note: Main accounting dashboard (`/accounting/page.tsx`) is fully functional with API integration
+
+- **Attendance Module** (Currently only main page exists):
+  - Missing: `/attendance/logs` - Detailed attendance logs page
+  - Missing: `/attendance/days` - Day-wise attendance view
+  - Missing: `/attendance/sheets` - Attendance sheets
+  - Missing: `/attendance/permissions` - Permission requests
+  - Missing: `/attendance/leave` - Leave management page
+  - Missing: `/attendance/shifts` - Shift management
+  - Missing: `/attendance/settings` - Attendance module settings
+  - Note: Main attendance dashboard (`/attendance/page.tsx`) is fully functional with API integration
+
+- **Payroll Module** (Currently only main page exists):
+  - Missing: `/payroll/contracts` - Employment contracts page
+  - Missing: `/payroll/pay-runs` - Payroll processing runs
+  - Missing: `/payroll/payslips` - Individual payslip management
+  - Missing: `/payroll/loans` - Employee loan tracking
+  - Missing: `/payroll/salary-components` - Salary component configuration
+  - Missing: `/payroll/structures` - Salary structure management
+  - Missing: `/payroll/settings` - Payroll module settings
+  - Note: Main payroll dashboard (`/payroll/page.tsx`) is fully functional with API integration
+
+**API Coverage**: All backend API routes exist for these modules. Only the frontend pages need to be created.
+
 ## Essential Commands
 
 ### Development

@@ -6,16 +6,49 @@ import { EnhancedCard } from '@/components/ui/enhanced-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, Users, Phone, Mail, MapPin, Filter, Download, UserPlus } from 'lucide-react'
+import { Plus, Search, Users, Phone, Mail, MapPin, Filter, Download, UserPlus, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
 export default function ClientContactsPage() {
   const { user } = useAuth()
   const { hasFullAccess } = usePermissions()
+  const [contacts, setContacts] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+
+  useEffect(() => {
+    fetchContacts()
+  }, [])
+
+  const fetchContacts = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/clients/contacts')
+      if (response.ok) {
+        const result = await response.json()
+        setContacts(result.data || [])
+      }
+    } catch (error) {
+      console.error('Error fetching contacts:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (!user) {
     return null
   }
+
+  const filteredContacts = contacts.filter(contact =>
+    contact.contactName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    contact.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    contact.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const totalContacts = contacts.length
+  const primaryContacts = contacts.filter(c => c.isPrimary).length
+  const verifiedContacts = contacts.filter(c => c.email).length
 
   return (
     <MainLayout user={{ name: `${user.firstName} ${user.lastName}`, email: user.email, role: user.role }}>
@@ -45,7 +78,11 @@ export default function ClientContactsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Contacts</p>
-                  <p className="text-2xl font-bold text-gray-900">156</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">{totalContacts}</p>
+                  )}
                 </div>
                 <div className="p-3 bg-blue-100 rounded-xl">
                   <Users className="h-6 w-6 text-blue-600" />
@@ -57,7 +94,11 @@ export default function ClientContactsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Primary Contacts</p>
-                  <p className="text-2xl font-bold text-gray-900">42</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">{primaryContacts}</p>
+                  )}
                 </div>
                 <div className="p-3 bg-green-100 rounded-xl">
                   <UserPlus className="h-6 w-6 text-green-600" />
@@ -68,9 +109,15 @@ export default function ClientContactsPage() {
             <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Recent Additions</p>
-                  <p className="text-2xl font-bold text-gray-900">8</p>
-                  <p className="text-xs text-gray-500">This Month</p>
+                  <p className="text-sm font-medium text-gray-600">All Clients</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-gray-900">{new Set(contacts.map(c => c.clientId)).size}</p>
+                      <p className="text-xs text-gray-500">Companies</p>
+                    </>
+                  )}
                 </div>
                 <div className="p-3 bg-purple-100 rounded-xl">
                   <Plus className="h-6 w-6 text-purple-600" />
@@ -81,8 +128,12 @@ export default function ClientContactsPage() {
             <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Verified</p>
-                  <p className="text-2xl font-bold text-gray-900">142</p>
+                  <p className="text-sm font-medium text-gray-600">With Email</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">{verifiedContacts}</p>
+                  )}
                 </div>
                 <div className="p-3 bg-orange-100 rounded-xl">
                   <Mail className="h-6 w-6 text-orange-600" />
@@ -98,6 +149,8 @@ export default function ClientContactsPage() {
                 <Search className="h-5 w-5 text-orange-600" />
                 <Input
                   placeholder="Search contacts by name, company, email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="border-orange-200 focus:border-orange-400"
                 />
               </div>

@@ -6,16 +6,52 @@ import { EnhancedCard } from '@/components/ui/enhanced-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, FileText, Clock, CheckCircle, XCircle, Filter, Download, Package } from 'lucide-react'
+import { Plus, Search, FileText, Clock, CheckCircle, XCircle, Filter, Download, Package, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
 export default function InventoryRequisitionPage() {
   const { user } = useAuth()
   const { hasFullAccess } = usePermissions()
+  const [requisitions, setRequisitions] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState<string>('')
+
+  useEffect(() => {
+    fetchRequisitions()
+  }, [])
+
+  const fetchRequisitions = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/inventory/requisitions')
+      if (response.ok) {
+        const result = await response.json()
+        setRequisitions(result.data || [])
+      }
+    } catch (error) {
+      console.error('Error fetching requisitions:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (!user) {
     return null
   }
+
+  const filteredRequisitions = requisitions.filter(req => {
+    const matchesSearch = req.requisitionNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         req.requesterName?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = !filterStatus || req.status === filterStatus
+    return matchesSearch && matchesStatus
+  })
+
+  const pendingCount = requisitions.filter(r => r.status === 'PENDING').length
+  const approvedCount = requisitions.filter(r => r.status === 'APPROVED').length
+  const rejectedCount = requisitions.filter(r => r.status === 'REJECTED').length
+  const totalValue = requisitions.reduce((sum, r) => sum + (r.estimatedCost || 0), 0)
 
   return (
     <MainLayout user={{ name: `${user.firstName} ${user.lastName}`, email: user.email, role: user.role }}>
@@ -45,7 +81,11 @@ export default function InventoryRequisitionPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Pending Approval</p>
-                  <p className="text-2xl font-bold text-gray-900">12</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">{pendingCount}</p>
+                  )}
                 </div>
                 <div className="p-3 bg-yellow-100 rounded-xl">
                   <Clock className="h-6 w-6 text-yellow-600" />
@@ -57,7 +97,11 @@ export default function InventoryRequisitionPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Approved</p>
-                  <p className="text-2xl font-bold text-gray-900">8</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">{approvedCount}</p>
+                  )}
                 </div>
                 <div className="p-3 bg-green-100 rounded-xl">
                   <CheckCircle className="h-6 w-6 text-green-600" />
@@ -69,7 +113,11 @@ export default function InventoryRequisitionPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Rejected</p>
-                  <p className="text-2xl font-bold text-gray-900">3</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">{rejectedCount}</p>
+                  )}
                 </div>
                 <div className="p-3 bg-red-100 rounded-xl">
                   <XCircle className="h-6 w-6 text-red-600" />
@@ -81,7 +129,11 @@ export default function InventoryRequisitionPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Value</p>
-                  <p className="text-2xl font-bold text-gray-900">$24,500</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">${(totalValue / 1000).toFixed(1)}K</p>
+                  )}
                 </div>
                 <div className="p-3 bg-blue-100 rounded-xl">
                   <Package className="h-6 w-6 text-blue-600" />
@@ -97,6 +149,8 @@ export default function InventoryRequisitionPage() {
                 <Search className="h-5 w-5 text-orange-600" />
                 <Input
                   placeholder="Search requisitions..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="border-orange-200 focus:border-orange-400"
                 />
               </div>
@@ -105,12 +159,16 @@ export default function InventoryRequisitionPage() {
             <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
               <div className="flex items-center space-x-3">
                 <Filter className="h-5 w-5 text-orange-600" />
-                <select className="w-full border border-orange-200 rounded-lg px-3 py-2 focus:border-orange-400">
-                  <option>All Status</option>
-                  <option>Pending</option>
-                  <option>Approved</option>
-                  <option>Rejected</option>
-                  <option>Completed</option>
+                <select
+                  className="w-full border border-orange-200 rounded-lg px-3 py-2 focus:border-orange-400"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  <option value="">All Status</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="APPROVED">Approved</option>
+                  <option value="REJECTED">Rejected</option>
+                  <option value="COMPLETED">Completed</option>
                 </select>
               </div>
             </EnhancedCard>

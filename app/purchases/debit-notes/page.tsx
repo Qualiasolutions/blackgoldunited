@@ -6,16 +6,51 @@ import { EnhancedCard } from '@/components/ui/enhanced-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, FileText, AlertCircle, CheckCircle, Clock, Filter, Download, Eye, CreditCard } from 'lucide-react'
+import { Plus, Search, FileText, AlertCircle, CheckCircle, Clock, Filter, Download, Eye, CreditCard, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
 export default function PurchaseDebitNotesPage() {
   const { user } = useAuth()
   const { hasFullAccess } = usePermissions()
+  const [debitNotes, setDebitNotes] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState<string>('')
+
+  useEffect(() => {
+    fetchDebitNotes()
+  }, [])
+
+  const fetchDebitNotes = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/purchases/debit-notes')
+      if (response.ok) {
+        const result = await response.json()
+        setDebitNotes(result.data || [])
+      }
+    } catch (error) {
+      console.error('Error fetching debit notes:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (!user) {
     return null
   }
+
+  const filteredDebitNotes = debitNotes.filter(note => {
+    const matchesSearch = note.debitNoteNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         note.supplierName?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = !filterStatus || note.status === filterStatus
+    return matchesSearch && matchesStatus
+  })
+
+  const totalAmount = debitNotes.reduce((sum, note) => sum + (note.amount || 0), 0)
+  const pendingCount = debitNotes.filter(note => note.status === 'DRAFT').length
+  const pendingAmount = debitNotes.filter(note => note.status === 'DRAFT').reduce((sum, note) => sum + (note.amount || 0), 0)
 
   return (
     <MainLayout user={{ name: `${user.firstName} ${user.lastName}`, email: user.email, role: user.role }}>
@@ -45,7 +80,11 @@ export default function PurchaseDebitNotesPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Debit Notes</p>
-                  <p className="text-2xl font-bold text-gray-900">42</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">{debitNotes.length}</p>
+                  )}
                 </div>
                 <div className="p-3 bg-blue-100 rounded-xl">
                   <FileText className="h-6 w-6 text-blue-600" />
@@ -57,8 +96,14 @@ export default function PurchaseDebitNotesPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Pending Approval</p>
-                  <p className="text-2xl font-bold text-gray-900">8</p>
-                  <p className="text-xs text-gray-500">$15,200</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-gray-900">{pendingCount}</p>
+                      <p className="text-xs text-gray-500">${(pendingAmount / 1000).toFixed(1)}K</p>
+                    </>
+                  )}
                 </div>
                 <div className="p-3 bg-yellow-100 rounded-xl">
                   <Clock className="h-6 w-6 text-yellow-600" />
@@ -70,8 +115,14 @@ export default function PurchaseDebitNotesPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Amount</p>
-                  <p className="text-2xl font-bold text-gray-900">$89.5K</p>
-                  <p className="text-xs text-gray-500">This Year</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-gray-900">${(totalAmount / 1000).toFixed(1)}K</p>
+                      <p className="text-xs text-gray-500">This Year</p>
+                    </>
+                  )}
                 </div>
                 <div className="p-3 bg-green-100 rounded-xl">
                   <CreditCard className="h-6 w-6 text-green-600" />
@@ -82,12 +133,18 @@ export default function PurchaseDebitNotesPage() {
             <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Disputed</p>
-                  <p className="text-2xl font-bold text-gray-900">3</p>
-                  <p className="text-xs text-gray-500">$4,800</p>
+                  <p className="text-sm font-medium text-gray-600">Issued</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-gray-900">{debitNotes.filter(n => n.status === 'ISSUED').length}</p>
+                      <p className="text-xs text-gray-500">Approved</p>
+                    </>
+                  )}
                 </div>
-                <div className="p-3 bg-red-100 rounded-xl">
-                  <AlertCircle className="h-6 w-6 text-red-600" />
+                <div className="p-3 bg-green-100 rounded-xl">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
                 </div>
               </div>
             </EnhancedCard>
@@ -100,6 +157,8 @@ export default function PurchaseDebitNotesPage() {
                 <Search className="h-5 w-5 text-orange-600" />
                 <Input
                   placeholder="Search debit notes..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="border-orange-200 focus:border-orange-400"
                 />
               </div>
@@ -108,13 +167,16 @@ export default function PurchaseDebitNotesPage() {
             <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
               <div className="flex items-center space-x-3">
                 <Filter className="h-5 w-5 text-orange-600" />
-                <select className="w-full border border-orange-200 rounded-lg px-3 py-2 focus:border-orange-400">
-                  <option>All Status</option>
-                  <option>Draft</option>
-                  <option>Pending</option>
-                  <option>Approved</option>
-                  <option>Sent</option>
-                  <option>Disputed</option>
+                <select
+                  className="w-full border border-orange-200 rounded-lg px-3 py-2 focus:border-orange-400"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  <option value="">All Status</option>
+                  <option value="DRAFT">Draft</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="ISSUED">Issued</option>
+                  <option value="APPROVED">Approved</option>
                 </select>
               </div>
             </EnhancedCard>
@@ -176,136 +238,71 @@ export default function PurchaseDebitNotesPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {/* Sample Data - Replace with real data from Supabase */}
-                    <tr className="border-b border-gray-100 hover:bg-orange-50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <FileText className="h-4 w-4 text-orange-600 mr-2" />
-                          DN-2025-008
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="font-medium text-gray-900">ABC Supplies Co</p>
-                          <p className="text-sm text-gray-500">Office Equipment</p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <FileText className="h-4 w-4 text-gray-400 mr-2" />
-                          INV-2025-0021
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 font-medium">$2,100.00</td>
-                      <td className="py-3 px-4">
-                        <span className="text-sm text-gray-600">Damaged Goods</span>
-                      </td>
-                      <td className="py-3 px-4">Jan 20, 2025</td>
-                      <td className="py-3 px-4">
-                        <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-3 w-3 mr-1" />
-                            View
-                          </Button>
-                          <Button variant="outline" size="sm">Send</Button>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr className="border-b border-gray-100 hover:bg-orange-50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <FileText className="h-4 w-4 text-orange-600 mr-2" />
-                          DN-2025-007
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="font-medium text-gray-900">Tech Equipment Ltd</p>
-                          <p className="text-sm text-gray-500">IT Hardware</p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <FileText className="h-4 w-4 text-gray-400 mr-2" />
-                          INV-2025-0019
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 font-medium">$3,750.00</td>
-                      <td className="py-3 px-4">
-                        <span className="text-sm text-gray-600">Late Delivery</span>
-                      </td>
-                      <td className="py-3 px-4">Jan 18, 2025</td>
-                      <td className="py-3 px-4">
-                        <Badge className="bg-green-100 text-green-800">Approved</Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-3 w-3 mr-1" />
-                            View
-                          </Button>
-                          <Button variant="outline" size="sm">Print</Button>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr className="border-b border-gray-100 hover:bg-orange-50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <AlertCircle className="h-4 w-4 text-red-600 mr-2" />
-                          DN-2025-006
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="font-medium text-gray-900">Office Pro Supplies</p>
-                          <p className="text-sm text-gray-500">Stationery</p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <FileText className="h-4 w-4 text-gray-400 mr-2" />
-                          INV-2025-0016
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 font-medium">$1,200.00</td>
-                      <td className="py-3 px-4">
-                        <span className="text-sm text-gray-600">Quality Issue</span>
-                      </td>
-                      <td className="py-3 px-4">Jan 15, 2025</td>
-                      <td className="py-3 px-4">
-                        <Badge className="bg-red-100 text-red-800">Disputed</Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-3 w-3 mr-1" />
-                            View
-                          </Button>
-                          <Button variant="outline" size="sm" className="border-red-300 text-red-600">Resolve</Button>
-                        </div>
-                      </td>
-                    </tr>
+                    {loading ? (
+                      <tr>
+                        <td colSpan={8} className="py-12 text-center">
+                          <Loader2 className="h-8 w-8 animate-spin text-orange-600 mx-auto mb-4" />
+                          <p className="text-gray-500">Loading debit notes...</p>
+                        </td>
+                      </tr>
+                    ) : filteredDebitNotes.length > 0 ? (
+                      filteredDebitNotes.map((note) => (
+                        <tr key={note.id} className="border-b border-gray-100 hover:bg-orange-50">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center">
+                              <FileText className="h-4 w-4 text-orange-600 mr-2" />
+                              {note.debitNoteNumber}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div>
+                              <p className="font-medium text-gray-900">{note.supplierName}</p>
+                              <p className="text-sm text-gray-500">{note.category || 'N/A'}</p>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center">
+                              <FileText className="h-4 w-4 text-gray-400 mr-2" />
+                              {note.relatedInvoice || 'N/A'}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 font-medium">${note.amount?.toFixed(2)}</td>
+                          <td className="py-3 px-4">
+                            <span className="text-sm text-gray-600">{note.reason || 'N/A'}</span>
+                          </td>
+                          <td className="py-3 px-4">{new Date(note.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                          <td className="py-3 px-4">
+                            <Badge className={
+                              note.status === 'ISSUED' || note.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                              note.status === 'DRAFT' || note.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }>
+                              {note.status}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex space-x-2">
+                              <Button variant="outline" size="sm">
+                                <Eye className="h-3 w-3 mr-1" />
+                                View
+                              </Button>
+                              <Button variant="outline" size="sm">Send</Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={8} className="py-12 text-center">
+                          <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                          <p className="text-gray-500">No debit notes found</p>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
 
-              {/* Empty State for when no data */}
-              <div className="text-center py-12 hidden">
-                <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">No debit notes found</p>
-                <p className="text-gray-400 mt-2">Create your first debit note to get started</p>
-                {hasFullAccess('purchase') && (
-                  <Link href="/purchases/debit-notes/create" className="mt-4 inline-block">
-                    <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create First Debit Note
-                    </Button>
-                  </Link>
-                )}
-              </div>
             </div>
           </EnhancedCard>
         </div>

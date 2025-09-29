@@ -31,7 +31,37 @@ The application consists of 14 main modules accessible via the sidebar navigatio
 14. **QHSE** (4 pages) - Reports, Policy, Procedures, Forms
 
 **Total Pages**: 61 pages across all modules
-**Status**: ~45 pages fully functional with backend integration, remaining pages use placeholder/template structure
+**Status**: ~49 pages fully functional with backend integration, remaining pages use placeholder/template structure
+
+**🚧 WORK IN PROGRESS (January 2025):**
+Currently removing ALL mock data and connecting remaining pages to Supabase backend.
+
+**✅ COMPLETED - NEW API ROUTES (9 routes):**
+- `/api/sales/recurring` - Recurring invoice management
+- `/api/sales/refunds` - Refund receipts (credit notes)
+- `/api/purchases/debit-notes` - Purchase debit notes
+- `/api/purchases/payments` - Supplier payments
+- `/api/purchases/refunds` - Purchase refunds
+- `/api/inventory/price-lists` - Price list management
+- `/api/inventory/requisitions` - Purchase requisitions
+- `/api/inventory/stock-adjustments` - Stock movements
+- `/api/clients/contacts` - Client contact management
+
+**✅ COMPLETED - PAGES UPDATED (5/12):**
+- `app/sales/recurring/page.tsx` - Connected to API ✅
+- `app/sales/refunds/page.tsx` - Connected to API ✅
+- `app/purchases/debit-notes/page.tsx` - Connected to API ✅
+- `app/purchases/payments/page.tsx` - Connected to API ✅
+- `app/purchases/refunds/page.tsx` - Connected to API ✅
+
+**🔄 IN PROGRESS - REMAINING PAGES (7/12):**
+- `app/inventory/price-list/page.tsx`
+- `app/inventory/requisition/page.tsx`
+- `app/inventory/stockings/page.tsx`
+- `app/clients/contacts/page.tsx`
+- `app/purchase/invoices/page.tsx`
+- `app/purchases/invoices/page.tsx`
+- `app/settings/page.tsx`
 
 **⚠️ Known Missing Pages**:
 Some modules have subpages defined in the schema but not yet implemented in the frontend:

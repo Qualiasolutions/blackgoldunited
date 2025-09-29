@@ -6,16 +6,54 @@ import { EnhancedCard } from '@/components/ui/enhanced-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, CreditCard, Calendar, CheckCircle, Clock, AlertCircle, Filter, Download, Eye, DollarSign } from 'lucide-react'
+import { Plus, Search, CreditCard, Calendar, CheckCircle, Clock, AlertCircle, Filter, Download, Eye, DollarSign, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
 export default function PurchasePaymentsPage() {
   const { user } = useAuth()
   const { hasFullAccess } = usePermissions()
+  const [payments, setPayments] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState<string>('')
+
+  useEffect(() => {
+    fetchPayments()
+  }, [])
+
+  const fetchPayments = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/purchases/payments')
+      if (response.ok) {
+        const result = await response.json()
+        setPayments(result.data || [])
+      }
+    } catch (error) {
+      console.error('Error fetching payments:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (!user) {
     return null
   }
+
+  const filteredPayments = payments.filter(payment => {
+    const matchesSearch = payment.paymentNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         payment.supplierName?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = !filterStatus || payment.status === filterStatus
+    return matchesSearch && matchesStatus
+  })
+
+  const totalPayments = payments.length
+  const pendingPayments = payments.filter(p => p.status === 'PENDING').length
+  const pendingAmount = payments.filter(p => p.status === 'PENDING').reduce((sum, p) => sum + (p.amount || 0), 0)
+  const paidThisMonth = payments.filter(p => p.status === 'COMPLETED').reduce((sum, p) => sum + (p.amount || 0), 0)
+  const overduePayments = payments.filter(p => p.status === 'OVERDUE').length
+  const overdueAmount = payments.filter(p => p.status === 'OVERDUE').reduce((sum, p) => sum + (p.amount || 0), 0)
 
   return (
     <MainLayout user={{ name: `${user.firstName} ${user.lastName}`, email: user.email, role: user.role }}>
@@ -45,7 +83,11 @@ export default function PurchasePaymentsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Payments</p>
-                  <p className="text-2xl font-bold text-gray-900">156</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">{totalPayments}</p>
+                  )}
                 </div>
                 <div className="p-3 bg-blue-100 rounded-xl">
                   <CreditCard className="h-6 w-6 text-blue-600" />
@@ -57,8 +99,14 @@ export default function PurchasePaymentsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Pending Payments</p>
-                  <p className="text-2xl font-bold text-gray-900">12</p>
-                  <p className="text-xs text-gray-500">$34,200</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-gray-900">{pendingPayments}</p>
+                      <p className="text-xs text-gray-500">${(pendingAmount / 1000).toFixed(1)}K</p>
+                    </>
+                  )}
                 </div>
                 <div className="p-3 bg-yellow-100 rounded-xl">
                   <Clock className="h-6 w-6 text-yellow-600" />
@@ -70,7 +118,11 @@ export default function PurchasePaymentsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Paid This Month</p>
-                  <p className="text-2xl font-bold text-gray-900">$142K</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">${(paidThisMonth / 1000).toFixed(0)}K</p>
+                  )}
                 </div>
                 <div className="p-3 bg-green-100 rounded-xl">
                   <CheckCircle className="h-6 w-6 text-green-600" />
@@ -82,8 +134,14 @@ export default function PurchasePaymentsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Overdue Payments</p>
-                  <p className="text-2xl font-bold text-gray-900">3</p>
-                  <p className="text-xs text-gray-500">$7,150</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-gray-900">{overduePayments}</p>
+                      <p className="text-xs text-gray-500">${(overdueAmount / 1000).toFixed(1)}K</p>
+                    </>
+                  )}
                 </div>
                 <div className="p-3 bg-red-100 rounded-xl">
                   <AlertCircle className="h-6 w-6 text-red-600" />
@@ -99,6 +157,8 @@ export default function PurchasePaymentsPage() {
                 <Search className="h-5 w-5 text-orange-600" />
                 <Input
                   placeholder="Search payments, suppliers..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="border-orange-200 focus:border-orange-400"
                 />
               </div>
@@ -107,13 +167,17 @@ export default function PurchasePaymentsPage() {
             <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
               <div className="flex items-center space-x-3">
                 <Filter className="h-5 w-5 text-orange-600" />
-                <select className="w-full border border-orange-200 rounded-lg px-3 py-2 focus:border-orange-400">
-                  <option>All Status</option>
-                  <option>Pending</option>
-                  <option>Processing</option>
-                  <option>Completed</option>
-                  <option>Failed</option>
-                  <option>Cancelled</option>
+                <select
+                  className="w-full border border-orange-200 rounded-lg px-3 py-2 focus:border-orange-400"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  <option value="">All Status</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="PROCESSING">Processing</option>
+                  <option value="COMPLETED">Completed</option>
+                  <option value="FAILED">Failed</option>
+                  <option value="CANCELLED">Cancelled</option>
                 </select>
               </div>
             </EnhancedCard>
@@ -258,121 +322,66 @@ export default function PurchasePaymentsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {/* Sample Data - Replace with real data from Supabase */}
-                    <tr className="border-b border-gray-100 hover:bg-orange-50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <CreditCard className="h-4 w-4 text-orange-600 mr-2" />
-                          PAY-2025-045
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="font-medium text-gray-900">ABC Supplies Co</p>
-                          <p className="text-sm text-gray-500">Office Equipment</p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">INV-2025-0021</td>
-                      <td className="py-3 px-4 font-medium">$8,450.00</td>
-                      <td className="py-3 px-4">
-                        <span className="text-sm text-gray-600">Bank Transfer</span>
-                      </td>
-                      <td className="py-3 px-4">Jan 20, 2025</td>
-                      <td className="py-3 px-4">
-                        <Badge className="bg-green-100 text-green-800">Completed</Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-3 w-3 mr-1" />
-                            View
-                          </Button>
-                          <Button variant="outline" size="sm">Receipt</Button>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr className="border-b border-gray-100 hover:bg-orange-50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 text-yellow-600 mr-2" />
-                          PAY-2025-044
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="font-medium text-gray-900">Tech Equipment Ltd</p>
-                          <p className="text-sm text-gray-500">IT Hardware</p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">INV-2025-0020</td>
-                      <td className="py-3 px-4 font-medium">$12,750.00</td>
-                      <td className="py-3 px-4">
-                        <span className="text-sm text-gray-600">Wire Transfer</span>
-                      </td>
-                      <td className="py-3 px-4">Jan 22, 2025</td>
-                      <td className="py-3 px-4">
-                        <Badge className="bg-yellow-100 text-yellow-800">Processing</Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-3 w-3 mr-1" />
-                            View
-                          </Button>
-                          <Button variant="outline" size="sm">Track</Button>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr className="border-b border-gray-100 hover:bg-orange-50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <AlertCircle className="h-4 w-4 text-red-600 mr-2" />
-                          PAY-2024-398
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="font-medium text-gray-900">Office Pro Supplies</p>
-                          <p className="text-sm text-gray-500">Stationery</p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">INV-2024-1567</td>
-                      <td className="py-3 px-4 font-medium">$3,200.00</td>
-                      <td className="py-3 px-4">
-                        <span className="text-sm text-gray-600">Check</span>
-                      </td>
-                      <td className="py-3 px-4 text-red-600">Jan 14, 2025</td>
-                      <td className="py-3 px-4">
-                        <Badge className="bg-red-100 text-red-800">Overdue</Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-3 w-3 mr-1" />
-                            View
-                          </Button>
-                          <Button variant="outline" size="sm" className="border-red-300 text-red-600">Pay Now</Button>
-                        </div>
-                      </td>
-                    </tr>
+                    {loading ? (
+                      <tr>
+                        <td colSpan={8} className="py-12 text-center">
+                          <Loader2 className="h-8 w-8 animate-spin text-orange-600 mx-auto mb-4" />
+                          <p className="text-gray-500">Loading payments...</p>
+                        </td>
+                      </tr>
+                    ) : filteredPayments.length > 0 ? (
+                      filteredPayments.map((payment) => (
+                        <tr key={payment.id} className="border-b border-gray-100 hover:bg-orange-50">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center">
+                              <CreditCard className="h-4 w-4 text-orange-600 mr-2" />
+                              {payment.paymentNumber}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div>
+                              <p className="font-medium text-gray-900">{payment.supplierName}</p>
+                              <p className="text-sm text-gray-500">{payment.category || 'N/A'}</p>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">{payment.invoiceNumber || 'N/A'}</td>
+                          <td className="py-3 px-4 font-medium">${payment.amount?.toFixed(2)}</td>
+                          <td className="py-3 px-4">
+                            <span className="text-sm text-gray-600">{payment.paymentMethod || 'N/A'}</span>
+                          </td>
+                          <td className="py-3 px-4">{new Date(payment.paymentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                          <td className="py-3 px-4">
+                            <Badge className={
+                              payment.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                              payment.status === 'PROCESSING' || payment.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }>
+                              {payment.status}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex space-x-2">
+                              <Button variant="outline" size="sm">
+                                <Eye className="h-3 w-3 mr-1" />
+                                View
+                              </Button>
+                              <Button variant="outline" size="sm">Receipt</Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={8} className="py-12 text-center">
+                          <CreditCard className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                          <p className="text-gray-500">No payments found</p>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
 
-              {/* Empty State for when no data */}
-              <div className="text-center py-12 hidden">
-                <CreditCard className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">No payments found</p>
-                <p className="text-gray-400 mt-2">Make your first supplier payment to get started</p>
-                {hasFullAccess('purchase') && (
-                  <Link href="/purchases/payments/create" className="mt-4 inline-block">
-                    <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Make First Payment
-                    </Button>
-                  </Link>
-                )}
-              </div>
             </div>
           </EnhancedCard>
         </div>

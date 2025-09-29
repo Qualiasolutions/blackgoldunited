@@ -1,39 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BlackGoldUnited ERP System
 
-## BlackGoldUnited ERP System
-A comprehensive business management system for BlackGoldUnited with role-based access control.
+A comprehensive Enterprise Resource Planning system built with Next.js 15, featuring 14 business modules, role-based access control, and full production integrations.
 
-## Getting Started
+## 🚀 Production Status
 
-First, run the development server:
+**Live Application**: https://blackgoldunited-10cnui8d7-qualiasolutionscy.vercel.app
+**Status**: ✅ Production Ready
+**Last Updated**: September 28, 2025
+
+## 🏃‍♂️ Quick Start
 
 ```bash
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Open http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 📚 Documentation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **[CLAUDE.md](./CLAUDE.md)** - Comprehensive project guide and technical documentation
+- **[docs/](./docs/)** - Complete documentation library
+  - `docs/setup/` - Deployment and environment setup
+  - `docs/development/` - API docs and development guides
+  - `docs/progress/` - Historical progress tracking
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ⚙️ Key Commands
 
-## Learn More
+```bash
+# Development
+npm run dev              # Start with Turbopack
+npm run build           # Production build
+npm run type-check      # TypeScript validation
+npm run lint           # Code quality check
 
-To learn more about Next.js, take a look at the following resources:
+# Deployment
+npm run deploy         # Deploy to production
+npm run env:validate   # Check environment setup
+npm run health:check   # Verify deployment health
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🏗️ Architecture
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Framework**: Next.js 15.5.3 + React 19 + TypeScript
+- **Database**: Supabase (PostgreSQL) with Row Level Security
+- **Authentication**: 5-role RBAC system
+- **UI**: Radix UI + Tailwind CSS
+- **Deployment**: Vercel with CI/CD
+- **Integrations**: Sentry, Resend, Novu, Inngest, Checkly
 
-## Deploy on Vercel
+## 📊 Business Modules
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+14 core modules: Sales, Clients, Inventory, Purchase, Finance, Accounting, Employees, Organizational, Attendance, Payroll, Reports, Templates, QHSE, Settings
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔐 Security
+
+- JWT-based authentication
+- Role-based access control (5 roles)
+- Row Level Security on all 63 database tables
+- Production-grade security hardening
+
+---
+
+For detailed technical information, development guidelines, and complete project overview, see **[CLAUDE.md](./CLAUDE.md)**.

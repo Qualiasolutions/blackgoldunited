@@ -73,19 +73,44 @@ export async function authenticateAndAuthorize(
       .single();
 
     if (profileError || !userProfile) {
-      console.error('Profile fetch error:', profileError);
+      console.error('Profile fetch error for user:', authUser.id, {
+        error: profileError,
+        code: profileError?.code,
+        message: profileError?.message,
+        details: profileError?.details,
+        hint: profileError?.hint
+      });
+
+      // Validate required fields before creating profile
+      if (!authUser.id || !authUser.email) {
+        console.error('Missing required auth user data:', {
+          hasId: !!authUser.id,
+          hasEmail: !!authUser.email
+        });
+        return {
+          success: false,
+          error: 'Incomplete authentication data',
+          status: 500
+        };
+      }
 
       // Create a default user profile if it doesn't exist
       const defaultProfile = {
         id: authUser.id,
-        email: authUser.email || '',
+        email: authUser.email,
         role: 'MANAGEMENT' as UserRole, // Default to MANAGEMENT role
         first_name: authUser.user_metadata?.first_name || 'User',
-        last_name: authUser.user_metadata?.last_name || '',
+        last_name: authUser.user_metadata?.last_name || 'Name',
         is_active: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
+
+      console.log('Attempting to create user profile:', {
+        userId: authUser.id,
+        email: authUser.email,
+        profileData: defaultProfile
+      });
 
       // Try to insert the default profile
       const { data: newProfile, error: insertError } = await supabase
@@ -95,12 +120,61 @@ export async function authenticateAndAuthorize(
         .single();
 
       if (insertError) {
-        console.error('Failed to create user profile:', insertError);
-        return { success: false, error: 'User profile setup failed', status: 500 };
-      }
+        console.error('Failed to create user profile - Detailed error:', {
+          error: insertError,
+          code: insertError?.code,
+          message: insertError?.message,
+          details: insertError?.details,
+          hint: insertError?.hint,
+          userId: authUser.id,
+          email: authUser.email
+        });
 
-      // Use the newly created profile
-      userProfile = newProfile;
+        // If the error is "already exists", try to fetch the profile again
+        if (insertError?.code === '23505') {
+          console.log('Profile already exists, attempting to fetch again...');
+          const { data: existingProfile, error: refetchError } = await supabase
+            .from('users')
+            .select('id, email, role, first_name, last_name, is_active')
+            .eq('id', authUser.id)
+            .single();
+
+          if (!refetchError && existingProfile) {
+            console.log('Successfully retrieved existing profile on retry');
+            userProfile = existingProfile;
+          } else {
+            console.error('Failed to retrieve existing profile:', refetchError);
+            return {
+              success: false,
+              error: 'User profile exists but cannot be accessed. Please contact administrator.',
+              status: 500
+            };
+          }
+        } else {
+          // For other errors, provide specific error messages
+          let errorMessage = 'User profile setup failed';
+          if (insertError?.code === '42501') {
+            errorMessage = 'Permission denied - unable to create user profile';
+          } else if (insertError?.code === '23502') {
+            errorMessage = 'Missing required fields for user profile creation';
+          }
+
+          return {
+            success: false,
+            error: `${errorMessage}: ${insertError?.message || 'Unknown error'}`,
+            status: 500
+          };
+        }
+      } else {
+        console.log('Successfully created user profile:', {
+          userId: newProfile?.id,
+          email: newProfile?.email,
+          role: newProfile?.role
+        });
+
+        // Use the newly created profile
+        userProfile = newProfile;
+      }
     }
 
     // Check if user is active

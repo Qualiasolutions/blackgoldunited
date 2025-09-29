@@ -3,7 +3,7 @@
 import { useAuth, usePermissions } from '@/lib/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { DollarSign, TrendingUp, TrendingDown, PieChart, BarChart3, Calculator, FileText, CreditCard } from 'lucide-react'
+import { DollarSign, TrendingUp, TrendingDown, PieChart, BarChart3, Calculator, FileText, CreditCard, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
@@ -11,17 +11,49 @@ export default function FinancePage() {
   const { user } = useAuth()
   const { hasModuleAccess, hasFullAccess } = usePermissions()
   const [financialData, setFinancialData] = useState({
-    totalAssets: 2450000,
-    totalLiabilities: 890000,
-    totalEquity: 1560000,
-    monthlyRevenue: 485200,
-    monthlyExpenses: 342800,
-    netIncome: 142400,
-    cashFlow: 98500,
-    accountsReceivable: 234500,
-    accountsPayable: 156700,
-    bankBalance: 456200
+    totalAssets: 0,
+    totalLiabilities: 0,
+    totalEquity: 0,
+    monthlyRevenue: 0,
+    monthlyExpenses: 0,
+    netIncome: 0,
+    cashFlow: 0,
+    accountsReceivable: 0,
+    accountsPayable: 0,
+    bankBalance: 0
   })
+  const [transactions, setTransactions] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchFinanceData = async () => {
+      try {
+        setLoading(true)
+
+        // Fetch financial stats
+        const statsResponse = await fetch('/api/finance/stats')
+        if (statsResponse.ok) {
+          const stats = await statsResponse.json()
+          setFinancialData(stats)
+        }
+
+        // Fetch recent transactions
+        const transactionsResponse = await fetch('/api/finance/transactions')
+        if (transactionsResponse.ok) {
+          const txns = await transactionsResponse.json()
+          setTransactions(txns)
+        }
+      } catch (error) {
+        console.error('Error fetching finance data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (hasModuleAccess('finance')) {
+      fetchFinanceData()
+    }
+  }, [hasModuleAccess])
 
   if (!hasModuleAccess('finance')) {
     return (
@@ -74,12 +106,21 @@ export default function FinancePage() {
                 <TrendingUp className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  ${financialData.totalAssets.toLocaleString()}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Current + Non-current
-                </p>
+                {loading ? (
+                  <div className="flex items-center space-x-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-sm text-gray-500">Loading...</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-green-600">
+                      ${financialData.totalAssets.toLocaleString()}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Current + Non-current
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -89,12 +130,20 @@ export default function FinancePage() {
                 <TrendingDown className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">
-                  ${financialData.totalLiabilities.toLocaleString()}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Current + Long-term
-                </p>
+                {loading ? (
+                  <div className="flex items-center space-x-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-red-600">
+                      ${financialData.totalLiabilities.toLocaleString()}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Current + Long-term
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -104,12 +153,20 @@ export default function FinancePage() {
                 <BarChart3 className="h-4 w-4 text-blue-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">
-                  ${financialData.totalEquity.toLocaleString()}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Owner's equity
-                </p>
+                {loading ? (
+                  <div className="flex items-center space-x-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-blue-600">
+                      ${financialData.totalEquity.toLocaleString()}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Owner's equity
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -119,12 +176,20 @@ export default function FinancePage() {
                 <DollarSign className="h-4 w-4 text-emerald-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-emerald-600">
-                  ${financialData.netIncome.toLocaleString()}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  This month
-                </p>
+                {loading ? (
+                  <div className="flex items-center space-x-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-emerald-600">
+                      ${financialData.netIncome.toLocaleString()}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      This month
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -194,35 +259,41 @@ export default function FinancePage() {
               <CardTitle>Recent Transactions</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {[
-                  { id: 'TXN-001', description: 'Payment from Client ABC Ltd', amount: 45000, type: 'Credit', date: '2025-01-15' },
-                  { id: 'TXN-002', description: 'Office Rent Payment', amount: -8200, type: 'Debit', date: '2025-01-14' },
-                  { id: 'TXN-003', description: 'Equipment Purchase', amount: -12500, type: 'Debit', date: '2025-01-13' },
-                  { id: 'TXN-004', description: 'Invoice Payment - XYZ Corp', amount: 28300, type: 'Credit', date: '2025-01-12' },
-                  { id: 'TXN-005', description: 'Utility Bills', amount: -1850, type: 'Debit', date: '2025-01-11' },
-                ].map((transaction) => (
-                  <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-3 h-3 rounded-full ${
-                        transaction.type === 'Credit' ? 'bg-green-500' : 'bg-red-500'
-                      }`}></div>
-                      <div>
-                        <p className="font-medium">{transaction.description}</p>
-                        <p className="text-sm text-gray-600">{transaction.id} • {transaction.date}</p>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  <span className="text-gray-500">Loading transactions...</span>
+                </div>
+              ) : transactions.length > 0 ? (
+                <div className="space-y-4">
+                  {transactions.map((transaction) => (
+                    <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-4">
+                        <div className={`w-3 h-3 rounded-full ${
+                          transaction.type === 'Credit' ? 'bg-green-500' : 'bg-red-500'
+                        }`}></div>
+                        <div>
+                          <p className="font-medium">{transaction.description}</p>
+                          <p className="text-sm text-gray-600">{transaction.id} • {transaction.date}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-medium ${
+                          transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {transaction.amount > 0 ? '+' : ''}${Math.abs(transaction.amount).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-gray-600">{transaction.type}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className={`font-medium ${
-                        transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {transaction.amount > 0 ? '+' : ''}${Math.abs(transaction.amount).toLocaleString()}
-                      </p>
-                      <p className="text-sm text-gray-600">{transaction.type}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">No transactions found</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

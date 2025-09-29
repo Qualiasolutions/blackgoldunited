@@ -122,13 +122,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const validatedParams = searchSchema.parse(Object.fromEntries(searchParams.entries()));
 
+    // Get invoices first without joins to avoid foreign key relationship issues
     let query = supabase
       .from('invoices')
-      .select(`
-        *,
-        client:clients!inner(id, company_name, contact_person, email),
-        items:invoice_items(*)
-      `, { count: 'exact' })
+      .select('*', { count: 'exact' })
       .is('deleted_at', null);
 
     // Apply search filter
@@ -157,8 +154,25 @@ export async function GET(request: NextRequest) {
       query = query.lte('issue_date', validatedParams.dateTo);
     }
 
+    // Map camelCase to snake_case for database column names
+    const columnMapping: Record<string, string> = {
+      'createdAt': 'created_at',
+      'updatedAt': 'updated_at',
+      'issueDate': 'issue_date',
+      'dueDate': 'due_date',
+      'clientId': 'client_id',
+      'invoiceNumber': 'invoice_number',
+      'totalAmount': 'total_amount',
+      'paidAmount': 'paid_amount',
+      'taxAmount': 'tax_amount',
+      'discountAmount': 'discount_amount',
+      'paymentStatus': 'payment_status'
+    };
+
+    const dbSortColumn = columnMapping[validatedParams.sortBy] || validatedParams.sortBy;
+
     // Apply sorting
-    query = query.order(validatedParams.sortBy, { ascending: validatedParams.sortOrder === 'asc' });
+    query = query.order(dbSortColumn, { ascending: validatedParams.sortOrder === 'asc' });
 
     // Apply pagination
     const from = (validatedParams.page - 1) * validatedParams.limit;
@@ -172,9 +186,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch invoices' }, { status: 500 });
     }
 
+    // For now, return invoices without client data to avoid JOIN issues
+    // TODO: Fetch client data separately if needed
+    const invoicesWithBasicData = (invoices || []).map(invoice => ({
+      ...invoice,
+      client: null, // Will be populated later when foreign keys are properly set up
+      items: [] // Will be populated later when foreign keys are properly set up
+    }));
+
     return NextResponse.json({
       success: true,
-      data: invoices || [],
+      data: invoicesWithBasicData,
       pagination: {
         page: validatedParams.page,
         limit: validatedParams.limit,

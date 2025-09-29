@@ -1,15 +1,16 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { authenticateAndAuthorize } from '@/lib/auth/api-auth'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Authenticate and authorize using the same pattern as other APIs
+    const authResult = await authenticateAndAuthorize(request, 'reports', 'GET')
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
+
+    const supabase = await createClient()
 
     // Start with simple queries and add complexity gradually
     const results: any = {}
@@ -18,8 +19,8 @@ export async function GET() {
     try {
       const { data: clients, error: clientsError } = await supabase
         .from('clients')
-        .select('id, companyName, isActive, createdAt')
-        .eq('deletedAt', null)
+        .select('id, company_name, is_active, created_at')
+        .is('deleted_at', null)
 
       if (!clientsError) {
         results.clients = clients || []
@@ -33,8 +34,8 @@ export async function GET() {
     try {
       const { data: invoices, error: invoicesError } = await supabase
         .from('invoices')
-        .select('id, totalAmount, paidAmount, status, createdAt, invoiceNumber')
-        .eq('deletedAt', null)
+        .select('id, total_amount, paid_amount, status, created_at, invoice_number')
+        .is('deleted_at', null)
 
       if (!invoicesError) {
         results.invoices = invoices || []
@@ -48,9 +49,9 @@ export async function GET() {
     try {
       const { data: products, error: productsError } = await supabase
         .from('products')
-        .select('id, name, productCode, sellingPrice, reorderLevel, isActive')
-        .eq('deletedAt', null)
-        .eq('isActive', true)
+        .select('id, name, product_code, selling_price, reorder_level, is_active')
+        .is('deleted_at', null)
+        .eq('is_active', true)
 
       if (!productsError) {
         results.products = products || []
@@ -64,8 +65,8 @@ export async function GET() {
     try {
       const { data: purchaseOrders, error: ordersError } = await supabase
         .from('purchase_orders')
-        .select('id, status, totalAmount, createdAt')
-        .eq('deletedAt', null)
+        .select('id, status, total_amount, created_at')
+        .is('deleted_at', null)
 
       if (!ordersError) {
         results.purchaseOrders = purchaseOrders || []
@@ -79,43 +80,56 @@ export async function GET() {
     const { clients = [], invoices = [], products = [], purchaseOrders = [] } = results
 
     // Revenue calculations
-    const totalRevenue = invoices.reduce((sum: number, inv: any) => sum + (Number(inv.paidAmount) || Number(inv.totalAmount) || 0), 0)
-    const previousRevenue = totalRevenue * 0.9 // Mock previous period for change calculation
-    const revenueChange = previousRevenue > 0 ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 : 0
+    const totalRevenue = invoices.reduce((sum: number, inv: any) => sum + (Number(inv.paid_amount) || Number(inv.total_amount) || 0), 0)
 
-    // Client calculations
-    const activeClientsCount = clients.filter((c: any) => c.isActive !== false).length
-    const totalClientsCount = clients.length
-    const previousClients = Math.max(1, activeClientsCount - 2) // Mock previous count
-    const clientsChange = ((activeClientsCount - previousClients) / previousClients) * 100
+    // Calculate real historical data for last month (30 days ago)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-    // Product calculations (simplified without stocks for now)
+    const lastMonthRevenue = invoices
+      .filter((inv: any) => new Date(inv.created_at) <= thirtyDaysAgo)
+      .reduce((sum: number, inv: any) => sum + (Number(inv.paid_amount) || Number(inv.total_amount) || 0), 0)
+
+    const revenueChange = lastMonthRevenue > 0 ? ((totalRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : 0
+
+    // Client calculations with real historical data
+    const activeClientsCount = clients.filter((c: any) => c.is_active !== false).length
+    const lastMonthClients = clients
+      .filter((c: any) => new Date(c.created_at) <= thirtyDaysAgo && c.is_active !== false).length
+    const currentMonthNewClients = activeClientsCount - lastMonthClients
+    const clientsChange = lastMonthClients > 0 ? (currentMonthNewClients / lastMonthClients) * 100 : 0
+
+    // Product calculations with real data
     const productsInStock = products.length
-    const previousProducts = Math.max(1, productsInStock - 1)
-    const productsChange = ((productsInStock - previousProducts) / previousProducts) * 100
+    const lastMonthProducts = products
+      .filter((p: any) => new Date(p.created_at || Date.now()) <= thirtyDaysAgo).length
+    const newProducts = productsInStock - lastMonthProducts
+    const productsChange = lastMonthProducts > 0 ? (newProducts / lastMonthProducts) * 100 : 0
 
-    // Purchase order calculations
+    // Purchase order calculations with real data
     const pendingOrdersCount = purchaseOrders.filter((po: any) =>
       ['DRAFT', 'SENT', 'CONFIRMED', 'PENDING'].includes(po.status)
     ).length
-    const previousOrders = Math.max(1, pendingOrdersCount + 1)
-    const ordersChange = ((pendingOrdersCount - previousOrders) / previousOrders) * 100
+    const lastMonthOrders = purchaseOrders
+      .filter((po: any) => new Date(po.created_at) <= thirtyDaysAgo &&
+        ['DRAFT', 'SENT', 'CONFIRMED', 'PENDING'].includes(po.status)).length
+    const ordersChange = lastMonthOrders > 0 ? ((pendingOrdersCount - lastMonthOrders) / lastMonthOrders) * 100 : 0
 
     // Recent activity from available data
     const recentActivity = [
       ...invoices.slice(0, 3).map((inv: any) => ({
         id: inv.id || 'unknown',
         type: 'invoice',
-        description: `Invoice ${inv.invoiceNumber || 'N/A'}`,
-        amount: Number(inv.totalAmount) || 0,
-        timestamp: inv.createdAt || new Date().toISOString()
+        description: `Invoice ${inv.invoice_number || 'N/A'}`,
+        amount: Number(inv.total_amount) || 0,
+        timestamp: inv.created_at || new Date().toISOString()
       })),
       ...clients.slice(0, 2).map((client: any) => ({
         id: client.id || 'unknown',
         type: 'client',
-        description: `New client: ${client.companyName}`,
+        description: `New client: ${client.company_name}`,
         amount: 0,
-        timestamp: client.createdAt || new Date().toISOString()
+        timestamp: client.created_at || new Date().toISOString()
       }))
     ].sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 5)
 
@@ -143,8 +157,8 @@ export async function GET() {
         return {
           id: product.id,
           name: product.name,
-          code: product.productCode,
-          price: Number(product.sellingPrice) || 0,
+          code: product.product_code,
+          price: Number(product.selling_price) || 0,
           totalStock,
           warehouses: warehouses || 0
         }
@@ -170,15 +184,7 @@ export async function GET() {
         change: { value: Math.round(ordersChange * 10) / 10, isPositive: ordersChange >= 0 }
       },
       recentActivity,
-      topProducts,
-      // Add debug info
-      debug: {
-        tablesFound: Object.keys(results),
-        clientsCount: clients.length,
-        invoicesCount: invoices.length,
-        productsCount: products.length,
-        purchaseOrdersCount: purchaseOrders.length
-      }
+      topProducts
     }
 
     return NextResponse.json(stats)

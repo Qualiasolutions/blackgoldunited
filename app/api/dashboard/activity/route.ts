@@ -12,112 +12,100 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // For now, return structured activity data
-    // In production, this would aggregate from multiple tables: invoices, purchase_orders, clients, etc.
-    const recentTransactions = [
-      {
-        id: '1',
-        type: 'invoice_payment',
-        title: 'Invoice #INV-2024-1001',
-        description: 'Payment received from Emerald Holdings LLC',
-        amount: 8750,
-        module: 'sales',
-        created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
-        status: 'completed'
-      },
-      {
-        id: '2',
-        type: 'purchase_order',
-        title: 'Purchase Order #PO-2024-0087',
-        description: 'Automotive Parts Supply Order',
-        amount: -12300,
-        module: 'purchase',
-        created_at: new Date(Date.now() - 25 * 60 * 1000).toISOString(), // 25 minutes ago
-        status: 'pending'
-      },
-      {
-        id: '3',
-        type: 'invoice_payment',
-        title: 'Invoice #INV-2024-0998',
-        description: 'Payment received from Phoenix Industries',
-        amount: 15600,
-        module: 'sales',
-        created_at: new Date(Date.now() - 45 * 60 * 1000).toISOString(), // 45 minutes ago
-        status: 'completed'
-      },
-      {
-        id: '4',
-        type: 'expense',
-        title: 'Office Supplies',
-        description: 'Monthly office equipment purchase',
-        amount: -850,
-        module: 'finance',
-        created_at: new Date(Date.now() - 1.5 * 60 * 60 * 1000).toISOString(), // 1.5 hours ago
-        status: 'completed'
-      },
-      {
-        id: '5',
-        type: 'invoice_payment',
-        title: 'Invoice #INV-2024-0995',
-        description: 'Payment received from Gulf Machinery LLC',
-        amount: 22400,
-        module: 'sales',
-        created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
-        status: 'completed'
-      }
-    ]
+    // Get real transactions from database
+    const recentTransactions: any[] = []
+    const systemActivity: any[] = []
 
-    const systemActivity = [
-      {
-        id: '1',
-        action: 'Client registered',
-        description: 'Phoenix Industries successfully added to client database',
-        user: 'System',
-        module: 'clients',
-        created_at: new Date(Date.now() - 8 * 60 * 1000).toISOString(), // 8 minutes ago
-        type: 'success'
-      },
-      {
-        id: '2',
-        action: 'Low stock alert',
-        description: 'Premium Oil Filter inventory below minimum threshold',
-        user: 'System',
-        module: 'inventory',
-        created_at: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 minutes ago
-        type: 'warning'
-      },
-      {
-        id: '3',
-        action: 'Invoice generated',
-        description: 'Automated invoice INV-2024-1002 created for recurring client',
-        user: 'System',
-        module: 'sales',
-        created_at: new Date(Date.now() - 22 * 60 * 1000).toISOString(), // 22 minutes ago
-        type: 'info'
-      },
-      {
-        id: '4',
-        action: 'Purchase order approved',
-        description: 'PO-2024-0087 approved by management team',
-        user: user.email?.split('@')[0] || 'User',
-        module: 'purchase',
-        created_at: new Date(Date.now() - 35 * 60 * 1000).toISOString(), // 35 minutes ago
-        type: 'success'
-      },
-      {
-        id: '5',
-        action: 'Report generated',
-        description: 'Monthly financial summary report completed',
-        user: 'System',
-        module: 'finance',
-        created_at: new Date(Date.now() - 55 * 60 * 1000).toISOString(), // 55 minutes ago
-        type: 'info'
-      }
-    ]
+    // Get recent invoices
+    try {
+      const { data: invoices } = await supabase
+        .from('invoices')
+        .select('id, invoiceNumber, totalAmount, paidAmount, status, createdAt')
+        .eq('deletedAt', null)
+        .order('createdAt', { ascending: false })
+        .limit(3)
 
+      if (invoices) {
+        invoices.forEach((invoice: any) => {
+          if (invoice.paidAmount > 0) {
+            recentTransactions.push({
+              id: invoice.id,
+              type: 'invoice_payment',
+              title: `Invoice #${invoice.invoiceNumber || 'N/A'}`,
+              description: `Payment received - Invoice #${invoice.invoiceNumber || 'N/A'}`,
+              amount: Number(invoice.paidAmount),
+              module: 'sales',
+              created_at: invoice.createdAt,
+              status: 'completed'
+            })
+          }
+        })
+      }
+    } catch (err) {
+      console.log('Error fetching invoices:', err)
+    }
+
+    // Get recent purchase orders
+    try {
+      const { data: purchaseOrders } = await supabase
+        .from('purchase_orders')
+        .select('id, orderNumber, totalAmount, status, createdAt')
+        .eq('deletedAt', null)
+        .order('createdAt', { ascending: false })
+        .limit(2)
+
+      if (purchaseOrders) {
+        purchaseOrders.forEach((po: any) => {
+          recentTransactions.push({
+            id: po.id,
+            type: 'purchase_order',
+            title: `Purchase Order #${po.orderNumber || 'N/A'}`,
+            description: `Purchase order - ${po.orderNumber || 'N/A'}`,
+            amount: -Number(po.totalAmount || 0),
+            module: 'purchase',
+            created_at: po.createdAt,
+            status: po.status?.toLowerCase() || 'pending'
+          })
+        })
+      }
+    } catch (err) {
+      console.log('Error fetching purchase orders:', err)
+    }
+
+    // Get recent clients for system activity
+    try {
+      const { data: clients } = await supabase
+        .from('clients')
+        .select('id, companyName, createdAt')
+        .eq('deletedAt', null)
+        .order('createdAt', { ascending: false })
+        .limit(2)
+
+      if (clients) {
+        clients.forEach((client: any) => {
+          systemActivity.push({
+            id: client.id,
+            action: 'Client registered',
+            description: `${client.companyName} successfully added to client database`,
+            user: 'System',
+            module: 'clients',
+            created_at: client.createdAt,
+            type: 'success'
+          })
+        })
+      }
+    } catch (err) {
+      console.log('Error fetching clients:', err)
+    }
+
+    // Sort transactions by date (most recent first)
+    recentTransactions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    systemActivity.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+    // If no real data, return empty arrays instead of mock data
     return NextResponse.json({
-      recentTransactions,
-      systemActivity
+      recentTransactions: recentTransactions.slice(0, 5),
+      systemActivity: systemActivity.slice(0, 5)
     })
 
   } catch (error) {

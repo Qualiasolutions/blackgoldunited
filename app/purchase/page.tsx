@@ -3,12 +3,42 @@
 import { useAuth, usePermissions } from '@/lib/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Plus, Truck, ShoppingCart, FileText, DollarSign, Package } from 'lucide-react'
+import { Plus, Truck, ShoppingCart, FileText, DollarSign, Package, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
 export default function PurchasePage() {
   const { user } = useAuth()
   const { hasModuleAccess, hasFullAccess } = usePermissions()
+  const [purchaseStats, setPurchaseStats] = useState({
+    totalPurchaseValue: 0,
+    activeSuppliers: 0,
+    pendingOrders: 0,
+    itemsReceived: 0,
+    recentOrders: []
+  })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchPurchaseStats = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('/api/purchase/stats')
+        if (response.ok) {
+          const data = await response.json()
+          setPurchaseStats(data)
+        }
+      } catch (error) {
+        console.error('Error fetching purchase stats:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (hasModuleAccess('purchase')) {
+      fetchPurchaseStats()
+    }
+  }, [hasModuleAccess])
 
   if (!hasModuleAccess('purchase')) {
     return (
@@ -61,10 +91,16 @@ export default function PurchasePage() {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">$186,400</div>
-                <p className="text-xs text-muted-foreground">
-                  This quarter
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">${purchaseStats.totalPurchaseValue.toLocaleString()}</div>
+                    <p className="text-xs text-muted-foreground">
+                      This quarter
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -74,10 +110,16 @@ export default function PurchasePage() {
                 <Truck className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">24</div>
-                <p className="text-xs text-muted-foreground">
-                  Verified suppliers
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">{purchaseStats.activeSuppliers}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Verified suppliers
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -87,10 +129,16 @@ export default function PurchasePage() {
                 <ShoppingCart className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">8</div>
-                <p className="text-xs text-muted-foreground">
-                  Awaiting delivery
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">{purchaseStats.pendingOrders}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Awaiting delivery
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -100,10 +148,16 @@ export default function PurchasePage() {
                 <Package className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">156</div>
-                <p className="text-xs text-muted-foreground">
-                  This month
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">{purchaseStats.itemsReceived}</div>
+                    <p className="text-xs text-muted-foreground">
+                      This month
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -171,36 +225,51 @@ export default function PurchasePage() {
               <CardTitle>Recent Purchase Orders</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {[
-                  { id: 'PO-001', supplier: 'Steel Dynamics Ltd', amount: 45000, status: 'Pending', date: '2025-01-15' },
-                  { id: 'PO-002', supplier: 'Industrial Equipment Co', amount: 12800, status: 'Delivered', date: '2025-01-14' },
-                  { id: 'PO-003', supplier: 'Safety Solutions Inc', amount: 8200, status: 'Approved', date: '2025-01-13' },
-                  { id: 'PO-004', supplier: 'Material Suppliers LLC', amount: 22100, status: 'Pending', date: '2025-01-12' },
-                ].map((order) => (
-                  <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-4">
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  <span className="text-gray-500">Loading purchase orders...</span>
+                </div>
+              ) : purchaseStats.recentOrders && purchaseStats.recentOrders.length > 0 ? (
+                <div className="space-y-4">
+                  {purchaseStats.recentOrders.map((order: any) => (
+                    <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-4">
+                        <div>
+                          <p className="font-medium">{order.id}</p>
+                          <p className="text-sm text-gray-600">{order.supplier}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">${order.amount.toLocaleString()}</p>
+                        <p className="text-sm text-gray-600">{order.date}</p>
+                      </div>
                       <div>
-                        <p className="font-medium">{order.id}</p>
-                        <p className="text-sm text-gray-600">{order.supplier}</p>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
+                          order.status === 'Approved' ? 'bg-blue-100 text-blue-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {order.status}
+                        </span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium">${order.amount.toLocaleString()}</p>
-                      <p className="text-sm text-gray-600">{order.date}</p>
-                    </div>
-                    <div>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
-                        order.status === 'Approved' ? 'bg-blue-100 text-blue-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <ShoppingCart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">No recent purchase orders</p>
+                  {canCreate && (
+                    <Link href="/purchases/orders/create" className="mt-4 inline-block">
+                      <Button>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create First Purchase Order
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 

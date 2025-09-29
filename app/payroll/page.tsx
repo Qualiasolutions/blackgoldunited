@@ -3,12 +3,54 @@
 import { useAuth, usePermissions } from '@/lib/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { DollarSign, Calculator, FileText, Users, Calendar, TrendingUp } from 'lucide-react'
+import { DollarSign, Calculator, FileText, Users, TrendingUp, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
 export default function PayrollPage() {
   const { user } = useAuth()
   const { hasModuleAccess, hasFullAccess } = usePermissions()
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState<any>(null)
+  const [records, setRecords] = useState<any[]>([])
+  const [schedule, setSchedule] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchPayrollData = async () => {
+      try {
+        setLoading(true)
+
+        // Fetch payroll stats
+        const statsRes = await fetch('/api/payroll/stats')
+        if (statsRes.ok) {
+          const statsData = await statsRes.json()
+          setStats(statsData.data)
+        }
+
+        // Fetch recent payroll records
+        const recordsRes = await fetch('/api/payroll/records?limit=5')
+        if (recordsRes.ok) {
+          const recordsData = await recordsRes.json()
+          setRecords(recordsData.data || [])
+        }
+
+        // Fetch payroll schedule
+        const scheduleRes = await fetch('/api/payroll/schedule')
+        if (scheduleRes.ok) {
+          const scheduleData = await scheduleRes.json()
+          setSchedule(scheduleData.data || [])
+        }
+      } catch (error) {
+        console.error('Error fetching payroll data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (hasModuleAccess('payroll')) {
+      fetchPayrollData()
+    }
+  }, [hasModuleAccess])
 
   if (!hasModuleAccess('payroll')) {
     return (
@@ -61,10 +103,16 @@ export default function PayrollPage() {
                 <DollarSign className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">$486,200</div>
-                <p className="text-xs text-muted-foreground">
-                  Current month total
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-green-600">${stats?.monthlyPayroll?.toLocaleString() || 0}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Current month total
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -74,10 +122,16 @@ export default function PayrollPage() {
                 <Users className="h-4 w-4 text-blue-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">142</div>
-                <p className="text-xs text-muted-foreground">
-                  Out of 142 total employees
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-blue-600">{stats?.employeesPaid || 0}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Out of {stats?.totalEmployees || 0} total employees
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -87,10 +141,16 @@ export default function PayrollPage() {
                 <FileText className="h-4 w-4 text-yellow-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">8</div>
-                <p className="text-xs text-muted-foreground">
-                  Awaiting approval
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-yellow-600">{stats?.pendingPayslips || 0}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Awaiting approval
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -100,10 +160,16 @@ export default function PayrollPage() {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">$3,424</div>
-                <p className="text-xs text-muted-foreground">
-                  Monthly average
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">${stats?.avgSalary?.toLocaleString() || 0}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Monthly average
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -165,58 +231,63 @@ export default function PayrollPage() {
               <CardTitle>Recent Payroll Records</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {[
-                  { name: 'John Smith', id: 'EMP-001', baseSalary: 5800, allowances: 1200, deductions: 580, netPay: 6420, status: 'Paid' },
-                  { name: 'Sarah Johnson', id: 'EMP-002', baseSalary: 4200, allowances: 800, deductions: 420, netPay: 4580, status: 'Paid' },
-                  { name: 'Michael Brown', id: 'EMP-003', baseSalary: 6500, allowances: 1500, deductions: 650, netPay: 7350, status: 'Processing' },
-                  { name: 'Emily Davis', id: 'EMP-004', baseSalary: 3800, allowances: 600, deductions: 380, netPay: 4020, status: 'Paid' },
-                  { name: 'David Wilson', id: 'EMP-005', baseSalary: 4800, allowances: 900, deductions: 480, netPay: 5220, status: 'Processing' },
-                ].map((record) => (
-                  <div key={record.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                    <div className="flex items-center space-x-4">
-                      <div className="bg-gray-200 rounded-full w-10 h-10 flex items-center justify-center">
-                        <span className="text-sm font-medium">{record.name.split(' ').map(n => n[0]).join('')}</span>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  <span className="text-gray-500">Loading payroll records...</span>
+                </div>
+              ) : records.length > 0 ? (
+                <div className="space-y-4">
+                  {records.map((record) => (
+                    <div key={record.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-4">
+                        <div className="bg-gray-200 rounded-full w-10 h-10 flex items-center justify-center">
+                          <span className="text-sm font-medium">{record.name?.split(' ').map((n: string) => n[0]).join('')}</span>
+                        </div>
+                        <div>
+                          <p className="font-medium">{record.name}</p>
+                          <p className="text-sm text-gray-600">{record.employeeNumber}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">{record.name}</p>
-                        <p className="text-sm text-gray-600">{record.id}</p>
+
+                      <div className="flex items-center space-x-6 text-sm">
+                        <div className="text-center">
+                          <p className="font-medium">Base Salary</p>
+                          <p className="text-gray-600">${record.baseSalary?.toLocaleString()}</p>
+                        </div>
+
+                        <div className="text-center">
+                          <p className="font-medium">Allowances</p>
+                          <p className="text-green-600">+${record.allowances?.toLocaleString()}</p>
+                        </div>
+
+                        <div className="text-center">
+                          <p className="font-medium">Deductions</p>
+                          <p className="text-red-600">-${record.deductions?.toLocaleString()}</p>
+                        </div>
+
+                        <div className="text-center">
+                          <p className="font-medium">Net Pay</p>
+                          <p className="font-bold">${record.netPay?.toLocaleString()}</p>
+                        </div>
+
+                        <div>
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            record.status === 'PAID' || record.status === 'Paid' ? 'bg-green-100 text-green-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {record.status}
+                          </span>
+                        </div>
                       </div>
                     </div>
-
-                    <div className="flex items-center space-x-6 text-sm">
-                      <div className="text-center">
-                        <p className="font-medium">Base Salary</p>
-                        <p className="text-gray-600">${record.baseSalary.toLocaleString()}</p>
-                      </div>
-
-                      <div className="text-center">
-                        <p className="font-medium">Allowances</p>
-                        <p className="text-green-600">+${record.allowances.toLocaleString()}</p>
-                      </div>
-
-                      <div className="text-center">
-                        <p className="font-medium">Deductions</p>
-                        <p className="text-red-600">-${record.deductions.toLocaleString()}</p>
-                      </div>
-
-                      <div className="text-center">
-                        <p className="font-medium">Net Pay</p>
-                        <p className="font-bold">${record.netPay.toLocaleString()}</p>
-                      </div>
-
-                      <div>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          record.status === 'Paid' ? 'bg-green-100 text-green-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {record.status}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No payroll records found</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -227,29 +298,35 @@ export default function PayrollPage() {
                 <CardTitle>Monthly Payroll Breakdown</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Base Salaries</span>
-                    <span className="font-medium">$398,400</span>
+                {loading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin" />
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Allowances</span>
-                    <span className="font-medium text-green-600">+$67,200</span>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Base Salaries</span>
+                      <span className="font-medium">${stats?.breakdown?.baseSalaries?.toLocaleString() || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Allowances</span>
+                      <span className="font-medium text-green-600">+${stats?.breakdown?.allowances?.toLocaleString() || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Tax Deductions</span>
+                      <span className="font-medium text-red-600">-${stats?.breakdown?.taxDeductions?.toLocaleString() || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Other Deductions</span>
+                      <span className="font-medium text-red-600">-${stats?.breakdown?.otherDeductions?.toLocaleString() || 0}</span>
+                    </div>
+                    <hr />
+                    <div className="flex justify-between items-center font-bold">
+                      <span>Net Payroll</span>
+                      <span className="text-green-600">${stats?.monthlyPayroll?.toLocaleString() || 0}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Tax Deductions</span>
-                    <span className="font-medium text-red-600">-$45,600</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Other Deductions</span>
-                    <span className="font-medium text-red-600">-$18,200</span>
-                  </div>
-                  <hr />
-                  <div className="flex justify-between items-center font-bold">
-                    <span>Net Payroll</span>
-                    <span className="text-green-600">$401,800</span>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
@@ -258,24 +335,29 @@ export default function PayrollPage() {
                 <CardTitle>Upcoming Payroll Schedule</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {[
-                    { date: 'Jan 31, 2025', type: 'Monthly Salary', employees: 142, amount: 486200 },
-                    { date: 'Feb 15, 2025', type: 'Bonus Payment', employees: 35, amount: 85000 },
-                    { date: 'Feb 28, 2025', type: 'Monthly Salary', employees: 142, amount: 492000 },
-                    { date: 'Mar 15, 2025', type: 'Performance Bonus', employees: 28, amount: 62000 },
-                  ].map((schedule, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded">
-                      <div>
-                        <p className="font-medium text-sm">{schedule.type}</p>
-                        <p className="text-xs text-gray-600">{schedule.date} • {schedule.employees} employees</p>
+                {loading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  </div>
+                ) : schedule.length > 0 ? (
+                  <div className="space-y-3">
+                    {schedule.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 border rounded">
+                        <div>
+                          <p className="font-medium text-sm">{item.type}</p>
+                          <p className="text-xs text-gray-600">{item.date} • {item.employees} employees</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">${item.amount?.toLocaleString()}</p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium">${schedule.amount.toLocaleString()}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-gray-500 text-sm">No upcoming payroll scheduled</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

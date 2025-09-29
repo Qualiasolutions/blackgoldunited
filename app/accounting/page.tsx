@@ -3,12 +3,54 @@
 import { useAuth, usePermissions } from '@/lib/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Plus, BookOpen, FileText, BarChart3, Calculator, DollarSign } from 'lucide-react'
+import { Plus, BookOpen, FileText, BarChart3, Calculator, DollarSign, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
 export default function AccountingPage() {
   const { user } = useAuth()
   const { hasModuleAccess, hasFullAccess } = usePermissions()
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState<any>(null)
+  const [chartOfAccounts, setChartOfAccounts] = useState<any[]>([])
+  const [journalEntries, setJournalEntries] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchAccountingData = async () => {
+      try {
+        setLoading(true)
+
+        // Fetch accounting stats
+        const statsRes = await fetch('/api/accounting/stats')
+        if (statsRes.ok) {
+          const statsData = await statsRes.json()
+          setStats(statsData.data)
+        }
+
+        // Fetch chart of accounts
+        const coaRes = await fetch('/api/accounting/chart-of-accounts')
+        if (coaRes.ok) {
+          const coaData = await coaRes.json()
+          setChartOfAccounts(coaData.data || [])
+        }
+
+        // Fetch journal entries
+        const jeRes = await fetch('/api/accounting/journal-entries?limit=4')
+        if (jeRes.ok) {
+          const jeData = await jeRes.json()
+          setJournalEntries(jeData.data || [])
+        }
+      } catch (error) {
+        console.error('Error fetching accounting data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (hasModuleAccess('accounting')) {
+      fetchAccountingData()
+    }
+  }, [hasModuleAccess])
 
   if (!hasModuleAccess('accounting')) {
     return (
@@ -61,10 +103,16 @@ export default function AccountingPage() {
                 <DollarSign className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">$2.4M</div>
-                <p className="text-xs text-muted-foreground">
-                  +5.2% from last quarter
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-green-600">${(stats?.totalAssets / 1000000).toFixed(1)}M</div>
+                    <p className="text-xs text-muted-foreground">
+                      Current + Non-current
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -74,10 +122,16 @@ export default function AccountingPage() {
                 <Calculator className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">$890K</div>
-                <p className="text-xs text-muted-foreground">
-                  -2.1% from last quarter
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-red-600">${(stats?.totalLiabilities / 1000).toFixed(0)}K</div>
+                    <p className="text-xs text-muted-foreground">
+                      Current + Long-term
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -87,10 +141,16 @@ export default function AccountingPage() {
                 <BarChart3 className="h-4 w-4 text-blue-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">$1.51M</div>
-                <p className="text-xs text-muted-foreground">
-                  +8.7% from last quarter
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-blue-600">${(stats?.ownersEquity / 1000000).toFixed(2)}M</div>
+                    <p className="text-xs text-muted-foreground">
+                      Shareholders equity
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -100,10 +160,16 @@ export default function AccountingPage() {
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">186</div>
-                <p className="text-xs text-muted-foreground">
-                  This month
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">{stats?.journalEntries || 0}</div>
+                    <p className="text-xs text-muted-foreground">
+                      This month
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -167,39 +233,41 @@ export default function AccountingPage() {
               <CardTitle>Chart of Accounts</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {[
-                  { code: '1000', name: 'Cash and Cash Equivalents', type: 'ASSET', balance: 125000 },
-                  { code: '1200', name: 'Accounts Receivable', type: 'ASSET', balance: 45000 },
-                  { code: '1500', name: 'Inventory', type: 'ASSET', balance: 89000 },
-                  { code: '2000', name: 'Accounts Payable', type: 'LIABILITY', balance: 23000 },
-                  { code: '3000', name: 'Owner\'s Equity', type: 'EQUITY', balance: 236000 },
-                  { code: '4000', name: 'Sales Revenue', type: 'REVENUE', balance: 450000 },
-                  { code: '5000', name: 'Cost of Goods Sold', type: 'EXPENSE', balance: 180000 },
-                  { code: '6000', name: 'Operating Expenses', type: 'EXPENSE', balance: 95000 },
-                ].map((account) => (
-                  <div key={account.code} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                    <div className="flex items-center space-x-4">
-                      <div className="bg-gray-100 px-3 py-1 rounded text-sm font-mono">
-                        {account.code}
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  <span className="text-gray-500">Loading chart of accounts...</span>
+                </div>
+              ) : chartOfAccounts.length > 0 ? (
+                <div className="space-y-4">
+                  {chartOfAccounts.map((account) => (
+                    <div key={account.code} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-4">
+                        <div className="bg-gray-100 px-3 py-1 rounded text-sm font-mono">
+                          {account.code}
+                        </div>
+                        <div>
+                          <p className="font-medium">{account.name}</p>
+                          <p className="text-sm text-gray-600">{account.type}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">{account.name}</p>
-                        <p className="text-sm text-gray-600">{account.type}</p>
+                      <div className="text-right">
+                        <p className={`font-medium ${
+                          account.type === 'ASSET' || account.type === 'EXPENSE' ? 'text-green-600' :
+                          account.type === 'LIABILITY' || account.type === 'EQUITY' || account.type === 'REVENUE' ? 'text-blue-600' :
+                          'text-gray-900'
+                        }`}>
+                          ${account.balance?.toLocaleString()}
+                        </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className={`font-medium ${
-                        account.type === 'ASSET' || account.type === 'EXPENSE' ? 'text-green-600' :
-                        account.type === 'LIABILITY' || account.type === 'EQUITY' || account.type === 'REVENUE' ? 'text-blue-600' :
-                        'text-gray-900'
-                      }`}>
-                        ${account.balance.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No accounts found</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -209,30 +277,36 @@ export default function AccountingPage() {
               <CardTitle>Recent Journal Entries</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {[
-                  { id: 'JE-001', date: '2025-01-15', description: 'Sales revenue recognition', reference: 'INV-2025-001', debit: 45000, credit: 45000 },
-                  { id: 'JE-002', date: '2025-01-14', description: 'Office rent payment', reference: 'RENT-JAN', debit: 8200, credit: 8200 },
-                  { id: 'JE-003', date: '2025-01-13', description: 'Equipment purchase', reference: 'PO-2025-003', debit: 12500, credit: 12500 },
-                  { id: 'JE-004', date: '2025-01-12', description: 'Utility bill payment', reference: 'UTIL-001', debit: 1850, credit: 1850 },
-                ].map((entry) => (
-                  <div key={entry.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                    <div className="flex items-center space-x-4">
-                      <div className="bg-blue-100 px-3 py-1 rounded text-sm font-mono">
-                        {entry.id}
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  <span className="text-gray-500">Loading journal entries...</span>
+                </div>
+              ) : journalEntries.length > 0 ? (
+                <div className="space-y-4">
+                  {journalEntries.map((entry) => (
+                    <div key={entry.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-4">
+                        <div className="bg-blue-100 px-3 py-1 rounded text-sm font-mono">
+                          {entry.id}
+                        </div>
+                        <div>
+                          <p className="font-medium">{entry.description}</p>
+                          <p className="text-sm text-gray-600">{entry.date} • Ref: {entry.reference}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">{entry.description}</p>
-                        <p className="text-sm text-gray-600">{entry.date} • Ref: {entry.reference}</p>
+                      <div className="text-right">
+                        <p className="font-medium">${entry.debit?.toLocaleString()}</p>
+                        <p className="text-sm text-gray-600">Balanced entry</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium">${entry.debit.toLocaleString()}</p>
-                      <p className="text-sm text-gray-600">Balanced entry</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No journal entries found</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -243,45 +317,51 @@ export default function AccountingPage() {
                 <CardTitle>Balance Sheet Summary</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="font-semibold text-green-600">ASSETS</div>
-                  <div className="pl-4 space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Current Assets</span>
-                      <span>$259,000</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Fixed Assets</span>
-                      <span>$2,141,000</span>
-                    </div>
+                {loading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin" />
                   </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="font-semibold text-green-600">ASSETS</div>
+                    <div className="pl-4 space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>Current Assets</span>
+                        <span>${stats?.balanceSheet?.assets?.current?.toLocaleString() || 0}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Fixed Assets</span>
+                        <span>${stats?.balanceSheet?.assets?.fixed?.toLocaleString() || 0}</span>
+                      </div>
+                    </div>
 
-                  <div className="font-semibold text-red-600">LIABILITIES</div>
-                  <div className="pl-4 space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Current Liabilities</span>
-                      <span>$340,000</span>
+                    <div className="font-semibold text-red-600">LIABILITIES</div>
+                    <div className="pl-4 space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>Current Liabilities</span>
+                        <span>${stats?.balanceSheet?.liabilities?.current?.toLocaleString() || 0}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Long-term Liabilities</span>
+                        <span>${stats?.balanceSheet?.liabilities?.longTerm?.toLocaleString() || 0}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Long-term Liabilities</span>
-                      <span>$550,000</span>
-                    </div>
-                  </div>
 
-                  <div className="font-semibold text-blue-600">EQUITY</div>
-                  <div className="pl-4">
-                    <div className="flex justify-between text-sm">
-                      <span>Owner's Equity</span>
-                      <span>$1,510,000</span>
+                    <div className="font-semibold text-blue-600">EQUITY</div>
+                    <div className="pl-4">
+                      <div className="flex justify-between text-sm">
+                        <span>Owner's Equity</span>
+                        <span>${stats?.balanceSheet?.equity?.ownersEquity?.toLocaleString() || 0}</span>
+                      </div>
+                    </div>
+
+                    <hr />
+                    <div className="flex justify-between font-bold">
+                      <span>Total Assets</span>
+                      <span>${stats?.balanceSheet?.assets?.total?.toLocaleString() || 0}</span>
                     </div>
                   </div>
-
-                  <hr />
-                  <div className="flex justify-between font-bold">
-                    <span>Total Assets</span>
-                    <span>$2,400,000</span>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
@@ -290,44 +370,50 @@ export default function AccountingPage() {
                 <CardTitle>Income Statement Summary</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Revenue</span>
-                    <span className="text-green-600 font-bold">$450,000</span>
+                {loading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin" />
                   </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Cost of Goods Sold</span>
-                      <span className="text-red-600">($180,000)</span>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="font-semibold">Revenue</span>
+                      <span className="text-green-600 font-bold">${stats?.incomeStatement?.revenue?.toLocaleString() || 0}</span>
                     </div>
-                    <div className="flex justify-between font-medium">
-                      <span>Gross Profit</span>
-                      <span>$270,000</span>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>Cost of Goods Sold</span>
+                        <span className="text-red-600">($${stats?.incomeStatement?.cogs?.toLocaleString() || 0})</span>
+                      </div>
+                      <div className="flex justify-between font-medium">
+                        <span>Gross Profit</span>
+                        <span>${stats?.incomeStatement?.grossProfit?.toLocaleString() || 0}</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>Operating Expenses</span>
+                        <span className="text-red-600">($${stats?.incomeStatement?.operatingExpenses?.toLocaleString() || 0})</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Administrative Expenses</span>
+                        <span className="text-red-600">($${stats?.incomeStatement?.administrativeExpenses?.toLocaleString() || 0})</span>
+                      </div>
+                    </div>
+
+                    <hr />
+                    <div className="flex justify-between font-bold">
+                      <span>Net Income</span>
+                      <span className="text-green-600">${stats?.incomeStatement?.netIncome?.toLocaleString() || 0}</span>
+                    </div>
+
+                    <div className="text-sm text-gray-600">
+                      Profit Margin: {stats?.incomeStatement?.profitMargin?.toFixed(1) || 0}%
                     </div>
                   </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Operating Expenses</span>
-                      <span className="text-red-600">($95,000)</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Administrative Expenses</span>
-                      <span className="text-red-600">($38,000)</span>
-                    </div>
-                  </div>
-
-                  <hr />
-                  <div className="flex justify-between font-bold">
-                    <span>Net Income</span>
-                    <span className="text-green-600">$137,000</span>
-                  </div>
-
-                  <div className="text-sm text-gray-600">
-                    Profit Margin: 30.4%
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>

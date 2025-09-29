@@ -3,12 +3,62 @@
 import { useAuth, usePermissions } from '@/lib/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Plus, Shield, AlertTriangle, FileCheck, Users, Calendar, BarChart3 } from 'lucide-react'
+import { Plus, Shield, AlertTriangle, FileCheck, Users, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
 export default function QHSEPage() {
   const { user } = useAuth()
   const { hasModuleAccess, hasFullAccess } = usePermissions()
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState<any>(null)
+  const [incidents, setIncidents] = useState<any[]>([])
+  const [compliance, setCompliance] = useState<any[]>([])
+  const [training, setTraining] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchQHSEData = async () => {
+      try {
+        setLoading(true)
+
+        // Fetch QHSE stats
+        const statsRes = await fetch('/api/qhse/stats')
+        if (statsRes.ok) {
+          const statsData = await statsRes.json()
+          setStats(statsData.data)
+        }
+
+        // Fetch incidents
+        const incidentsRes = await fetch('/api/qhse/incidents?limit=4')
+        if (incidentsRes.ok) {
+          const incidentsData = await incidentsRes.json()
+          setIncidents(incidentsData.data || [])
+        }
+
+        // Fetch compliance status
+        const complianceRes = await fetch('/api/qhse/compliance')
+        if (complianceRes.ok) {
+          const complianceData = await complianceRes.json()
+          setCompliance(complianceData.data || [])
+        }
+
+        // Fetch training progress
+        const trainingRes = await fetch('/api/qhse/training')
+        if (trainingRes.ok) {
+          const trainingData = await trainingRes.json()
+          setTraining(trainingData.data || [])
+        }
+      } catch (error) {
+        console.error('Error fetching QHSE data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (hasModuleAccess('qhse')) {
+      fetchQHSEData()
+    }
+  }, [hasModuleAccess])
 
   if (!hasModuleAccess('qhse')) {
     return (
@@ -62,10 +112,16 @@ export default function QHSEPage() {
                 <Shield className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">96%</div>
-                <p className="text-xs text-muted-foreground">
-                  +2% improvement this month
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-green-600">{stats?.safetyScore || 0}%</div>
+                    <p className="text-xs text-muted-foreground">
+                      Excellent safety rating
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -75,10 +131,16 @@ export default function QHSEPage() {
                 <AlertTriangle className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">3</div>
-                <p className="text-xs text-muted-foreground">
-                  1 high priority
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-red-600">{stats?.openIncidents || 0}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {stats?.highPriorityIncidents || 0} high priority
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -88,10 +150,16 @@ export default function QHSEPage() {
                 <FileCheck className="h-4 w-4 text-blue-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">98.5%</div>
-                <p className="text-xs text-muted-foreground">
-                  All audits passed
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-blue-600">{stats?.complianceRate || 0}%</div>
+                    <p className="text-xs text-muted-foreground">
+                      All audits passed
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -101,10 +169,16 @@ export default function QHSEPage() {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">139/142</div>
-                <p className="text-xs text-muted-foreground">
-                  3 pending completion
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">{stats?.trainingCompleted || 0}/{stats?.trainingTotal || 0}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {stats?.trainingPending || 0} pending completion
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -180,40 +254,46 @@ export default function QHSEPage() {
               <CardTitle>Recent Incidents & Actions</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {[
-                  { id: 'INC-001', type: 'Near Miss', description: 'Employee slipped on wet floor in warehouse', severity: 'Low', status: 'Investigating', date: '2025-01-15', reporter: 'John Smith' },
-                  { id: 'INC-002', type: 'Environmental', description: 'Minor oil spill in machinery area', severity: 'Medium', status: 'Resolved', date: '2025-01-12', reporter: 'Sarah Johnson' },
-                  { id: 'INC-003', type: 'Safety Violation', description: 'PPE not worn in designated area', severity: 'High', status: 'Action Required', date: '2025-01-10', reporter: 'Michael Brown' },
-                  { id: 'INC-004', type: 'Equipment', description: 'Safety guard damaged on equipment', severity: 'High', status: 'Resolved', date: '2025-01-08', reporter: 'Emily Davis' },
-                ].map((incident) => (
-                  <div key={incident.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-3 h-3 rounded-full ${
-                        incident.severity === 'High' ? 'bg-red-500' :
-                        incident.severity === 'Medium' ? 'bg-yellow-500' :
-                        'bg-green-500'
-                      }`}></div>
-                      <div>
-                        <p className="font-medium">{incident.id} - {incident.type}</p>
-                        <p className="text-sm text-gray-600">{incident.description}</p>
-                        <p className="text-xs text-gray-500">Reported by {incident.reporter} on {incident.date}</p>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  <span className="text-gray-500">Loading incidents...</span>
+                </div>
+              ) : incidents.length > 0 ? (
+                <div className="space-y-4">
+                  {incidents.map((incident) => (
+                    <div key={incident.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-4">
+                        <div className={`w-3 h-3 rounded-full ${
+                          incident.severity === 'High' ? 'bg-red-500' :
+                          incident.severity === 'Medium' ? 'bg-yellow-500' :
+                          'bg-green-500'
+                        }`}></div>
+                        <div>
+                          <p className="font-medium">{incident.id} - {incident.type}</p>
+                          <p className="text-sm text-gray-600">{incident.description}</p>
+                          <p className="text-xs text-gray-500">Reported by {incident.reporter} on {incident.date}</p>
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          incident.status === 'Resolved' ? 'bg-green-100 text-green-800' :
+                          incident.status === 'Action Required' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {incident.status}
+                        </span>
+                        <p className="text-xs text-gray-600 mt-1">{incident.severity} Severity</p>
                       </div>
                     </div>
-
-                    <div className="text-right">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        incident.status === 'Resolved' ? 'bg-green-100 text-green-800' :
-                        incident.status === 'Action Required' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {incident.status}
-                      </span>
-                      <p className="text-xs text-gray-600 mt-1">{incident.severity} Severity</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No incidents found</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -224,30 +304,35 @@ export default function QHSEPage() {
                 <CardTitle>Compliance Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { area: 'ISO 45001 (Safety)', status: 'Compliant', lastAudit: '2024-12-15', nextAudit: '2025-06-15' },
-                    { area: 'ISO 14001 (Environment)', status: 'Compliant', lastAudit: '2024-11-20', nextAudit: '2025-05-20' },
-                    { area: 'ISO 9001 (Quality)', status: 'Compliant', lastAudit: '2024-10-10', nextAudit: '2025-04-10' },
-                    { area: 'Local Safety Regulations', status: 'Action Required', lastAudit: '2025-01-05', nextAudit: '2025-07-05' },
-                  ].map((compliance, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded">
-                      <div>
-                        <p className="font-medium text-sm">{compliance.area}</p>
-                        <p className="text-xs text-gray-600">Last audit: {compliance.lastAudit}</p>
+                {loading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  </div>
+                ) : compliance.length > 0 ? (
+                  <div className="space-y-4">
+                    {compliance.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 border rounded">
+                        <div>
+                          <p className="font-medium text-sm">{item.area}</p>
+                          <p className="text-xs text-gray-600">Last audit: {item.lastAudit}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            item.status === 'Compliant' ? 'bg-green-100 text-green-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {item.status}
+                          </span>
+                          <p className="text-xs text-gray-600 mt-1">Next: {item.nextAudit}</p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          compliance.status === 'Compliant' ? 'bg-green-100 text-green-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {compliance.status}
-                        </span>
-                        <p className="text-xs text-gray-600 mt-1">Next: {compliance.nextAudit}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-gray-500 text-sm">No compliance data</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -256,32 +341,37 @@ export default function QHSEPage() {
                 <CardTitle>Training Progress</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { course: 'Fire Safety Training', completed: 142, total: 142, percentage: 100 },
-                    { course: 'First Aid Certification', completed: 38, total: 50, percentage: 76 },
-                    { course: 'Chemical Handling Safety', completed: 28, total: 35, percentage: 80 },
-                    { course: 'Equipment Operation Safety', completed: 89, total: 95, percentage: 94 },
-                  ].map((training, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="font-medium">{training.course}</span>
-                        <span>{training.completed}/{training.total}</span>
+                {loading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  </div>
+                ) : training.length > 0 ? (
+                  <div className="space-y-4">
+                    {training.map((item, index) => (
+                      <div key={index} className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="font-medium">{item.course}</span>
+                          <span>{item.completed}/{item.total}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full ${
+                              item.percentage === 100 ? 'bg-green-500' :
+                              item.percentage >= 80 ? 'bg-blue-500' :
+                              'bg-yellow-500'
+                            }`}
+                            style={{ width: `${item.percentage}%` }}
+                          ></div>
+                        </div>
+                        <div className="text-xs text-gray-600">{item.percentage}% complete</div>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full ${
-                            training.percentage === 100 ? 'bg-green-500' :
-                            training.percentage >= 80 ? 'bg-blue-500' :
-                            'bg-yellow-500'
-                          }`}
-                          style={{ width: `${training.percentage}%` }}
-                        ></div>
-                      </div>
-                      <div className="text-xs text-gray-600">{training.percentage}% complete</div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-gray-500 text-sm">No training data</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -292,28 +382,34 @@ export default function QHSEPage() {
               <CardTitle>Environmental Impact Metrics</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">2.3 tons</div>
-                  <div className="text-sm text-gray-600">CO₂ Emissions</div>
-                  <div className="text-xs text-green-600">-15% vs last month</div>
+              {loading ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-5 w-5 animate-spin" />
                 </div>
-                <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">1,240 L</div>
-                  <div className="text-sm text-gray-600">Water Usage</div>
-                  <div className="text-xs text-blue-600">-8% vs last month</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="text-center p-4 border rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">{stats?.environmental?.co2Emissions} tons</div>
+                    <div className="text-sm text-gray-600">CO₂ Emissions</div>
+                    <div className="text-xs text-green-600">{stats?.environmental?.co2Change}% vs last month</div>
+                  </div>
+                  <div className="text-center p-4 border rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">{stats?.environmental?.waterUsage} L</div>
+                    <div className="text-sm text-gray-600">Water Usage</div>
+                    <div className="text-xs text-blue-600">{stats?.environmental?.waterChange}% vs last month</div>
+                  </div>
+                  <div className="text-center p-4 border rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">{stats?.environmental?.wasteRecycled}%</div>
+                    <div className="text-sm text-gray-600">Waste Recycled</div>
+                    <div className="text-xs text-purple-600">+{stats?.environmental?.wasteChange}% vs last month</div>
+                  </div>
+                  <div className="text-center p-4 border rounded-lg">
+                    <div className="text-2xl font-bold text-orange-600">{stats?.environmental?.energyUsage} MWh</div>
+                    <div className="text-sm text-gray-600">Energy Usage</div>
+                    <div className="text-xs text-orange-600">{stats?.environmental?.energyChange}% vs last month</div>
+                  </div>
                 </div>
-                <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">85%</div>
-                  <div className="text-sm text-gray-600">Waste Recycled</div>
-                  <div className="text-xs text-purple-600">+5% vs last month</div>
-                </div>
-                <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold text-orange-600">4.2 MWh</div>
-                  <div className="text-sm text-gray-600">Energy Usage</div>
-                  <div className="text-xs text-orange-600">-12% vs last month</div>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 

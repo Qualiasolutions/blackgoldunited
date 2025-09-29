@@ -9,6 +9,30 @@ BlackGoldUnited ERP is a production-ready Enterprise Resource Planning system bu
 **Tech Stack**: Next.js 15.5.3 + React 19 + TypeScript + Supabase (PostgreSQL) + Vercel
 **Live**: https://blackgoldunited-10cnui8d7-qualiasolutionscy.vercel.app
 
+**System Scale**: 14 sidebar modules with 61 total pages across the application
+
+## Module Structure & Page Count
+
+The application consists of 14 main modules accessible via the sidebar navigation:
+
+1. **Dashboard** (1 page) - Main overview dashboard
+2. **Sales** (11 pages) - Invoices, POs, RFQ, Credit Notes, Refunds, Recurring, Payments, Settings
+3. **Clients** (4 pages) - Manage Clients, Add/Edit, Contacts, Settings
+4. **Inventory** (12 pages) - Products, Requisitions, Price Lists, Warehouses, Stock, Settings
+5. **Purchase** (7 pages) - Invoices, Refunds, Debit Notes, Suppliers, Payments, Settings
+6. **Finance** (4 pages) - Expenses, Incomes, Treasuries/Banks, Settings
+7. **Accounting** (6 pages) - Journal Entries, Chart of Accounts, Cost Centers, Assets, Settings
+8. **Employees** (3 pages) - Manage Employees, Roles, Settings
+9. **Organizational Structure** (5 pages) - Designations, Departments, Levels, Employment Types, Org Chart
+10. **Attendance** (9 pages) - Logs, Days, Sheets, Permissions, Leave, Shifts, Settings
+11. **Payroll** (7 pages) - Contracts, Pay Runs, Payslips, Loans, Salary Components, Structures, Settings
+12. **Reports** (7 pages) - Sales, Purchase, Accounting, Employee, Clients, Store, Activity Log
+13. **Templates** (5 pages) - Printable, Prefilled, Terms, Documents, Reminders
+14. **QHSE** (4 pages) - Reports, Policy, Procedures, Forms
+
+**Total Pages**: 61 pages across all modules
+**Status**: ~45 pages fully functional with backend integration, remaining pages use placeholder/template structure
+
 ## Essential Commands
 
 ### Development

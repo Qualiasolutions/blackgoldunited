@@ -3,12 +3,55 @@
 import { useAuth, usePermissions } from '@/lib/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Clock, Calendar, Users, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { Clock, Calendar, Users, CheckCircle, XCircle, AlertCircle, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
 export default function AttendancePage() {
   const { user } = useAuth()
   const { hasModuleAccess, hasFullAccess } = usePermissions()
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState<any>(null)
+  const [todayLogs, setTodayLogs] = useState<any[]>([])
+  const [leaveRequests, setLeaveRequests] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchAttendanceData = async () => {
+      try {
+        setLoading(true)
+
+        // Fetch attendance stats
+        const statsRes = await fetch('/api/hr/attendance/stats')
+        if (statsRes.ok) {
+          const statsData = await statsRes.json()
+          setStats(statsData.data)
+        }
+
+        // Fetch today's attendance logs
+        const today = new Date().toISOString().split('T')[0]
+        const logsRes = await fetch(`/api/hr/attendance?startDate=${today}&endDate=${today}&limit=10`)
+        if (logsRes.ok) {
+          const logsData = await logsRes.json()
+          setTodayLogs(logsData.data || [])
+        }
+
+        // Fetch leave requests
+        const leaveRes = await fetch('/api/hr/attendance/leave-requests?limit=5')
+        if (leaveRes.ok) {
+          const leaveData = await leaveRes.json()
+          setLeaveRequests(leaveData.data || [])
+        }
+      } catch (error) {
+        console.error('Error fetching attendance data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (hasModuleAccess('attendance')) {
+      fetchAttendanceData()
+    }
+  }, [hasModuleAccess])
 
   if (!hasModuleAccess('attendance')) {
     return (
@@ -61,10 +104,16 @@ export default function AttendancePage() {
                 <CheckCircle className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">134</div>
-                <p className="text-xs text-muted-foreground">
-                  94% attendance rate
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-green-600">{stats?.presentToday || 0}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {stats?.attendanceRate || 0}% attendance rate
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -74,10 +123,16 @@ export default function AttendancePage() {
                 <XCircle className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">8</div>
-                <p className="text-xs text-muted-foreground">
-                  6% of total employees
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-red-600">{stats?.absentToday || 0}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {stats?.totalEmployees ? Math.round((stats.absentToday / stats.totalEmployees) * 100) : 0}% of total employees
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -87,10 +142,16 @@ export default function AttendancePage() {
                 <AlertCircle className="h-4 w-4 text-yellow-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">12</div>
-                <p className="text-xs text-muted-foreground">
-                  Arrived after 9:00 AM
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-yellow-600">{stats?.lateArrivals || 0}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Arrived after scheduled time
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -100,10 +161,16 @@ export default function AttendancePage() {
                 <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">8.2h</div>
-                <p className="text-xs text-muted-foreground">
-                  Daily average this month
-                </p>
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">{stats?.avgHours || 0}h</div>
+                    <p className="text-xs text-muted-foreground">
+                      Daily average today
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -165,55 +232,62 @@ export default function AttendancePage() {
               <CardTitle>Today's Attendance Summary</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {[
-                  { name: 'John Smith', id: 'EMP-001', clockIn: '8:45 AM', clockOut: '-', status: 'Present', hours: '6h 15m' },
-                  { name: 'Sarah Johnson', id: 'EMP-002', clockIn: '9:15 AM', clockOut: '-', status: 'Late', hours: '5h 45m' },
-                  { name: 'Michael Brown', id: 'EMP-003', clockIn: '-', clockOut: '-', status: 'On Leave', hours: '0h' },
-                  { name: 'Emily Davis', id: 'EMP-004', clockIn: '8:30 AM', clockOut: '-', status: 'Present', hours: '6h 30m' },
-                  { name: 'David Wilson', id: 'EMP-005', clockIn: '-', clockOut: '-', status: 'Absent', hours: '0h' },
-                ].map((record) => (
-                  <div key={record.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <div className="bg-gray-200 rounded-full w-10 h-10 flex items-center justify-center">
-                        <span className="text-sm font-medium">{record.name.split(' ').map(n => n[0]).join('')}</span>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  <span className="text-gray-500">Loading attendance logs...</span>
+                </div>
+              ) : todayLogs.length > 0 ? (
+                <div className="space-y-4">
+                  {todayLogs.map((record) => (
+                    <div key={record.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-4">
+                        <div className="bg-gray-200 rounded-full w-10 h-10 flex items-center justify-center">
+                          <span className="text-sm font-medium">
+                            {record.employee?.firstName?.[0]}{record.employee?.lastName?.[0]}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-medium">{record.employee?.firstName} {record.employee?.lastName}</p>
+                          <p className="text-sm text-gray-600">{record.employee?.employeeNumber}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">{record.name}</p>
-                        <p className="text-sm text-gray-600">{record.id}</p>
+
+                      <div className="flex items-center space-x-6">
+                        <div className="text-center">
+                          <p className="text-sm font-medium">Clock In</p>
+                          <p className="text-sm text-gray-600">{record.checkIn || record.check_in || '-'}</p>
+                        </div>
+
+                        <div className="text-center">
+                          <p className="text-sm font-medium">Clock Out</p>
+                          <p className="text-sm text-gray-600">{record.checkOut || record.check_out || '-'}</p>
+                        </div>
+
+                        <div className="text-center">
+                          <p className="text-sm font-medium">Hours</p>
+                          <p className="text-sm text-gray-600">{record.hoursWorked ? `${record.hoursWorked}h` : '-'}</p>
+                        </div>
+
+                        <div>
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            record.status === 'PRESENT' || record.status === 'present' ? 'bg-green-100 text-green-800' :
+                            record.status === 'LATE' || record.status === 'late' ? 'bg-yellow-100 text-yellow-800' :
+                            record.status === 'LEAVE' ? 'bg-blue-100 text-blue-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {record.status}
+                          </span>
+                        </div>
                       </div>
                     </div>
-
-                    <div className="flex items-center space-x-6">
-                      <div className="text-center">
-                        <p className="text-sm font-medium">Clock In</p>
-                        <p className="text-sm text-gray-600">{record.clockIn}</p>
-                      </div>
-
-                      <div className="text-center">
-                        <p className="text-sm font-medium">Clock Out</p>
-                        <p className="text-sm text-gray-600">{record.clockOut}</p>
-                      </div>
-
-                      <div className="text-center">
-                        <p className="text-sm font-medium">Hours</p>
-                        <p className="text-sm text-gray-600">{record.hours}</p>
-                      </div>
-
-                      <div>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          record.status === 'Present' ? 'bg-green-100 text-green-800' :
-                          record.status === 'Late' ? 'bg-yellow-100 text-yellow-800' :
-                          record.status === 'On Leave' ? 'bg-blue-100 text-blue-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {record.status}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No attendance records for today</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -224,14 +298,13 @@ export default function AttendancePage() {
                 <CardTitle>Weekly Attendance Trend</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {[
-                    { day: 'Monday', present: 138, absent: 4, rate: 97 },
-                    { day: 'Tuesday', present: 142, absent: 0, rate: 100 },
-                    { day: 'Wednesday', present: 135, absent: 7, rate: 95 },
-                    { day: 'Thursday', present: 140, absent: 2, rate: 99 },
-                    { day: 'Friday', present: 134, absent: 8, rate: 94 },
-                  ].map((day) => (
+                {loading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {(stats?.weeklyTrend || []).map((day: any) => (
                     <div key={day.day} className="flex items-center justify-between">
                       <span className="text-sm font-medium">{day.day}</span>
                       <div className="flex items-center space-x-4">
@@ -239,9 +312,10 @@ export default function AttendancePage() {
                         <span className="text-sm text-red-600">{day.absent} absent</span>
                         <span className="text-sm font-medium">{day.rate}%</span>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -250,27 +324,33 @@ export default function AttendancePage() {
                 <CardTitle>Leave Requests</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {[
-                    { name: 'Alice Cooper', type: 'Sick Leave', dates: 'Jan 20-22', status: 'Pending' },
-                    { name: 'Bob Smith', type: 'Vacation', dates: 'Jan 25-29', status: 'Approved' },
-                    { name: 'Carol Davis', type: 'Personal', dates: 'Feb 1', status: 'Approved' },
-                    { name: 'Dan Wilson', type: 'Sick Leave', dates: 'Feb 3-4', status: 'Pending' },
-                  ].map((request, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded">
-                      <div>
-                        <p className="font-medium text-sm">{request.name}</p>
-                        <p className="text-xs text-gray-600">{request.type} • {request.dates}</p>
+                {loading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  </div>
+                ) : leaveRequests.length > 0 ? (
+                  <div className="space-y-3">
+                    {leaveRequests.map((request, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 border rounded">
+                        <div>
+                          <p className="font-medium text-sm">{request.name}</p>
+                          <p className="text-xs text-gray-600">{request.type} • {request.dates}</p>
+                        </div>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          request.status === 'APPROVED' || request.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                          request.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {request.status}
+                        </span>
                       </div>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        request.status === 'Approved' ? 'bg-green-100 text-green-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {request.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-gray-500 text-sm">No leave requests</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

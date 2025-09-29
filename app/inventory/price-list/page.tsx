@@ -6,16 +6,46 @@ import { EnhancedCard } from '@/components/ui/enhanced-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, DollarSign, TrendingUp, TrendingDown, Edit, Filter, Download, Package } from 'lucide-react'
+import { Plus, Search, DollarSign, TrendingUp, TrendingDown, Edit, Filter, Download, Package, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
 export default function InventoryPriceListPage() {
   const { user } = useAuth()
   const { hasFullAccess } = usePermissions()
+  const [priceLists, setPriceLists] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+
+  useEffect(() => {
+    fetchPriceLists()
+  }, [])
+
+  const fetchPriceLists = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/inventory/price-lists')
+      if (response.ok) {
+        const result = await response.json()
+        setPriceLists(result.data || [])
+      }
+    } catch (error) {
+      console.error('Error fetching price lists:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (!user) {
     return null
   }
+
+  const filteredPriceLists = priceLists.filter(list =>
+    list.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const activeLists = priceLists.filter(l => l.isActive).length
+  const totalItems = priceLists.reduce((sum, l) => sum + (l.itemsCount || 0), 0)
 
   return (
     <MainLayout user={{ name: `${user.firstName} ${user.lastName}`, email: user.email, role: user.role }}>
@@ -51,7 +81,11 @@ export default function InventoryPriceListPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Active Price Lists</p>
-                  <p className="text-2xl font-bold text-gray-900">5</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">{activeLists}</p>
+                  )}
                 </div>
                 <div className="p-3 bg-blue-100 rounded-xl">
                   <DollarSign className="h-6 w-6 text-blue-600" />
@@ -63,7 +97,11 @@ export default function InventoryPriceListPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Products</p>
-                  <p className="text-2xl font-bold text-gray-900">247</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">{totalItems}</p>
+                  )}
                 </div>
                 <div className="p-3 bg-green-100 rounded-xl">
                   <Package className="h-6 w-6 text-green-600" />
@@ -74,9 +112,15 @@ export default function InventoryPriceListPage() {
             <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Price Increases</p>
-                  <p className="text-2xl font-bold text-gray-900">18</p>
-                  <p className="text-xs text-gray-500">This Month</p>
+                  <p className="text-sm font-medium text-gray-600">Total Lists</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-gray-900">{priceLists.length}</p>
+                      <p className="text-xs text-gray-500">All</p>
+                    </>
+                  )}
                 </div>
                 <div className="p-3 bg-red-100 rounded-xl">
                   <TrendingUp className="h-6 w-6 text-red-600" />
@@ -87,9 +131,15 @@ export default function InventoryPriceListPage() {
             <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Price Decreases</p>
-                  <p className="text-2xl font-bold text-gray-900">5</p>
-                  <p className="text-xs text-gray-500">This Month</p>
+                  <p className="text-sm font-medium text-gray-600">Inactive</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-gray-900">{priceLists.filter(l => !l.isActive).length}</p>
+                      <p className="text-xs text-gray-500">Lists</p>
+                    </>
+                  )}
                 </div>
                 <div className="p-3 bg-purple-100 rounded-xl">
                   <TrendingDown className="h-6 w-6 text-purple-600" />
@@ -104,7 +154,9 @@ export default function InventoryPriceListPage() {
               <div className="flex items-center space-x-3">
                 <Search className="h-5 w-5 text-orange-600" />
                 <Input
-                  placeholder="Search products, SKU, or descriptions..."
+                  placeholder="Search price lists..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="border-orange-200 focus:border-orange-400"
                 />
               </div>
@@ -139,80 +191,46 @@ export default function InventoryPriceListPage() {
 
           {/* Price Lists Overview */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <EnhancedCard className="p-6 bg-white border-2 border-green-100 hover:shadow-lg transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Standard Pricing</h3>
-                <Badge className="bg-green-100 text-green-800">Active</Badge>
+            {loading ? (
+              <div className="col-span-3 text-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-orange-600 mx-auto mb-4" />
+                <p className="text-gray-500">Loading price lists...</p>
               </div>
-              <div className="space-y-2 mb-4">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Products:</span>
-                  <span className="text-sm font-medium">156</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Last Updated:</span>
-                  <span className="text-sm font-medium">Jan 15, 2025</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Currency:</span>
-                  <span className="text-sm font-medium">USD</span>
-                </div>
+            ) : filteredPriceLists.length > 0 ? (
+              filteredPriceLists.slice(0, 3).map((list) => (
+                <EnhancedCard key={list.id} className="p-6 bg-white border-2 border-green-100 hover:shadow-lg transition-all">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">{list.name}</h3>
+                    <Badge className={list.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                      {list.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Products:</span>
+                      <span className="text-sm font-medium">{list.itemsCount || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Valid From:</span>
+                      <span className="text-sm font-medium">{list.validFrom ? new Date(list.validFrom).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Currency:</span>
+                      <span className="text-sm font-medium">{list.currency || 'AED'}</span>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm" className="flex-1">View</Button>
+                    <Button variant="outline" size="sm" className="flex-1">Edit</Button>
+                  </div>
+                </EnhancedCard>
+              ))
+            ) : (
+              <div className="col-span-3 text-center py-12">
+                <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">No price lists found</p>
               </div>
-              <div className="flex space-x-2">
-                <Button variant="outline" size="sm" className="flex-1">View</Button>
-                <Button variant="outline" size="sm" className="flex-1">Edit</Button>
-              </div>
-            </EnhancedCard>
-
-            <EnhancedCard className="p-6 bg-white border-2 border-blue-100 hover:shadow-lg transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Premium Customers</h3>
-                <Badge className="bg-blue-100 text-blue-800">Active</Badge>
-              </div>
-              <div className="space-y-2 mb-4">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Products:</span>
-                  <span className="text-sm font-medium">89</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Discount:</span>
-                  <span className="text-sm font-medium text-green-600">15%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Currency:</span>
-                  <span className="text-sm font-medium">USD</span>
-                </div>
-              </div>
-              <div className="flex space-x-2">
-                <Button variant="outline" size="sm" className="flex-1">View</Button>
-                <Button variant="outline" size="sm" className="flex-1">Edit</Button>
-              </div>
-            </EnhancedCard>
-
-            <EnhancedCard className="p-6 bg-white border-2 border-purple-100 hover:shadow-lg transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Wholesale</h3>
-                <Badge className="bg-purple-100 text-purple-800">Active</Badge>
-              </div>
-              <div className="space-y-2 mb-4">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Products:</span>
-                  <span className="text-sm font-medium">203</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Discount:</span>
-                  <span className="text-sm font-medium text-green-600">25%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Min. Quantity:</span>
-                  <span className="text-sm font-medium">100</span>
-                </div>
-              </div>
-              <div className="flex space-x-2">
-                <Button variant="outline" size="sm" className="flex-1">View</Button>
-                <Button variant="outline" size="sm" className="flex-1">Edit</Button>
-              </div>
-            </EnhancedCard>
+            )}
           </div>
 
           {/* Products Pricing Table */}

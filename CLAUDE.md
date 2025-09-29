@@ -47,14 +47,16 @@ Currently removing ALL mock data and connecting remaining pages to Supabase back
 - `/api/inventory/stock-adjustments` - Stock movements
 - `/api/clients/contacts` - Client contact management
 
-**✅ COMPLETED - PAGES UPDATED (5/12 - 42%):**
+**✅ COMPLETED - PAGES UPDATED (7/12 - 58%):**
 - `app/sales/recurring/page.tsx` - Connected to /api/sales/recurring ✅
 - `app/sales/refunds/page.tsx` - Connected to /api/sales/refunds ✅
 - `app/purchases/debit-notes/page.tsx` - Connected to /api/purchases/debit-notes ✅
 - `app/purchases/payments/page.tsx` - Connected to /api/purchases/payments ✅
 - `app/purchases/refunds/page.tsx` - Connected to /api/purchases/refunds ✅
+- `app/inventory/price-list/page.tsx` - Connected to /api/inventory/price-lists ✅
+- `app/inventory/requisition/page.tsx` - Connected to /api/inventory/requisitions ✅
 
-**🔄 REMAINING PAGES (7/12 - 58%):**
+**🔄 REMAINING PAGES (5/12 - 42%):**
 All APIs are ready and tested. Each page needs:
 - Add imports: useState, useEffect, Loader2
 - Add state: data, loading, searchTerm, filterStatus
@@ -64,9 +66,7 @@ All APIs are ready and tested. Each page needs:
 - Replace hardcoded tbody with loading/map/empty pattern
 - Remove hidden empty state divs
 
-Pages to complete:
-- `app/inventory/price-list/page.tsx` → /api/inventory/price-lists
-- `app/inventory/requisition/page.tsx` → /api/inventory/requisitions
+Remaining pages:
 - `app/inventory/stockings/page.tsx` → /api/inventory/stock-adjustments
 - `app/clients/contacts/page.tsx` → /api/clients/contacts
 - `app/purchases/invoices/page.tsx` → needs verification (may already be connected)

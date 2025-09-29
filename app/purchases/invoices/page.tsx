@@ -6,16 +6,54 @@ import { EnhancedCard } from '@/components/ui/enhanced-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, FileText, Calendar, CheckCircle, Clock, AlertCircle, Filter, Download, Eye } from 'lucide-react'
+import { Plus, Search, FileText, Calendar, CheckCircle, Clock, AlertCircle, Filter, Download, Eye, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
 export default function PurchaseInvoicesPage() {
   const { user } = useAuth()
   const { hasFullAccess } = usePermissions()
+  const [invoices, setInvoices] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState<string>('')
+
+  useEffect(() => {
+    fetchInvoices()
+  }, [])
+
+  const fetchInvoices = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/purchases/invoices')
+      if (response.ok) {
+        const result = await response.json()
+        setInvoices(result.data || [])
+      }
+    } catch (error) {
+      console.error('Error fetching invoices:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (!user) {
     return null
   }
+
+  const filteredInvoices = invoices.filter(inv => {
+    const matchesSearch = inv.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         inv.supplierName?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = !filterStatus || inv.status === filterStatus
+    return matchesSearch && matchesStatus
+  })
+
+  const totalInvoices = invoices.length
+  const pendingCount = invoices.filter(i => i.status === 'PENDING' || i.status === 'DRAFT').length
+  const approvedCount = invoices.filter(i => i.status === 'APPROVED').length
+  const paidCount = invoices.filter(i => i.status === 'PAID').length
+  const totalAmount = invoices.reduce((sum, i) => sum + (i.totalAmount || 0), 0)
+  const unpaidAmount = invoices.filter(i => i.status !== 'PAID').reduce((sum, i) => sum + (i.totalAmount || 0), 0)
 
   return (
     <MainLayout user={{ name: `${user.firstName} ${user.lastName}`, email: user.email, role: user.role }}>

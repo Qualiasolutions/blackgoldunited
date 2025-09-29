@@ -47,21 +47,31 @@ Currently removing ALL mock data and connecting remaining pages to Supabase back
 - `/api/inventory/stock-adjustments` - Stock movements
 - `/api/clients/contacts` - Client contact management
 
-**✅ COMPLETED - PAGES UPDATED (5/12):**
-- `app/sales/recurring/page.tsx` - Connected to API ✅
-- `app/sales/refunds/page.tsx` - Connected to API ✅
-- `app/purchases/debit-notes/page.tsx` - Connected to API ✅
-- `app/purchases/payments/page.tsx` - Connected to API ✅
-- `app/purchases/refunds/page.tsx` - Connected to API ✅
+**✅ COMPLETED - PAGES UPDATED (5/12 - 42%):**
+- `app/sales/recurring/page.tsx` - Connected to /api/sales/recurring ✅
+- `app/sales/refunds/page.tsx` - Connected to /api/sales/refunds ✅
+- `app/purchases/debit-notes/page.tsx` - Connected to /api/purchases/debit-notes ✅
+- `app/purchases/payments/page.tsx` - Connected to /api/purchases/payments ✅
+- `app/purchases/refunds/page.tsx` - Connected to /api/purchases/refunds ✅
 
-**🔄 IN PROGRESS - REMAINING PAGES (7/12):**
-- `app/inventory/price-list/page.tsx`
-- `app/inventory/requisition/page.tsx`
-- `app/inventory/stockings/page.tsx`
-- `app/clients/contacts/page.tsx`
-- `app/purchase/invoices/page.tsx`
-- `app/purchases/invoices/page.tsx`
-- `app/settings/page.tsx`
+**🔄 REMAINING PAGES (7/12 - 58%):**
+All APIs are ready and tested. Each page needs:
+- Add imports: useState, useEffect, Loader2
+- Add state: data, loading, searchTerm, filterStatus
+- Add useEffect + fetch function calling API
+- Update stats cards with loading states + real calculations
+- Add controlled inputs (value + onChange)
+- Replace hardcoded tbody with loading/map/empty pattern
+- Remove hidden empty state divs
+
+Pages to complete:
+- `app/inventory/price-list/page.tsx` → /api/inventory/price-lists
+- `app/inventory/requisition/page.tsx` → /api/inventory/requisitions
+- `app/inventory/stockings/page.tsx` → /api/inventory/stock-adjustments
+- `app/clients/contacts/page.tsx` → /api/clients/contacts
+- `app/purchases/invoices/page.tsx` → needs verification (may already be connected)
+- `app/purchase/invoices/page.tsx` → verify if duplicate
+- `app/settings/page.tsx` → verify if API needed
 
 **⚠️ Known Missing Pages**:
 Some modules have subpages defined in the schema but not yet implemented in the frontend:

@@ -6,16 +6,47 @@ import { EnhancedCard } from '@/components/ui/enhanced-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, FileText, Download, Filter } from 'lucide-react'
+import { Plus, Search, FileText, Download, Filter, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
 export default function RefundReceiptsPage() {
   const { user } = useAuth()
   const { hasFullAccess } = usePermissions()
+  const [refunds, setRefunds] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState<string>('')
+
+  useEffect(() => {
+    fetchRefunds()
+  }, [])
+
+  const fetchRefunds = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/sales/refunds')
+      if (response.ok) {
+        const result = await response.json()
+        setRefunds(result.data || [])
+      }
+    } catch (error) {
+      console.error('Error fetching refunds:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (!user) {
     return null
   }
+
+  const filteredRefunds = refunds.filter(refund => {
+    const matchesSearch = refund.receiptNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         refund.clientName.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = !filterStatus || refund.status === filterStatus
+    return matchesSearch && matchesStatus
+  })
 
   return (
     <MainLayout user={{ name: `${user.firstName} ${user.lastName}`, email: user.email, role: user.role }}>
@@ -46,6 +77,8 @@ export default function RefundReceiptsPage() {
                 <Search className="h-5 w-5 text-orange-600" />
                 <Input
                   placeholder="Search refund receipts..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="border-orange-200 focus:border-orange-400"
                 />
               </div>
@@ -54,11 +87,15 @@ export default function RefundReceiptsPage() {
             <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
               <div className="flex items-center space-x-3">
                 <Filter className="h-5 w-5 text-orange-600" />
-                <select className="w-full border border-orange-200 rounded-lg px-3 py-2 focus:border-orange-400">
-                  <option>All Refunds</option>
-                  <option>Processed</option>
-                  <option>Pending</option>
-                  <option>Cancelled</option>
+                <select
+                  className="w-full border border-orange-200 rounded-lg px-3 py-2 focus:border-orange-400"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  <option value="">All Refunds</option>
+                  <option value="ISSUED">Processed</option>
+                  <option value="DRAFT">Pending</option>
+                  <option value="CANCELLED">Cancelled</option>
                 </select>
               </div>
             </EnhancedCard>
@@ -66,7 +103,11 @@ export default function RefundReceiptsPage() {
             <EnhancedCard className="p-6 bg-white border-2 border-orange-100">
               <div className="flex items-center justify-between">
                 <span className="text-gray-700 font-medium">Total Refunds</span>
-                <Badge className="bg-orange-100 text-orange-800">12</Badge>
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                ) : (
+                  <Badge className="bg-orange-100 text-orange-800">{refunds.length}</Badge>
+                )}
               </div>
             </EnhancedCard>
           </div>
@@ -98,64 +139,55 @@ export default function RefundReceiptsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {/* Sample Data - Replace with real data from Supabase */}
-                    <tr className="border-b border-gray-100 hover:bg-orange-50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <FileText className="h-4 w-4 text-orange-600 mr-2" />
-                          RFD-2025-001
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">Acme Corporation</td>
-                      <td className="py-3 px-4 font-medium">$2,500.00</td>
-                      <td className="py-3 px-4">Jan 15, 2025</td>
-                      <td className="py-3 px-4">
-                        <Badge className="bg-green-100 text-green-800">Processed</Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">View</Button>
-                          <Button variant="outline" size="sm">Print</Button>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr className="border-b border-gray-100 hover:bg-orange-50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <FileText className="h-4 w-4 text-orange-600 mr-2" />
-                          RFD-2025-002
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">TechStart Solutions</td>
-                      <td className="py-3 px-4 font-medium">$1,200.00</td>
-                      <td className="py-3 px-4">Jan 18, 2025</td>
-                      <td className="py-3 px-4">
-                        <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">View</Button>
-                          <Button variant="outline" size="sm">Print</Button>
-                        </div>
-                      </td>
-                    </tr>
+                    {loading ? (
+                      <tr>
+                        <td colSpan={6} className="py-8 text-center">
+                          <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
+                          <p className="text-gray-500 mt-2">Loading refund receipts...</p>
+                        </td>
+                      </tr>
+                    ) : filteredRefunds.length > 0 ? (
+                      filteredRefunds.map((refund) => (
+                        <tr key={refund.id} className="border-b border-gray-100 hover:bg-orange-50">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center">
+                              <FileText className="h-4 w-4 text-orange-600 mr-2" />
+                              {refund.receiptNumber}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">{refund.clientName}</td>
+                          <td className="py-3 px-4 font-medium">${refund.amount.toLocaleString()}</td>
+                          <td className="py-3 px-4">{refund.date}</td>
+                          <td className="py-3 px-4">
+                            <Badge className={
+                              refund.status === 'ISSUED' ? 'bg-green-100 text-green-800' :
+                              refund.status === 'DRAFT' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }>
+                              {refund.status === 'ISSUED' ? 'Processed' : refund.status}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex space-x-2">
+                              <Button variant="outline" size="sm">View</Button>
+                              <Button variant="outline" size="sm">Print</Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={6} className="py-8 text-center">
+                          <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                          <p className="text-gray-500 text-lg">No refund receipts found</p>
+                          <p className="text-gray-400 mt-2">
+                            {searchTerm || filterStatus ? 'Try adjusting your filters' : 'Create your first refund receipt to get started'}
+                          </p>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
-              </div>
-
-              {/* Empty State for when no data */}
-              <div className="text-center py-12 hidden">
-                <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">No refund receipts found</p>
-                <p className="text-gray-400 mt-2">Create your first refund receipt to get started</p>
-                {hasFullAccess('sales') && (
-                  <Link href="/sales/refunds/create" className="mt-4 inline-block">
-                    <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create First Refund Receipt
-                    </Button>
-                  </Link>
-                )}
               </div>
             </div>
           </EnhancedCard>

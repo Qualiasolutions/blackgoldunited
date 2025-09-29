@@ -61,7 +61,7 @@ const searchSchema = z.object({
   status: z.string().optional(),
   page: z.string().transform(Number).optional().default('1'),
   limit: z.string().transform(Number).optional().default('10'),
-  sortBy: z.string().optional().default('companyName'),
+  sortBy: z.string().optional().default('company_name'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('asc'),
 });
 
@@ -108,13 +108,13 @@ export async function GET(request: NextRequest) {
 
     // Apply search filter
     if (validatedParams.query) {
-      query = query.or(`clientCode.ilike.%${validatedParams.query}%,companyName.ilike.%${validatedParams.query}%,contactPerson.ilike.%${validatedParams.query}%,email.ilike.%${validatedParams.query}%`);
+      query = query.or(`client_code.ilike.%${validatedParams.query}%,company_name.ilike.%${validatedParams.query}%,contact_person.ilike.%${validatedParams.query}%,email.ilike.%${validatedParams.query}%`);
     }
 
-    // Apply status filter (using isActive boolean instead of status string)
+    // Apply status filter (using is_active boolean instead of status string)
     if (validatedParams.status) {
       const isActive = validatedParams.status === 'Active';
-      query = query.eq('isActive', isActive);
+      query = query.eq('is_active', isActive);
     }
 
     // Apply sorting
@@ -183,10 +183,30 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = clientSchema.parse(body);
 
+    // Map camelCase to snake_case for database
+    const dbData = {
+      client_code: validatedData.clientCode,
+      company_name: validatedData.companyName,
+      contact_person: validatedData.contactPerson,
+      email: validatedData.email,
+      phone: validatedData.phone,
+      mobile: validatedData.mobile,
+      address_line_1: validatedData.address,
+      city: validatedData.city,
+      state: validatedData.state,
+      country: validatedData.country || 'United Arab Emirates',
+      postal_code: validatedData.postalCode,
+      tax_number: validatedData.taxNumber,
+      credit_limit: validatedData.creditLimit || 0,
+      payment_terms: validatedData.paymentTerms || 30,
+      is_active: validatedData.isActive !== false,
+      created_by: authResult.user.id
+    };
+
     // Insert new client
     const { data: newClient, error } = await supabase
       .from('clients')
-      .insert([validatedData])
+      .insert([dbData])
       .select()
       .single();
 

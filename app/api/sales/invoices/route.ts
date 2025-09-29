@@ -78,7 +78,7 @@ const searchSchema = z.object({
   dateTo: z.string().datetime().optional(),
   page: z.string().transform(Number).optional().default('1'),
   limit: z.string().transform(Number).optional().default('10'),
-  sortBy: z.string().optional().default('createdAt'),
+  sortBy: z.string().optional().default('created_at'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
 });
 
@@ -126,14 +126,14 @@ export async function GET(request: NextRequest) {
       .from('invoices')
       .select(`
         *,
-        client:clients!inner(id, companyName, contactPerson, email),
+        client:clients!inner(id, company_name, contact_person, email),
         items:invoice_items(*)
       `, { count: 'exact' })
-      .is('deletedAt', null);
+      .is('deleted_at', null);
 
     // Apply search filter
     if (validatedParams.query) {
-      query = query.or(`invoiceNumber.ilike.%${validatedParams.query}%,notes.ilike.%${validatedParams.query}%`);
+      query = query.or(`invoice_number.ilike.%${validatedParams.query}%,notes.ilike.%${validatedParams.query}%`);
     }
 
     // Apply status filters
@@ -142,19 +142,19 @@ export async function GET(request: NextRequest) {
     }
 
     if (validatedParams.paymentStatus) {
-      query = query.eq('paymentStatus', validatedParams.paymentStatus);
+      query = query.eq('payment_status', validatedParams.paymentStatus);
     }
 
     if (validatedParams.clientId) {
-      query = query.eq('clientId', validatedParams.clientId);
+      query = query.eq('client_id', validatedParams.clientId);
     }
 
     // Apply date range filters
     if (validatedParams.dateFrom) {
-      query = query.gte('issueDate', validatedParams.dateFrom);
+      query = query.gte('issue_date', validatedParams.dateFrom);
     }
     if (validatedParams.dateTo) {
-      query = query.lte('issueDate', validatedParams.dateTo);
+      query = query.lte('issue_date', validatedParams.dateTo);
     }
 
     // Apply sorting
@@ -200,15 +200,15 @@ async function generateInvoiceNumber(supabase: any): Promise<string> {
   // Get the highest number for today
   const { data: lastInvoice } = await supabase
     .from('invoices')
-    .select('invoiceNumber')
-    .like('invoiceNumber', `${prefix}%`)
-    .order('invoiceNumber', { ascending: false })
+    .select('invoice_number')
+    .like('invoice_number', `${prefix}%`)
+    .order('invoice_number', { ascending: false })
     .limit(1)
     .single();
 
   let nextNumber = 1;
-  if (lastInvoice?.invoiceNumber) {
-    const lastNumStr = lastInvoice.invoiceNumber.split('-').pop();
+  if (lastInvoice?.invoice_number) {
+    const lastNumStr = lastInvoice.invoice_number.split('-').pop();
     nextNumber = (parseInt(lastNumStr) || 0) + 1;
   }
 
@@ -268,27 +268,24 @@ export async function POST(request: NextRequest) {
     // Get user ID for audit trail
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Insert new invoice
+    // Insert new invoice - mapping camelCase to snake_case for database
     const { data: newInvoice, error: invoiceError } = await supabase
       .from('invoices')
       .insert([{
-        invoiceNumber,
-        clientId: validatedData.clientId,
-        issueDate: validatedData.issueDate || new Date().toISOString(),
-        dueDate: validatedData.dueDate,
+        invoice_number: invoiceNumber,
+        client_id: validatedData.clientId,
+        issue_date: validatedData.issueDate || new Date().toISOString().split('T')[0],
+        due_date: validatedData.dueDate.split('T')[0],
         status: validatedData.status,
-        paymentStatus: validatedData.paymentStatus,
+        payment_status: validatedData.paymentStatus,
         subtotal,
-        taxAmount,
-        discountAmount: validatedData.discountAmount,
-        totalAmount,
-        paidAmount: validatedData.paidAmount,
+        tax_amount: taxAmount,
+        discount_amount: validatedData.discountAmount,
+        total_amount: totalAmount,
+        paid_amount: validatedData.paidAmount,
         notes: validatedData.notes,
-        terms: validatedData.terms,
-        isRecurring: validatedData.isRecurring,
-        recurringPeriod: validatedData.recurringPeriod,
-        nextRecurringDate: validatedData.nextRecurringDate,
-        createdById: user?.id,
+        terms_and_conditions: validatedData.terms,
+        created_by: user?.id,
       }])
       .select()
       .single();
@@ -301,15 +298,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create invoice' }, { status: 500 });
     }
 
-    // Insert invoice items
+    // Insert invoice items - mapping camelCase to snake_case for database
     const invoiceItems = validatedData.items.map(item => ({
-      invoiceId: newInvoice.id,
-      productId: item.productId,
+      invoice_id: newInvoice.id,
+      product_id: item.productId,
       description: item.description,
       quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      lineTotal: item.quantity * item.unitPrice,
-      taxRate: item.taxRate,
+      unit_price: item.unitPrice,
+      line_total: item.quantity * item.unitPrice,
+      tax_rate: item.taxRate,
     }));
 
     const { error: itemsError } = await supabase
@@ -328,7 +325,7 @@ export async function POST(request: NextRequest) {
       .from('invoices')
       .select(`
         *,
-        client:clients!inner(id, companyName, contactPerson, email),
+        client:clients!inner(id, company_name, contact_person, email),
         items:invoice_items(*)
       `)
       .eq('id', newInvoice.id)

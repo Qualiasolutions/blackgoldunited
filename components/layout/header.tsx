@@ -18,6 +18,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from '@/components/ui/navigation-menu'
 import { cn } from '@/lib/utils'
 import { useNotifications } from '@/lib/hooks/useNotifications'
+import { useAuth } from '@/lib/hooks/useAuth'
 import { Notification } from '@/lib/types/bgu'
 
 // Helper function to get notification icons
@@ -80,6 +81,7 @@ interface HeaderProps {
 }
 
 export function Header({ user }: HeaderProps) {
+  const { logout } = useAuth()
   const {
     notifications,
     unreadCount,
@@ -88,6 +90,10 @@ export function Header({ user }: HeaderProps) {
     markAllAsRead,
     deleteNotification
   } = useNotifications()
+
+  const handleSignOut = async () => {
+    await logout()
+  }
 
   const currentTime = new Date().toLocaleTimeString('en-US', {
     hour: '2-digit',
@@ -375,7 +381,10 @@ export function Header({ user }: HeaderProps) {
                 <span>Account Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive">
+              <DropdownMenuItem
+                className="cursor-pointer text-destructive focus:text-destructive"
+                onClick={handleSignOut}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Sign Out</span>
               </DropdownMenuItem>

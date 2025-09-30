@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Package, DollarSign, Truck, TrendingDown, Download, FileText } from 'lucide-react'
+import { Package, DollarSign, Truck, TrendingDown, Download, FileText, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
 const purchaseReports = [
@@ -53,22 +53,63 @@ const purchaseReports = [
 ]
 
 export default function PurchaseReportsPage() {
-  const [stats, setStats] = useState({
-    totalPurchases: 0,
-    monthlySpend: 0,
-    activeSuppliers: 0,
-    savingsRate: 0
-  })
+  const [purchaseData, setPurchaseData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // In a real app, fetch from Supabase
-    setStats({
-      totalPurchases: 89,
-      monthlySpend: 850000,
-      activeSuppliers: 34,
-      savingsRate: 8.5
-    })
+    async function fetchPurchaseData() {
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await fetch('/api/reports/purchase')
+        const result = await response.json()
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to fetch purchase data')
+        }
+
+        if (result.success) {
+          setPurchaseData(result.data)
+        }
+      } catch (error) {
+        console.error('Error fetching purchase data:', error)
+        setError(error instanceof Error ? error.message : 'Failed to load data')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPurchaseData()
   }, [])
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading purchase reports...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-6 text-center">
+            <TrendingDown className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-red-900 mb-2">Error Loading Data</h2>
+            <p className="text-red-700 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>Try Again</Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const stats = purchaseData || {}
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -77,7 +118,7 @@ export default function PurchaseReportsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Purchase Reports</h1>
           <p className="text-muted-foreground">
-            Monitor procurement, supplier performance, and cost optimization
+            Track purchase orders, supplier performance, and procurement analytics
           </p>
         </div>
         <div className="flex space-x-2">
@@ -100,9 +141,9 @@ export default function PurchaseReportsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Purchases</p>
-                <p className="text-2xl font-bold">{stats.totalPurchases}</p>
+                <p className="text-2xl font-bold">AED {((stats.totalPurchases || 0) / 1000).toFixed(1)}K</p>
               </div>
-              <Package className="h-8 w-8 text-blue-600" />
+              <DollarSign className="h-8 w-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
@@ -110,10 +151,10 @@ export default function PurchaseReportsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Monthly Spend</p>
-                <p className="text-2xl font-bold">AED {(stats.monthlySpend / 1000)}K</p>
+                <p className="text-sm font-medium text-muted-foreground">Pending Orders</p>
+                <p className="text-2xl font-bold">{stats.pendingOrdersCount || 0}</p>
               </div>
-              <DollarSign className="h-8 w-8 text-red-600" />
+              <Package className="h-8 w-8 text-orange-600" />
             </div>
           </CardContent>
         </Card>
@@ -122,7 +163,7 @@ export default function PurchaseReportsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Active Suppliers</p>
-                <p className="text-2xl font-bold">{stats.activeSuppliers}</p>
+                <p className="text-2xl font-bold">{stats.activeSuppliersCount || 0}</p>
               </div>
               <Truck className="h-8 w-8 text-green-600" />
             </div>
@@ -133,9 +174,9 @@ export default function PurchaseReportsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Cost Savings</p>
-                <p className="text-2xl font-bold">{stats.savingsRate}%</p>
+                <p className="text-2xl font-bold">{((stats.savingsRate || 0) * 100).toFixed(1)}%</p>
               </div>
-              <TrendingDown className="h-8 w-8 text-green-600" />
+              <TrendingDown className="h-8 w-8 text-purple-600" />
             </div>
           </CardContent>
         </Card>
@@ -152,23 +193,18 @@ export default function PurchaseReportsPage() {
               <Card key={report.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-start justify-between">
-                    <FileText className="h-8 w-8 text-green-600" />
+                    <FileText className="h-6 w-6 text-blue-600" />
                     <Badge variant={report.status === 'active' ? 'default' : 'secondary'}>
                       {report.frequency}
                     </Badge>
                   </div>
                   <div>
-                    <h3 className="font-semibold">{report.title}</h3>
-                    <p className="text-sm text-muted-foreground">{report.description}</p>
+                    <h3 className="font-semibold text-sm">{report.title}</h3>
+                    <p className="text-xs text-muted-foreground">{report.description}</p>
                   </div>
-                  <div className="flex space-x-2">
-                    <Button size="sm" className="flex-1">
-                      Generate
-                    </Button>
-                    <Button size="sm" variant="outline">
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Button size="sm" className="w-full text-xs">
+                    Generate Report
+                  </Button>
                 </CardContent>
               </Card>
             ))}

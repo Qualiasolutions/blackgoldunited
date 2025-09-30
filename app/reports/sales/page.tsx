@@ -1,9 +1,10 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { TrendingUp, DollarSign, Users, Calendar, Download, FileText } from 'lucide-react'
+import { TrendingUp, DollarSign, Users, Calendar, Download, FileText, Loader2, TrendingDown } from 'lucide-react'
 import Link from 'next/link'
 
 const salesReports = [
@@ -52,6 +53,64 @@ const salesReports = [
 ]
 
 export default function SalesReportsPage() {
+  const [salesData, setSalesData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function fetchSalesData() {
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await fetch('/api/reports/sales')
+        const result = await response.json()
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to fetch sales data')
+        }
+
+        if (result.success) {
+          setSalesData(result.data)
+        }
+      } catch (error) {
+        console.error('Error fetching sales data:', error)
+        setError(error instanceof Error ? error.message : 'Failed to load data')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchSalesData()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading sales reports...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-6 text-center">
+            <TrendingDown className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-red-900 mb-2">Error Loading Data</h2>
+            <p className="text-red-700 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>Try Again</Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const stats = salesData || {}
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
@@ -81,8 +140,8 @@ export default function SalesReportsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Today's Sales</p>
-                <p className="text-2xl font-bold">AED 45,250</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
+                <p className="text-2xl font-bold">AED {((stats.totalSales || 0) / 1000).toFixed(1)}K</p>
               </div>
               <DollarSign className="h-8 w-8 text-green-600" />
             </div>
@@ -92,8 +151,8 @@ export default function SalesReportsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Monthly Revenue</p>
-                <p className="text-2xl font-bold">AED 1.2M</p>
+                <p className="text-sm font-medium text-muted-foreground">Paid Amount</p>
+                <p className="text-2xl font-bold">AED {((stats.totalPaid || 0) / 1000).toFixed(1)}K</p>
               </div>
               <TrendingUp className="h-8 w-8 text-blue-600" />
             </div>
@@ -103,10 +162,10 @@ export default function SalesReportsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Clients</p>
-                <p className="text-2xl font-bold">142</p>
+                <p className="text-sm font-medium text-muted-foreground">Outstanding</p>
+                <p className="text-2xl font-bold">AED {((stats.totalOutstanding || 0) / 1000).toFixed(1)}K</p>
               </div>
-              <Users className="h-8 w-8 text-purple-600" />
+              <Calendar className="h-8 w-8 text-orange-600" />
             </div>
           </CardContent>
         </Card>
@@ -114,10 +173,10 @@ export default function SalesReportsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Growth Rate</p>
-                <p className="text-2xl font-bold">+12.5%</p>
+                <p className="text-sm font-medium text-muted-foreground">Active Clients</p>
+                <p className="text-2xl font-bold">{stats.activeClients || 0}</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-green-600" />
+              <Users className="h-8 w-8 text-purple-600" />
             </div>
           </CardContent>
         </Card>
@@ -134,23 +193,18 @@ export default function SalesReportsPage() {
               <Card key={report.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-start justify-between">
-                    <FileText className="h-8 w-8 text-blue-600" />
+                    <FileText className="h-6 w-6 text-blue-600" />
                     <Badge variant={report.status === 'active' ? 'default' : 'secondary'}>
                       {report.frequency}
                     </Badge>
                   </div>
                   <div>
-                    <h3 className="font-semibold">{report.title}</h3>
-                    <p className="text-sm text-muted-foreground">{report.description}</p>
+                    <h3 className="font-semibold text-sm">{report.title}</h3>
+                    <p className="text-xs text-muted-foreground">{report.description}</p>
                   </div>
-                  <div className="flex space-x-2">
-                    <Button size="sm" className="flex-1">
-                      Generate
-                    </Button>
-                    <Button size="sm" variant="outline">
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Button size="sm" className="w-full text-xs">
+                    Generate Report
+                  </Button>
                 </CardContent>
               </Card>
             ))}

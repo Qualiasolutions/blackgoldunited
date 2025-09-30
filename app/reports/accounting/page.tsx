@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { DollarSign, TrendingUp, TrendingDown, Calculator, Download, FileText } from 'lucide-react'
+import { DollarSign, TrendingUp, TrendingDown, Calculator, Download, FileText, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
 const accountingReports = [
@@ -75,22 +75,36 @@ export default function AccountingReportsPage() {
     receivables: 0,
     payables: 0
   })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Fetch real data from Supabase in production
     async function fetchFinancialData() {
       try {
-        // This would be replaced with actual Supabase calls
-        setFinancialStats({
-          revenue: 1250000,
-          expenses: 980000,
-          netIncome: 270000,
-          cashPosition: 450000,
-          receivables: 180000,
-          payables: 120000
-        })
+        setLoading(true)
+        setError(null)
+        const response = await fetch('/api/reports/accounting')
+        const result = await response.json()
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to fetch accounting data')
+        }
+
+        if (result.success && result.data) {
+          setFinancialStats({
+            revenue: Number(result.data.totalRevenue) || 0,
+            expenses: Number(result.data.totalExpenses) || 0,
+            netIncome: Number(result.data.netIncome) || 0,
+            cashPosition: Number(result.data.cashPosition) || 0,
+            receivables: Number(result.data.accountsReceivable) || 0,
+            payables: Number(result.data.accountsPayable) || 0
+          })
+        }
       } catch (error) {
         console.error('Error fetching financial data:', error)
+        setError(error instanceof Error ? error.message : 'Failed to load data')
+      } finally {
+        setLoading(false)
       }
     }
 
@@ -99,6 +113,32 @@ export default function AccountingReportsPage() {
 
   const profitMargin = financialStats.revenue > 0 ?
     ((financialStats.netIncome / financialStats.revenue) * 100).toFixed(1) : '0'
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading accounting reports...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-6 text-center">
+            <TrendingDown className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-red-900 mb-2">Error Loading Data</h2>
+            <p className="text-red-700 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>Try Again</Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto p-6 space-y-6">

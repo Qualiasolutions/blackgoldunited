@@ -28,6 +28,7 @@ import {
   Lock
 } from 'lucide-react'
 import Link from 'next/link'
+import { formatCurrency, formatNumber } from '@/lib/utils/format'
 
 interface FixedAsset {
   id: string
@@ -283,10 +284,10 @@ export default function AssetsPage() {
                             {asset.category}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-green-600">
-                            AED {Number(asset.purchase_cost).toLocaleString()}
+                            {formatCurrency(asset.purchase_cost, 'AED ', 'AED 0')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-blue-600">
-                            AED {Number(asset.current_value).toLocaleString()}
+                            {formatCurrency(asset.current_value, 'AED ', 'AED 0')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Badge variant={

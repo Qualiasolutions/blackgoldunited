@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Plus, Truck, ShoppingCart, FileText, DollarSign, Package, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import { formatCurrency } from '@/lib/utils/format'
 
 export default function PurchasePage() {
   const { user } = useAuth()
@@ -95,7 +96,7 @@ export default function PurchasePage() {
                   <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                 ) : (
                   <>
-                    <div className="text-2xl font-bold">${purchaseStats.totalPurchaseValue.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">{formatCurrency(purchaseStats.totalPurchaseValue)}</div>
                     <p className="text-xs text-muted-foreground">
                       This quarter
                     </p>

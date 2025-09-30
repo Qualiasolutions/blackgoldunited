@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Plus, Search, Download, Eye, Play, ArrowLeft, Loader2, Calendar, DollarSign, Users, Lock } from 'lucide-react'
 import Link from 'next/link'
+import { formatCurrency, formatNumber } from '@/lib/utils/format'
 
 interface PayRun {
   id: string
@@ -185,7 +186,7 @@ export default function PayRunsPage() {
                             {payRun.total_employees}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold text-blue-600">
-                            AED {Number(payRun.total_net).toLocaleString()}
+                            {formatCurrency(payRun.total_net, 'AED ', 'AED 0')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Badge variant={

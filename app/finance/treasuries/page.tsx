@@ -21,6 +21,7 @@ import {
   CreditCard
 } from 'lucide-react'
 import Link from 'next/link'
+import { formatCurrency, formatNumber } from '@/lib/utils/format'
 
 interface BankAccount {
   id: string
@@ -239,7 +240,7 @@ export default function TreasuriesPage() {
                             {account.accountType}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600">
-                            {account.currency} {Number(account.currentBalance).toLocaleString()}
+                            {formatCurrency(account.currentBalance, `${account.currency} `, `${account.currency} 0`)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Badge variant={account.isActive ? 'default' : 'secondary'}>

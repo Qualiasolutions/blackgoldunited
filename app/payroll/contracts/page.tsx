@@ -28,6 +28,7 @@ import {
   Lock
 } from 'lucide-react'
 import Link from 'next/link'
+import { formatCurrency, formatNumber } from '@/lib/utils/format'
 
 interface Contract {
   id: string
@@ -271,7 +272,7 @@ export default function ContractsPage() {
                             {contract.end_date ? new Date(contract.end_date).toLocaleDateString() : '-'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-blue-600">
-                            AED {Number(contract.basic_salary).toLocaleString()}
+                            {formatCurrency(contract.basic_salary, 'AED ', 'AED 0')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Badge variant={

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { DollarSign, TrendingUp, TrendingDown, PieChart, BarChart3, Calculator, FileText, CreditCard, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import { formatCurrency, formatNumber } from '@/lib/utils/format'
 
 export default function FinancePage() {
   const { user } = useAuth()
@@ -114,7 +115,7 @@ export default function FinancePage() {
                 ) : (
                   <>
                     <div className="text-2xl font-bold text-green-600">
-                      ${financialData.totalAssets.toLocaleString()}
+                      {formatCurrency(financialData.totalAssets)}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Current + Non-current
@@ -137,7 +138,7 @@ export default function FinancePage() {
                 ) : (
                   <>
                     <div className="text-2xl font-bold text-red-600">
-                      ${financialData.totalLiabilities.toLocaleString()}
+                      {formatCurrency(financialData.totalLiabilities)}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Current + Long-term
@@ -160,7 +161,7 @@ export default function FinancePage() {
                 ) : (
                   <>
                     <div className="text-2xl font-bold text-blue-600">
-                      ${financialData.totalEquity.toLocaleString()}
+                      {formatCurrency(financialData.totalEquity)}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Owner's equity
@@ -183,7 +184,7 @@ export default function FinancePage() {
                 ) : (
                   <>
                     <div className="text-2xl font-bold text-emerald-600">
-                      ${financialData.netIncome.toLocaleString()}
+                      {formatCurrency(financialData.netIncome)}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       This month
@@ -281,7 +282,7 @@ export default function FinancePage() {
                         <p className={`font-medium ${
                           transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
                         }`}>
-                          {transaction.amount > 0 ? '+' : ''}${Math.abs(transaction.amount).toLocaleString()}
+                          {transaction.amount > 0 ? '+' : ''}{formatCurrency(Math.abs(transaction.amount))}
                         </p>
                         <p className="text-sm text-gray-600">{transaction.type}</p>
                       </div>

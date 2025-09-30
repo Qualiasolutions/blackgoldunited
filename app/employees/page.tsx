@@ -7,6 +7,7 @@ import { Plus, Users, UserPlus, Award, Calendar, Clock, ArrowLeft } from 'lucide
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { formatCurrency, formatNumber } from '@/lib/utils/format'
 
 interface Employee {
   id: string
@@ -178,7 +179,7 @@ export default function EmployeesPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-yellow-900">
-                  ${averageSalary.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                  {formatCurrency(averageSalary)}
                 </div>
                 <p className="text-xs text-yellow-600">
                   Per employee annually
@@ -312,7 +313,7 @@ export default function EmployeesPage() {
                             {employee.isActive ? 'Active' : 'Inactive'}
                           </span>
                           <p className="text-sm text-gray-600">
-                            ${employee.salary.toLocaleString()} / year
+                            {formatCurrency(employee.salary)} / year
                           </p>
                           <p className="text-xs text-gray-400">
                             Hired: {new Date(employee.hireDate).toLocaleDateString()}

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Plus, Search, Calendar, RefreshCw, Play, Pause, Filter, Download, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import { formatCurrency, formatNumber } from '@/lib/utils/format'
 
 export default function RecurringInvoicesPage() {
   const { user } = useAuth()
@@ -103,7 +104,7 @@ export default function RecurringInvoicesPage() {
                   {loading ? (
                     <Loader2 className="h-6 w-6 animate-spin text-gray-400 mt-2" />
                   ) : (
-                    <p className="text-2xl font-bold text-gray-900">${monthlyRevenue.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-gray-900">{formatCurrency(monthlyRevenue)}</p>
                   )}
                 </div>
                 <div className="p-3 bg-blue-100 rounded-xl">
@@ -246,7 +247,7 @@ export default function RecurringInvoicesPage() {
                             </div>
                           </td>
                           <td className="py-3 px-4">{invoice.clientName}</td>
-                          <td className="py-3 px-4 font-medium">${invoice.amount.toLocaleString()}</td>
+                          <td className="py-3 px-4 font-medium">{formatCurrency(invoice.amount)}</td>
                           <td className="py-3 px-4">{invoice.frequency}</td>
                           <td className="py-3 px-4">{invoice.nextBilling || '-'}</td>
                           <td className="py-3 px-4">

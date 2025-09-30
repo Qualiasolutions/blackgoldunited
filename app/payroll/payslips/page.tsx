@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Search, Download, Eye, FileText, ArrowLeft, Loader2, Calendar, DollarSign, Lock } from 'lucide-react'
 import Link from 'next/link'
+import { formatCurrency, formatNumber } from '@/lib/utils/format'
 
 interface Payslip {
   id: string
@@ -190,13 +191,13 @@ export default function PayslipsPage() {
                             {new Date(payslip.pay_period_start).toLocaleDateString()} - {new Date(payslip.pay_period_end).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-green-600">
-                            AED {Number(payslip.gross_salary).toLocaleString()}
+                            {formatCurrency(payslip.gross_salary, 'AED ', 'AED 0')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-red-600">
-                            AED {Number(payslip.total_deductions).toLocaleString()}
+                            {formatCurrency(payslip.total_deductions, 'AED ', 'AED 0')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-blue-600">
-                            AED {Number(payslip.net_salary).toLocaleString()}
+                            {formatCurrency(payslip.net_salary, 'AED ', 'AED 0')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Badge variant={

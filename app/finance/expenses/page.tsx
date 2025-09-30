@@ -28,6 +28,7 @@ import {
   DollarSign
 } from 'lucide-react'
 import Link from 'next/link'
+import { formatCurrency, formatNumber } from '@/lib/utils/format'
 
 interface Expense {
   id: string
@@ -262,7 +263,7 @@ export default function ExpensesPage() {
                             {new Date(expense.date).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-red-600">
-                            AED {Number(expense.amount).toLocaleString()}
+                            {formatCurrency(expense.amount, 'AED ', 'AED 0')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Badge variant={

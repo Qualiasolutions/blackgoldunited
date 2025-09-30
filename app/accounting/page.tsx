@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Plus, BookOpen, FileText, BarChart3, Calculator, DollarSign, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import { formatCurrency, formatNumber } from '@/lib/utils/format'
 
 export default function AccountingPage() {
   const { user } = useAuth()
@@ -257,7 +258,7 @@ export default function AccountingPage() {
                           account.type === 'LIABILITY' || account.type === 'EQUITY' || account.type === 'REVENUE' ? 'text-blue-600' :
                           'text-gray-900'
                         }`}>
-                          ${account.balance?.toLocaleString()}
+                          {formatCurrency(account.balance)}
                         </p>
                       </div>
                     </div>
@@ -296,7 +297,7 @@ export default function AccountingPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">${entry.debit?.toLocaleString()}</p>
+                        <p className="font-medium">{formatCurrency(entry.debit)}</p>
                         <p className="text-sm text-gray-600">Balanced entry</p>
                       </div>
                     </div>
@@ -327,11 +328,11 @@ export default function AccountingPage() {
                     <div className="pl-4 space-y-1">
                       <div className="flex justify-between text-sm">
                         <span>Current Assets</span>
-                        <span>${stats?.balanceSheet?.assets?.current?.toLocaleString() || 0}</span>
+                        <span>{formatCurrency(stats?.balanceSheet?.assets?.current)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>Fixed Assets</span>
-                        <span>${stats?.balanceSheet?.assets?.fixed?.toLocaleString() || 0}</span>
+                        <span>{formatCurrency(stats?.balanceSheet?.assets?.fixed)}</span>
                       </div>
                     </div>
 
@@ -339,11 +340,11 @@ export default function AccountingPage() {
                     <div className="pl-4 space-y-1">
                       <div className="flex justify-between text-sm">
                         <span>Current Liabilities</span>
-                        <span>${stats?.balanceSheet?.liabilities?.current?.toLocaleString() || 0}</span>
+                        <span>{formatCurrency(stats?.balanceSheet?.liabilities?.current)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>Long-term Liabilities</span>
-                        <span>${stats?.balanceSheet?.liabilities?.longTerm?.toLocaleString() || 0}</span>
+                        <span>{formatCurrency(stats?.balanceSheet?.liabilities?.longTerm)}</span>
                       </div>
                     </div>
 
@@ -351,14 +352,14 @@ export default function AccountingPage() {
                     <div className="pl-4">
                       <div className="flex justify-between text-sm">
                         <span>Owner's Equity</span>
-                        <span>${stats?.balanceSheet?.equity?.ownersEquity?.toLocaleString() || 0}</span>
+                        <span>{formatCurrency(stats?.balanceSheet?.equity?.ownersEquity)}</span>
                       </div>
                     </div>
 
                     <hr />
                     <div className="flex justify-between font-bold">
                       <span>Total Assets</span>
-                      <span>${stats?.balanceSheet?.assets?.total?.toLocaleString() || 0}</span>
+                      <span>{formatCurrency(stats?.balanceSheet?.assets?.total)}</span>
                     </div>
                   </div>
                 )}
@@ -378,35 +379,35 @@ export default function AccountingPage() {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="font-semibold">Revenue</span>
-                      <span className="text-green-600 font-bold">${stats?.incomeStatement?.revenue?.toLocaleString() || 0}</span>
+                      <span className="text-green-600 font-bold">{formatCurrency(stats?.incomeStatement?.revenue)}</span>
                     </div>
 
                     <div className="space-y-1">
                       <div className="flex justify-between text-sm">
                         <span>Cost of Goods Sold</span>
-                        <span className="text-red-600">($${stats?.incomeStatement?.cogs?.toLocaleString() || 0})</span>
+                        <span className="text-red-600">(-{formatCurrency(stats?.incomeStatement?.cogs)})</span>
                       </div>
                       <div className="flex justify-between font-medium">
                         <span>Gross Profit</span>
-                        <span>${stats?.incomeStatement?.grossProfit?.toLocaleString() || 0}</span>
+                        <span>{formatCurrency(stats?.incomeStatement?.grossProfit)}</span>
                       </div>
                     </div>
 
                     <div className="space-y-1">
                       <div className="flex justify-between text-sm">
                         <span>Operating Expenses</span>
-                        <span className="text-red-600">($${stats?.incomeStatement?.operatingExpenses?.toLocaleString() || 0})</span>
+                        <span className="text-red-600">(-{formatCurrency(stats?.incomeStatement?.operatingExpenses)})</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>Administrative Expenses</span>
-                        <span className="text-red-600">($${stats?.incomeStatement?.administrativeExpenses?.toLocaleString() || 0})</span>
+                        <span className="text-red-600">(-{formatCurrency(stats?.incomeStatement?.administrativeExpenses)})</span>
                       </div>
                     </div>
 
                     <hr />
                     <div className="flex justify-between font-bold">
                       <span>Net Income</span>
-                      <span className="text-green-600">${stats?.incomeStatement?.netIncome?.toLocaleString() || 0}</span>
+                      <span className="text-green-600">{formatCurrency(stats?.incomeStatement?.netIncome)}</span>
                     </div>
 
                     <div className="text-sm text-gray-600">

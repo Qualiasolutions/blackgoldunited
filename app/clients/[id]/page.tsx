@@ -26,6 +26,7 @@ import {
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
+import { formatCurrency, formatDate } from '@/lib/utils/format'
 
 interface ClientData {
   id: string
@@ -422,7 +423,7 @@ export default function ClientDetailPage() {
                     <div className="mt-1 flex items-center">
                       <DollarSign className="h-4 w-4 text-gray-400 mr-2" />
                       <span className="text-sm text-gray-900 font-semibold">
-                        ${client.creditLimit.toLocaleString()}
+                        {formatCurrency(client.creditLimit)}
                       </span>
                     </div>
                   </div>
@@ -458,7 +459,7 @@ export default function ClientDetailPage() {
                     <label className="text-sm font-medium text-gray-700">Created</label>
                     <div className="mt-1">
                       <span className="text-sm text-gray-900">
-                        {new Date(client.createdAt).toLocaleString()}
+                        {formatDate(client.createdAt)}
                       </span>
                     </div>
                   </div>
@@ -467,7 +468,7 @@ export default function ClientDetailPage() {
                     <label className="text-sm font-medium text-gray-700">Last Updated</label>
                     <div className="mt-1">
                       <span className="text-sm text-gray-900">
-                        {new Date(client.updatedAt).toLocaleString()}
+                        {formatDate(client.updatedAt)}
                       </span>
                     </div>
                   </div>

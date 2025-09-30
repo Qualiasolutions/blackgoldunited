@@ -21,6 +21,7 @@ import {
   Lock
 } from 'lucide-react'
 import Link from 'next/link'
+import { formatCurrency, formatNumber } from '@/lib/utils/format'
 
 interface JournalEntry {
   id: string
@@ -256,10 +257,10 @@ export default function JournalEntriesPage() {
                             {entry.reference}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-green-600">
-                            AED {Number(entry.debit).toLocaleString()}
+                            {formatCurrency(entry.debit, 'AED ', 'AED 0')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-red-600">
-                            AED {Number(entry.credit).toLocaleString()}
+                            {formatCurrency(entry.credit, 'AED ', 'AED 0')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Badge variant={

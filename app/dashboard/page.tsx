@@ -34,6 +34,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { MainLayout } from '@/components/layout/main-layout'
+import { formatCurrency, formatNumber } from '@/lib/utils/format'
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -54,8 +55,8 @@ export default function DashboardPage() {
   })
 
   // Utility functions
-  const formatCurrency = (amount: number) => {
-    return `AED ${Math.abs(amount).toLocaleString()}`
+  const formatCurrencyLocal = (amount: number) => {
+    return `AED ${formatNumber(Math.abs(amount))}`
   }
 
   const formatTimeAgo = (dateString: string) => {
@@ -184,7 +185,7 @@ export default function DashboardPage() {
             <>
               <StatsCard
                 title="Total Revenue"
-                value={`AED ${(stats?.totalRevenue?.value || 0).toLocaleString()}`}
+                value={`AED ${formatNumber(stats?.totalRevenue?.value || 0)}`}
                 description="This Month"
                 icon={TrendingUp}
                 trend={{
@@ -196,7 +197,7 @@ export default function DashboardPage() {
               />
               <StatsCard
                 title="Active Clients"
-                value={(stats?.activeClients?.value || 0).toLocaleString()}
+                value={formatNumber(stats?.activeClients?.value || 0)}
                 description="Total Active"
                 icon={Users}
                 trend={{
@@ -208,7 +209,7 @@ export default function DashboardPage() {
               />
               <StatsCard
                 title="Products in Stock"
-                value={(stats?.productsInStock?.value || 0).toLocaleString()}
+                value={formatNumber(stats?.productsInStock?.value || 0)}
                 description="Available Products"
                 icon={Package}
                 trend={{
@@ -220,7 +221,7 @@ export default function DashboardPage() {
               />
               <StatsCard
                 title="Pending Orders"
-                value={(stats?.pendingOrders?.value || 0).toLocaleString()}
+                value={formatNumber(stats?.pendingOrders?.value || 0)}
                 description="Awaiting Processing"
                 icon={ShoppingCart}
                 trend={{
@@ -427,7 +428,7 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-muted/20 rounded-lg">
                   <p className="text-2xl font-bold text-green-600">
-                    AED {(stats?.totalRevenue?.value || 0).toLocaleString()}
+                    AED {formatNumber(stats?.totalRevenue?.value || 0)}
                   </p>
                   <p className="text-sm text-muted-foreground">Total Revenue</p>
                   <p className="text-xs text-green-600 mt-1">
@@ -436,7 +437,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="text-center p-4 bg-muted/20 rounded-lg">
                   <p className="text-2xl font-bold text-blue-600">
-                    {(stats?.activeClients?.value || 0).toLocaleString()}
+                    {formatNumber(stats?.activeClients?.value || 0)}
                   </p>
                   <p className="text-sm text-muted-foreground">Active Clients</p>
                   <p className="text-xs text-blue-600 mt-1">
@@ -445,7 +446,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="text-center p-4 bg-muted/20 rounded-lg">
                   <p className="text-2xl font-bold text-orange-600">
-                    {(stats?.productsInStock?.value || 0).toLocaleString()}
+                    {formatNumber(stats?.productsInStock?.value || 0)}
                   </p>
                   <p className="text-sm text-muted-foreground">Products</p>
                   <p className="text-xs text-orange-600 mt-1">
@@ -454,7 +455,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="text-center p-4 bg-muted/20 rounded-lg">
                   <p className="text-2xl font-bold text-emerald-600">
-                    {(stats?.pendingOrders?.value || 0).toLocaleString()}
+                    {formatNumber(stats?.pendingOrders?.value || 0)}
                   </p>
                   <p className="text-sm text-muted-foreground">Orders</p>
                   <p className="text-xs text-emerald-600 mt-1">
@@ -556,7 +557,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="text-right">
                         <p className={`text-sm font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                          {isPositive ? '+' : '-'}{formatCurrency(transaction.amount)}
+                          {isPositive ? '+' : '-'}{formatCurrencyLocal(transaction.amount)}
                         </p>
                         <p className="text-xs text-muted-foreground">{formatTimeAgo(transaction.created_at)}</p>
                       </div>

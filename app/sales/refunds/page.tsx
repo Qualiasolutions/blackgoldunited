@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Plus, Search, FileText, Download, Filter, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import { formatCurrency, formatNumber } from '@/lib/utils/format'
 
 export default function RefundReceiptsPage() {
   const { user } = useAuth()
@@ -156,7 +157,7 @@ export default function RefundReceiptsPage() {
                             </div>
                           </td>
                           <td className="py-3 px-4">{refund.clientName}</td>
-                          <td className="py-3 px-4 font-medium">${refund.amount.toLocaleString()}</td>
+                          <td className="py-3 px-4 font-medium">{formatCurrency(refund.amount)}</td>
                           <td className="py-3 px-4">{refund.date}</td>
                           <td className="py-3 px-4">
                             <Badge className={

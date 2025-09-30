@@ -26,6 +26,7 @@ import {
 import Link from 'next/link'
 import { useSalesStats } from '@/lib/hooks/useSalesStats'
 import { cn } from '@/lib/utils'
+import { formatCurrency, formatNumber } from '@/lib/utils/format'
 
 export default function SalesPage() {
   const { user } = useAuth()
@@ -194,7 +195,7 @@ export default function SalesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <StatsCard
                 title="Total Revenue"
-                value={loading ? '...' : `$${(stats?.totalRevenue || 0).toLocaleString()}`}
+                value={loading ? '...' : formatCurrency(stats?.totalRevenue || 0)}
                 description="Revenue generated this month"
                 icon={DollarSign}
                 trend={{
@@ -216,7 +217,7 @@ export default function SalesPage() {
               <StatsCard
                 title="Pending Invoices"
                 value={loading ? '...' : stats?.pendingInvoices || 0}
-                description={`$${(stats?.pendingAmount || 0).toLocaleString()} pending`}
+                description={`${formatCurrency(stats?.pendingAmount || 0)} pending`}
                 icon={FileText}
                 colorScheme="purple"
               />
@@ -405,7 +406,7 @@ export default function SalesPage() {
                     </div>
                     {activity.amount > 0 && (
                       <div className="text-sm font-semibold">
-                        ${activity.amount.toLocaleString()}
+                        {formatCurrency(activity.amount)}
                       </div>
                     )}
                   </div>

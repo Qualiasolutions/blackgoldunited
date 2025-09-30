@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Plus, Search, Download, Eye, Edit, Trash2, ArrowLeft, Loader2, DollarSign, TrendingDown, CheckCircle, Lock } from 'lucide-react'
 import Link from 'next/link'
+import { formatCurrency, formatNumber } from '@/lib/utils/format'
 
 interface Loan {
   id: string
@@ -206,13 +207,13 @@ export default function LoansPage() {
                             {new Date(loan.start_date).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-purple-600">
-                            AED {Number(loan.loan_amount).toLocaleString()}
+                            {formatCurrency(Number(loan.loan_amount), 'AED ')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-red-600">
-                            AED {Number(loan.remaining_amount).toLocaleString()}
+                            {formatCurrency(Number(loan.remaining_amount), 'AED ')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold">
-                            AED {Number(loan.monthly_deduction).toLocaleString()}
+                            {formatCurrency(Number(loan.monthly_deduction), 'AED ')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Badge variant={

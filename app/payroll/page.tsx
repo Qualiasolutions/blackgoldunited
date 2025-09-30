@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { DollarSign, Calculator, FileText, Users, TrendingUp, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import { formatCurrency, formatNumber } from '@/lib/utils/format'
 
 export default function PayrollPage() {
   const { user } = useAuth()
@@ -107,7 +108,7 @@ export default function PayrollPage() {
                   <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                 ) : (
                   <>
-                    <div className="text-2xl font-bold text-green-600">${stats?.monthlyPayroll?.toLocaleString() || 0}</div>
+                    <div className="text-2xl font-bold text-green-600">{formatCurrency(stats?.monthlyPayroll)}</div>
                     <p className="text-xs text-muted-foreground">
                       Current month total
                     </p>
@@ -164,7 +165,7 @@ export default function PayrollPage() {
                   <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                 ) : (
                   <>
-                    <div className="text-2xl font-bold">${stats?.avgSalary?.toLocaleString() || 0}</div>
+                    <div className="text-2xl font-bold">{formatCurrency(stats?.avgSalary)}</div>
                     <p className="text-xs text-muted-foreground">
                       Monthly average
                     </p>
@@ -253,22 +254,22 @@ export default function PayrollPage() {
                       <div className="flex items-center space-x-6 text-sm">
                         <div className="text-center">
                           <p className="font-medium">Base Salary</p>
-                          <p className="text-gray-600">${record.baseSalary?.toLocaleString()}</p>
+                          <p className="text-gray-600">{formatCurrency(record.baseSalary)}</p>
                         </div>
 
                         <div className="text-center">
                           <p className="font-medium">Allowances</p>
-                          <p className="text-green-600">+${record.allowances?.toLocaleString()}</p>
+                          <p className="text-green-600">+{formatCurrency(record.allowances)}</p>
                         </div>
 
                         <div className="text-center">
                           <p className="font-medium">Deductions</p>
-                          <p className="text-red-600">-${record.deductions?.toLocaleString()}</p>
+                          <p className="text-red-600">-{formatCurrency(record.deductions)}</p>
                         </div>
 
                         <div className="text-center">
                           <p className="font-medium">Net Pay</p>
-                          <p className="font-bold">${record.netPay?.toLocaleString()}</p>
+                          <p className="font-bold">{formatCurrency(record.netPay)}</p>
                         </div>
 
                         <div>
@@ -306,24 +307,24 @@ export default function PayrollPage() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Base Salaries</span>
-                      <span className="font-medium">${stats?.breakdown?.baseSalaries?.toLocaleString() || 0}</span>
+                      <span className="font-medium">{formatCurrency(stats?.breakdown?.baseSalaries)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Allowances</span>
-                      <span className="font-medium text-green-600">+${stats?.breakdown?.allowances?.toLocaleString() || 0}</span>
+                      <span className="font-medium text-green-600">+{formatCurrency(stats?.breakdown?.allowances)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Tax Deductions</span>
-                      <span className="font-medium text-red-600">-${stats?.breakdown?.taxDeductions?.toLocaleString() || 0}</span>
+                      <span className="font-medium text-red-600">-{formatCurrency(stats?.breakdown?.taxDeductions)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Other Deductions</span>
-                      <span className="font-medium text-red-600">-${stats?.breakdown?.otherDeductions?.toLocaleString() || 0}</span>
+                      <span className="font-medium text-red-600">-{formatCurrency(stats?.breakdown?.otherDeductions)}</span>
                     </div>
                     <hr />
                     <div className="flex justify-between items-center font-bold">
                       <span>Net Payroll</span>
-                      <span className="text-green-600">${stats?.monthlyPayroll?.toLocaleString() || 0}</span>
+                      <span className="text-green-600">{formatCurrency(stats?.monthlyPayroll)}</span>
                     </div>
                   </div>
                 )}
@@ -348,7 +349,7 @@ export default function PayrollPage() {
                           <p className="text-xs text-gray-600">{item.date} • {item.employees} employees</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium">${item.amount?.toLocaleString()}</p>
+                          <p className="font-medium">{formatCurrency(item.amount)}</p>
                         </div>
                       </div>
                     ))}

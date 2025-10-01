@@ -126,8 +126,8 @@ export async function GET(request: NextRequest) {
       // This will include NULL values as well
     } else {
       // By default (empty, undefined, or any other value), show active clients
-      // Use 'not.is' to include both true and NULL (treating NULL as active for backwards compatibility)
-      query = query.or('is_active.eq.true,is_active.is.null');
+      // Show clients that are NOT explicitly false (includes true and NULL)
+      query = query.not('is_active', 'eq', false);
     }
 
     // Apply sorting
@@ -200,16 +200,16 @@ export async function POST(request: NextRequest) {
     const validatedData = clientSchema.parse(body);
 
     // Check if an ACTIVE client with the same email already exists
-    const { data: existingClient } = await supabase
+    // Active = is_active is true OR NULL (for backwards compatibility)
+    const { data: existingClients } = await supabase
       .from('clients')
-      .select('id, email')
+      .select('id, email, is_active')
       .eq('email', validatedData.email)
-      .eq('is_active', true)
-      .single();
+      .not('is_active', 'eq', false);
 
-    if (existingClient) {
+    if (existingClients && existingClients.length > 0) {
       return NextResponse.json({
-        error: 'An active client with this email already exists. If you recently deleted this client, please use a different email or reactivate the existing client.'
+        error: 'A client with this email already exists'
       }, { status: 409 });
     }
 

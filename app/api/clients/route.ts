@@ -201,15 +201,22 @@ export async function POST(request: NextRequest) {
 
     // Check if an ACTIVE client with the same email already exists
     // Active = is_active is true OR NULL (for backwards compatibility)
-    const { data: existingClients } = await supabase
+    const { data: existingClients, error: checkError } = await supabase
       .from('clients')
       .select('id, email, is_active')
       .eq('email', validatedData.email)
       .not('is_active', 'eq', false);
 
+    console.log(`[POST /api/clients] Duplicate check for ${validatedData.email}:`, {
+      found: existingClients?.length || 0,
+      clients: existingClients,
+      error: checkError
+    });
+
     if (existingClients && existingClients.length > 0) {
       return NextResponse.json({
-        error: 'A client with this email already exists'
+        error: 'A client with this email already exists',
+        debug: { is_active: existingClients[0].is_active }
       }, { status: 409 });
     }
 

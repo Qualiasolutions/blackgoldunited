@@ -172,7 +172,7 @@ export async function DELETE(
     // Check if client exists and get some info for the response
     const { data: existingClient, error: checkError } = await supabase
       .from('clients')
-      .select('id, companyName')
+      .select('id, company_name')
       .eq('id', id)
       .single();
 
@@ -184,12 +184,12 @@ export async function DELETE(
       return NextResponse.json({ error: 'Failed to check client existence' }, { status: 500 });
     }
 
-    // Soft delete by updating isActive instead of hard delete (preserves data integrity)
+    // Soft delete by updating is_active instead of hard delete (preserves data integrity)
     const { error } = await supabase
       .from('clients')
       .update({
-        isActive: false,
-        updatedAt: new Date().toISOString(),
+        is_active: false,
+        updated_at: new Date().toISOString(),
       })
       .eq('id', id);
 
@@ -200,7 +200,7 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: `Client "${existingClient.companyName}" has been deactivated`
+      message: `Client "${existingClient.company_name}" has been deactivated`
     });
 
   } catch (error) {

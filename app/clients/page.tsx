@@ -70,9 +70,13 @@ export default function ClientsPage() {
   const [filterType, setFilterType] = useState<string>('')
   const [filterStatus, setFilterStatus] = useState<string>('')
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const canCreate = hasFullAccess('clients')
   const canRead = hasModuleAccess('clients')
+  const canDelete = hasFullAccess('clients')
 
   useEffect(() => {
     fetchClients()
@@ -169,6 +173,49 @@ export default function ClientsPage() {
       setClients([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDeleteClient = async (client: Client) => {
+    setClientToDelete(client)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!clientToDelete) return
+
+    try {
+      setDeleting(true)
+
+      const response = await fetch(`/api/clients/${clientToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        const result = await response.json()
+        throw new Error(result.error || 'Failed to delete client')
+      }
+
+      const result = await response.json()
+
+      // Remove client from local state
+      setClients(clients.filter(c => c.id !== clientToDelete.id))
+
+      // Close dialog and reset state
+      setDeleteDialogOpen(false)
+      setClientToDelete(null)
+
+      // Show success message (using browser alert for now)
+      alert(result.message || 'Client deactivated successfully')
+
+    } catch (error) {
+      console.error('Error deleting client:', error)
+      alert(error instanceof Error ? error.message : 'Failed to delete client')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -534,6 +581,18 @@ export default function ClientsPage() {
                               )}
                             </>
                           )}
+
+                          {canDelete && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => handleDeleteClient(client)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -544,6 +603,45 @@ export default function ClientsPage() {
           </Card>
         </div>
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteDialogOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader>
+              <CardTitle className="text-red-600 flex items-center">
+                <Trash2 className="h-5 w-5 mr-2" />
+                Delete Client
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-700 mb-6">
+                Are you sure you want to delete <strong>{clientToDelete?.companyName}</strong>?
+                This will deactivate the client and they will no longer appear in active listings.
+              </p>
+              <div className="flex justify-end space-x-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDeleteDialogOpen(false)
+                    setClientToDelete(null)
+                  }}
+                  disabled={deleting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                  onClick={confirmDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? 'Deleting...' : 'Delete Client'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

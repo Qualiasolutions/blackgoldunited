@@ -415,9 +415,9 @@ export default function ClientsPage() {
                     onChange={(e) => setFilterStatus(e.target.value)}
                     className="px-3 py-2 border border-gray-300 rounded-md text-sm"
                   >
-                    <option value="">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="">Active Only (Default)</option>
+                    <option value="all">All Clients</option>
+                    <option value="inactive">Inactive Only</option>
                   </select>
 
                   <Button

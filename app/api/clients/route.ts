@@ -112,9 +112,16 @@ export async function GET(request: NextRequest) {
     }
 
     // Apply status filter (using is_active boolean instead of status string)
-    if (validatedParams.status) {
-      const isActive = validatedParams.status === 'Active';
-      query = query.eq('is_active', isActive);
+    // Default to showing only active clients unless explicitly requesting all or inactive
+    if (validatedParams.status === 'active') {
+      query = query.eq('is_active', true);
+    } else if (validatedParams.status === 'inactive') {
+      query = query.eq('is_active', false);
+    } else if (validatedParams.status === 'all') {
+      // Show all clients (both active and inactive) - no filter
+    } else {
+      // By default (empty or undefined), only show active clients
+      query = query.eq('is_active', true);
     }
 
     // Apply sorting
@@ -182,6 +189,20 @@ export async function POST(request: NextRequest) {
     // Parse and validate request body
     const body = await request.json();
     const validatedData = clientSchema.parse(body);
+
+    // Check if an ACTIVE client with the same email already exists
+    const { data: existingClient } = await supabase
+      .from('clients')
+      .select('id, email')
+      .eq('email', validatedData.email)
+      .eq('is_active', true)
+      .single();
+
+    if (existingClient) {
+      return NextResponse.json({
+        error: 'An active client with this email already exists. If you recently deleted this client, please use a different email or reactivate the existing client.'
+      }, { status: 409 });
+    }
 
     // Map camelCase to snake_case for database
     const dbData = {

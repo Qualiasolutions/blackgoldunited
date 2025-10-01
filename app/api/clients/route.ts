@@ -113,15 +113,21 @@ export async function GET(request: NextRequest) {
 
     // Apply status filter (using is_active boolean instead of status string)
     // Default to showing only active clients unless explicitly requesting all or inactive
-    if (validatedParams.status === 'active') {
+    const statusFilter = validatedParams.status?.trim().toLowerCase();
+
+    if (statusFilter === 'active') {
+      // Show only explicitly active clients (is_active = true)
       query = query.eq('is_active', true);
-    } else if (validatedParams.status === 'inactive') {
+    } else if (statusFilter === 'inactive') {
+      // Show only explicitly inactive clients (is_active = false)
       query = query.eq('is_active', false);
-    } else if (validatedParams.status === 'all') {
-      // Show all clients (both active and inactive) - no filter
+    } else if (statusFilter === 'all') {
+      // Show all clients (both active and inactive) - no filter applied
+      // This will include NULL values as well
     } else {
-      // By default (empty or undefined), only show active clients
-      query = query.eq('is_active', true);
+      // By default (empty, undefined, or any other value), show active clients
+      // Use 'not.is' to include both true and NULL (treating NULL as active for backwards compatibility)
+      query = query.or('is_active.eq.true,is_active.is.null');
     }
 
     // Apply sorting
@@ -138,6 +144,9 @@ export async function GET(request: NextRequest) {
       console.error('Database error:', error);
       return NextResponse.json({ error: 'Failed to fetch clients' }, { status: 500 });
     }
+
+    // Debug logging
+    console.log(`[Clients API] Status filter: "${statusFilter}", Count: ${count}, Results: ${clients?.length || 0}`);
 
     return NextResponse.json({
       success: true,

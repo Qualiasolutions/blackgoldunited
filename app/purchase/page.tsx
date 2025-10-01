@@ -242,7 +242,7 @@ export default function PurchasePage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">${order.amount.toLocaleString()}</p>
+                        <p className="font-medium">${(order.amount ?? 0).toLocaleString()}</p>
                         <p className="text-sm text-gray-600">{order.date}</p>
                       </div>
                       <div>

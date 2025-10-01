@@ -194,7 +194,7 @@ export default function AccountingPage() {
                         account.type === 'LIABILITY' || account.type === 'EQUITY' || account.type === 'REVENUE' ? 'text-blue-600' :
                         'text-gray-900'
                       }`}>
-                        ${account.balance.toLocaleString()}
+                        ${(account.balance ?? 0).toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -227,7 +227,7 @@ export default function AccountingPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">${entry.debit.toLocaleString()}</p>
+                      <p className="font-medium">${(entry.debit ?? 0).toLocaleString()}</p>
                       <p className="text-sm text-gray-600">Balanced entry</p>
                     </div>
                   </div>

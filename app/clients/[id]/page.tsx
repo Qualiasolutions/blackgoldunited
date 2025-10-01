@@ -99,7 +99,29 @@ export default function ClientDetailPage() {
         throw new Error(result.error || 'Failed to fetch client details')
       }
 
-      setClient(result.data)
+      // Map snake_case from API to camelCase for frontend
+      const clientData = result.data
+      setClient({
+        id: clientData.id,
+        clientCode: clientData.client_code,
+        companyName: clientData.company_name,
+        contactPerson: clientData.contact_person,
+        email: clientData.email,
+        phone: clientData.phone,
+        mobile: clientData.mobile,
+        address: clientData.address,
+        city: clientData.city,
+        state: clientData.state,
+        postalCode: clientData.postal_code,
+        country: clientData.country,
+        taxNumber: clientData.tax_number,
+        creditLimit: clientData.credit_limit,
+        paymentTerms: clientData.payment_terms,
+        notes: clientData.notes,
+        isActive: clientData.is_active,
+        createdAt: clientData.created_at,
+        updatedAt: clientData.updated_at
+      })
     } catch (error) {
       console.error('Error fetching client:', error)
       setError(error instanceof Error ? error.message : 'Failed to fetch client')

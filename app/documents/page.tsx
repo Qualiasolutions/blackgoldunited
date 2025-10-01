@@ -383,7 +383,7 @@ export default function DocumentsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-900">{totalDownloads.toLocaleString()}</div>
+                <div className="text-2xl font-bold text-blue-900">{(totalDownloads ?? 0).toLocaleString()}</div>
                 <p className="text-xs text-blue-600">All time downloads</p>
               </CardContent>
             </Card>

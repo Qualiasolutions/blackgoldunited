@@ -94,7 +94,7 @@ export default function PaymentsPage() {
         invoiceId: item.invoiceId,
         invoiceNumber: (item.invoices as any)?.invoiceNumber || 'Unknown',
         clientId: (item.invoices as any)?.clientId || '',
-        clientName: (item.invoices as any)?.clients?.companyName || 'Unknown Client',
+        clientName: (item.invoices as any)?.clients?.company_name || 'Unknown Client',
         amount: Number(item.amount) || 0,
         paymentMethod: item.paymentMethod || 'OTHER',
         status: item.status || 'PENDING',
@@ -241,7 +241,7 @@ export default function PaymentsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-emerald-900">{payments.length}</div>
-                <p className="text-xs text-emerald-600">${totalAmount.toLocaleString()}</p>
+                <p className="text-xs text-emerald-600">${(totalAmount ?? 0).toLocaleString()}</p>
               </CardContent>
             </Card>
 
@@ -256,7 +256,7 @@ export default function PaymentsPage() {
                 <div className="text-2xl font-bold text-green-900">
                   {payments.filter(p => p.status === 'COMPLETED').length}
                 </div>
-                <p className="text-xs text-green-600">${completedAmount.toLocaleString()}</p>
+                <p className="text-xs text-green-600">${(completedAmount ?? 0).toLocaleString()}</p>
               </CardContent>
             </Card>
 
@@ -271,7 +271,7 @@ export default function PaymentsPage() {
                 <div className="text-2xl font-bold text-yellow-900">
                   {payments.filter(p => p.status === 'PENDING').length}
                 </div>
-                <p className="text-xs text-yellow-600">${pendingAmount.toLocaleString()}</p>
+                <p className="text-xs text-yellow-600">${(pendingAmount ?? 0).toLocaleString()}</p>
               </CardContent>
             </Card>
 
@@ -379,7 +379,7 @@ export default function PaymentsPage() {
                             {getStatusBadge(payment.status)}
                             {getPaymentMethodBadge(payment.paymentMethod)}
                             <div className="text-lg font-bold text-green-600">
-                              ${payment.amount.toLocaleString()}
+                              ${(payment.amount ?? 0).toLocaleString()}
                             </div>
                           </div>
 

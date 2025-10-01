@@ -84,7 +84,7 @@ export default function RFQPage() {
         id: item.id,
         rfqNumber: item.quotationNumber || `RFQ-${item.id.slice(-6)}`,
         clientId: item.clientId,
-        clientName: (item.clients as any)?.companyName || 'Unknown Client',
+        clientName: (item.clients as any)?.company_name || 'Unknown Client',
         title: item.title || 'Untitled RFQ',
         description: item.description || '',
         status: item.status || 'DRAFT',
@@ -232,7 +232,7 @@ export default function RFQPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-purple-900">
-                  ${rfqs.reduce((sum, r) => sum + r.totalAmount, 0).toLocaleString()}
+                  ${(rfqs.reduce((sum, r) => sum + (r.totalAmount ?? 0), 0)).toLocaleString()}
                 </div>
               </CardContent>
             </Card>
@@ -340,7 +340,7 @@ export default function RFQPage() {
                             {rfq.validUntil && (
                               <span>Valid Until: {new Date(rfq.validUntil).toLocaleDateString()}</span>
                             )}
-                            <span>Amount: ${rfq.totalAmount.toLocaleString()}</span>
+                            <span>Amount: ${(rfq.totalAmount ?? 0).toLocaleString()}</span>
                           </div>
                         </div>
 

@@ -112,24 +112,25 @@ export default function EditClientPage() {
         throw new Error(result.error || 'Failed to fetch client details')
       }
 
+      // Map snake_case from API to camelCase for form
       const client = result.data
       setFormData({
-        clientCode: client.clientCode || '',
-        companyName: client.companyName || '',
-        contactPerson: client.contactPerson || '',
+        clientCode: client.client_code || '',
+        companyName: client.company_name || '',
+        contactPerson: client.contact_person || '',
         email: client.email || '',
         phone: client.phone || '',
         mobile: client.mobile || '',
         address: client.address || '',
         city: client.city || '',
         state: client.state || '',
-        postalCode: client.postalCode || '',
+        postalCode: client.postal_code || '',
         country: client.country || '',
-        taxNumber: client.taxNumber || '',
-        creditLimit: Number(client.creditLimit) || 0,
-        paymentTerms: Number(client.paymentTerms) || 30,
+        taxNumber: client.tax_number || '',
+        creditLimit: Number(client.credit_limit) || 0,
+        paymentTerms: Number(client.payment_terms) || 30,
         notes: client.notes || '',
-        isActive: client.isActive !== false
+        isActive: client.is_active !== false
       })
     } catch (error) {
       console.error('Error fetching client:', error)
@@ -628,7 +629,7 @@ export default function EditClientPage() {
                     </div>
                     <div className="flex justify-between py-1">
                       <span className="text-gray-600">Credit Limit:</span>
-                      <span>${formData.creditLimit.toLocaleString()}</span>
+                      <span>${(formData.creditLimit ?? 0).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between py-1">
                       <span className="text-gray-600">Payment Terms:</span>

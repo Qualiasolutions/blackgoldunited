@@ -75,13 +75,20 @@ export default function CreateRFQPage() {
       const supabase = createClient()
       const { data, error } = await supabase
         .from('clients')
-        .select('id, companyName, contactPerson, email')
+        .select('id, company_name, contact_person, email')
         .eq('deletedAt', null)
-        .eq('isActive', true)
-        .order('companyName')
+        .eq('is_active', true)
+        .order('company_name')
 
       if (error) throw error
-      setClients(data || [])
+      // Map snake_case from database to camelCase
+      const mappedClients = (data || []).map(client => ({
+        id: client.id,
+        companyName: client.company_name,
+        contactPerson: client.contact_person,
+        email: client.email
+      }))
+      setClients(mappedClients)
     } catch (error) {
       console.error('Error fetching clients:', error)
     }

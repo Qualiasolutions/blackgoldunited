@@ -496,7 +496,7 @@ export default function CreateClientPage() {
                     </div>
                     <div className="flex justify-between py-1">
                       <span className="text-gray-600">Credit Limit:</span>
-                      <span>${formData.creditLimit.toLocaleString()}</span>
+                      <span>${(formData.creditLimit ?? 0).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between py-1">
                       <span className="text-gray-600">Payment Terms:</span>

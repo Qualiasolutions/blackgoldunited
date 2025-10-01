@@ -135,24 +135,24 @@ export default function ClientsPage() {
 
       const formattedClients = (result.data || []).map((client: any) => ({
         id: client.id,
-        clientCode: client.clientCode || '',
-        companyName: client.companyName || '',
-        contactPerson: client.contactPerson || '',
+        clientCode: client.client_code || '',
+        companyName: client.company_name || '',
+        contactPerson: client.contact_person || '',
         email: client.email || '',
         phone: client.phone || '',
         mobile: client.mobile || '',
-        address: client.address || '',
+        address: client.address_line_1 || '',
         city: client.city || '',
         state: client.state || '',
         country: client.country || '',
-        postalCode: client.postalCode || '',
-        taxNumber: client.taxNumber || '',
-        creditLimit: Number(client.creditLimit) || 0,
-        paymentTerms: Number(client.paymentTerms) || 0,
-        isActive: client.isActive !== false,
+        postalCode: client.postal_code || '',
+        taxNumber: client.tax_number || '',
+        creditLimit: Number(client.credit_limit) || 0,
+        paymentTerms: Number(client.payment_terms) || 0,
+        isActive: client.is_active !== false,
         notes: client.notes || '',
-        createdAt: client.createdAt,
-        updatedAt: client.updatedAt,
+        createdAt: client.created_at,
+        updatedAt: client.updated_at,
         // Derived fields for UI display
         industry: 'General', // Default since we don't have this field yet
         clientType: 'CORPORATE', // Default since we don't have this field yet
@@ -312,7 +312,7 @@ export default function ClientsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-emerald-900">
-                  ${totalRevenue.toLocaleString()}
+                  ${(totalRevenue ?? 0).toLocaleString()}
                 </div>
                 <p className="text-xs text-emerald-600">Total collected</p>
               </CardContent>
@@ -327,7 +327,7 @@ export default function ClientsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-orange-900">
-                  ${outstanding.toLocaleString()}
+                  ${(outstanding ?? 0).toLocaleString()}
                 </div>
                 <p className="text-xs text-orange-600">Pending payments</p>
               </CardContent>
@@ -466,7 +466,7 @@ export default function ClientsPage() {
                             {client.outstandingBalance > 0 && (
                               <Badge className="bg-yellow-100 text-yellow-700 text-xs">
                                 <Star className="h-3 w-3 mr-1" />
-                                Outstanding: ${client.outstandingBalance.toLocaleString()}
+                                Outstanding: ${(client.outstandingBalance ?? 0).toLocaleString()}
                               </Badge>
                             )}
                           </div>
@@ -502,7 +502,7 @@ export default function ClientsPage() {
                           <div className="flex items-center space-x-6 text-xs text-gray-500">
                             <span>Joined: {new Date(client.createdAt).toLocaleDateString()}</span>
                             {client.industry && <span>Industry: {client.industry}</span>}
-                            <span>Total Paid: ${client.totalPaid.toLocaleString()}</span>
+                            <span>Total Paid: ${(client.totalPaid ?? 0).toLocaleString()}</span>
                             {client.lastInvoiceDate && (
                               <span>Last Invoice: {new Date(client.lastInvoiceDate).toLocaleDateString()}</span>
                             )}

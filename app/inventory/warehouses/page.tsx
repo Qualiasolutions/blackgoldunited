@@ -389,7 +389,7 @@ export default function WarehousesPage() {
                           {warehouse.capacity && (
                             <div className="flex items-center text-sm text-gray-600">
                               <span className="font-medium mr-2">Capacity:</span>
-                              <span>{warehouse.capacity.toLocaleString()}</span>
+                              <span>{(warehouse.capacity ?? 0).toLocaleString()}</span>
                             </div>
                           )}
                         </div>

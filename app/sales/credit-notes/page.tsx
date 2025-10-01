@@ -87,7 +87,7 @@ export default function CreditNotesPage() {
         id: item.id,
         creditNoteNumber: item.creditNoteNumber || `CN-${item.id.slice(-6)}`,
         clientId: item.clientId,
-        clientName: (item.clients as any)?.companyName || 'Unknown Client',
+        clientName: (item.clients as any)?.company_name || 'Unknown Client',
         invoiceId: item.invoiceId,
         invoiceNumber: (item.invoices as any)?.invoiceNumber || '',
         reason: item.reason || '',
@@ -240,10 +240,10 @@ export default function CreditNotesPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-emerald-900">
-                  ${totalAmount.toLocaleString()}
+                  ${(totalAmount ?? 0).toLocaleString()}
                 </div>
                 <p className="text-xs text-emerald-600">
-                  ${issuedAmount.toLocaleString()} issued
+                  ${(issuedAmount ?? 0).toLocaleString()} issued
                 </p>
               </CardContent>
             </Card>
@@ -323,7 +323,7 @@ export default function CreditNotesPage() {
                             <h3 className="font-semibold text-gray-900">{creditNote.creditNoteNumber}</h3>
                             {getStatusBadge(creditNote.status)}
                             <div className="text-lg font-bold text-green-600">
-                              ${creditNote.amount.toLocaleString()}
+                              ${(creditNote.amount ?? 0).toLocaleString()}
                             </div>
                           </div>
 

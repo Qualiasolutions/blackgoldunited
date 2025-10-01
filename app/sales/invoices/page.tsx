@@ -282,7 +282,7 @@ export default function InvoicesPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-900">{pagination.total.toLocaleString()}</div>
+                <div className="text-2xl font-bold text-green-900">{(pagination.total ?? 0).toLocaleString()}</div>
                 <p className="text-xs text-green-600">All time invoices</p>
               </CardContent>
             </Card>
@@ -295,7 +295,7 @@ export default function InvoicesPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-900">${outstandingAmount.toLocaleString()}</div>
+                <div className="text-2xl font-bold text-blue-900">${(outstandingAmount ?? 0).toLocaleString()}</div>
                 <p className="text-xs text-blue-600">Unpaid amount</p>
               </CardContent>
             </Card>
@@ -308,7 +308,7 @@ export default function InvoicesPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-emerald-900">${paidAmount.toLocaleString()}</div>
+                <div className="text-2xl font-bold text-emerald-900">${(paidAmount ?? 0).toLocaleString()}</div>
                 <p className="text-xs text-emerald-600">Collected payments</p>
               </CardContent>
             </Card>
@@ -405,7 +405,7 @@ export default function InvoicesPage() {
                     </div>
                   ) : (
                     <>
-                      Showing {((pagination.page - 1) * pagination.limit) + 1}-{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total.toLocaleString()}
+                      Showing {((pagination.page - 1) * pagination.limit) + 1}-{Math.min(pagination.page * pagination.limit, pagination.total)} of {(pagination.total ?? 0).toLocaleString()}
                     </>
                   )}
                 </div>
@@ -447,7 +447,7 @@ export default function InvoicesPage() {
                             <h3 className="font-semibold text-gray-900">{invoice.invoiceNumber}</h3>
                             {getStatusBadge(invoice.status)}
                             <Badge variant="outline" className="text-xs">
-                              ${invoice.totalAmount.toLocaleString()}
+                              ${(invoice.totalAmount ?? 0).toLocaleString()}
                             </Badge>
                             {invoice.paymentStatus !== 'PENDING' && (
                               <Badge
@@ -465,8 +465,8 @@ export default function InvoicesPage() {
                           </div>
 
                           <div className="text-sm text-gray-600 mb-2">
-                            <span className="font-medium">{invoice.client.companyName}</span>
-                            <span className="text-gray-500 ml-2">({invoice.client.contactPerson})</span>
+                            <span className="font-medium">{invoice.client?.companyName || 'N/A'}</span>
+                            <span className="text-gray-500 ml-2">({invoice.client?.contactPerson || 'N/A'})</span>
                           </div>
 
                           <div className="flex items-center space-x-4 text-xs text-gray-500">
@@ -481,7 +481,7 @@ export default function InvoicesPage() {
                             {invoice.paidAmount > 0 && (
                               <span className="flex items-center text-green-600">
                                 <CheckCircle className="h-3 w-3 mr-1" />
-                                Paid: ${invoice.paidAmount.toLocaleString()}
+                                Paid: ${(invoice.paidAmount ?? 0).toLocaleString()}
                               </span>
                             )}
                             <span className="flex items-center">

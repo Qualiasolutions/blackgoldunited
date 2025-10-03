@@ -92,3 +92,51 @@ export function getModulePermissions(
 ) {
   return ACCESS_CONTROL_MATRIX[userRole][module];
 }
+
+/**
+ * Check if user has any access to a module (READ or FULL)
+ * Alias for hasReadAccess for backward compatibility
+ */
+export function hasModuleAccess(
+  userRole: UserRole,
+  module: keyof UserPermissions
+): boolean {
+  return hasReadAccess(userRole, module);
+}
+
+/**
+ * Check permission and return detailed result
+ */
+export function checkPermission(
+  userRole: UserRole,
+  module: keyof UserPermissions,
+  action: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE'
+): { allowed: boolean; message?: string } {
+  const moduleAccess = getModuleAccess(userRole, module);
+
+  if (moduleAccess === AccessLevel.NONE) {
+    return {
+      allowed: false,
+      message: `You do not have permission to access the ${module} module.`
+    };
+  }
+
+  const actionMap: Record<string, keyof UserPermissions['clients']['actions']> = {
+    'CREATE': 'create',
+    'READ': 'read',
+    'UPDATE': 'update',
+    'DELETE': 'delete'
+  };
+
+  const crudAction = actionMap[action];
+  const hasPermission = hasModulePermission(userRole, module, crudAction);
+
+  if (!hasPermission) {
+    return {
+      allowed: false,
+      message: `You do not have permission to ${action.toLowerCase()} in the ${module} module.`
+    };
+  }
+
+  return { allowed: true };
+}

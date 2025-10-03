@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { authenticateUser } from '@/lib/auth/api-auth'
+import { authenticateAndAuthorize } from '@/lib/auth/api-auth'
 
 export async function GET(request: NextRequest) {
+  // Authenticate and authorize (notifications are accessible to all authenticated users)
+  const authResult = await authenticateAndAuthorize(request, 'reports', 'GET')
+  if (!authResult.success) {
+    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+  }
+
   try {
-    // Authenticate user
-    const authResult = await authenticateUser(request)
-    if (!authResult.success) {
-      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
-    }
 
     const supabase = await createClient()
 
@@ -40,12 +41,13 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // Authenticate and authorize (creating notifications requires authentication)
+  const authResult = await authenticateAndAuthorize(request, 'reports', 'POST')
+  if (!authResult.success) {
+    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+  }
+
   try {
-    // Authenticate user
-    const authResult = await authenticateUser(request)
-    if (!authResult.success) {
-      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
-    }
 
     const supabase = await createClient()
 

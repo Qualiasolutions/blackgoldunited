@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { authenticateUser } from '@/lib/auth/api-auth'
+import { authenticateAndAuthorize } from '@/lib/auth/api-auth'
 
 export async function GET(request: NextRequest) {
+  // Authenticate and authorize (search is accessible to all authenticated users)
+  const authResult = await authenticateAndAuthorize(request, 'reports', 'GET')
+  if (!authResult.success) {
+    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+  }
+
   try {
-    // Authenticate user
-    const authResult = await authenticateUser(request)
-    if (!authResult.success) {
-      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
-    }
 
     const supabase = await createClient()
 

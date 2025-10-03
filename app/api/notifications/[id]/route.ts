@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { authenticateUser } from '@/lib/auth/api-auth'
+import { authenticateAndAuthorize } from '@/lib/auth/api-auth'
 
 export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
+  // Authenticate and authorize (updating notifications requires authentication)
+  const authResult = await authenticateAndAuthorize(request, 'reports', 'PUT')
+  if (!authResult.success) {
+    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+  }
+
   try {
-    // Authenticate user
-    const authResult = await authenticateUser(request)
-    if (!authResult.success) {
-      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
-    }
 
     const supabase = await createClient()
 
@@ -52,12 +53,13 @@ export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
+  // Authenticate and authorize (deleting notifications requires authentication)
+  const authResult = await authenticateAndAuthorize(request, 'reports', 'DELETE')
+  if (!authResult.success) {
+    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+  }
+
   try {
-    // Authenticate user
-    const authResult = await authenticateUser(request)
-    if (!authResult.success) {
-      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
-    }
 
     const supabase = await createClient()
 

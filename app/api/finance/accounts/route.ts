@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { authenticateAndAuthorize } from '@/lib/auth/api-auth'
 
 // DEMO API: Chart of accounts demonstration endpoint
 // This provides sample chart of accounts data for development and testing.
@@ -7,14 +8,14 @@ import { createClient } from '@/lib/supabase/server'
 
 // GET /api/finance/accounts - Get chart of accounts
 export async function GET(request: NextRequest) {
+  // Authenticate and authorize
+  const authResult = await authenticateAndAuthorize(request, 'finance', 'GET')
+  if (!authResult.success) {
+    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+  }
+
   try {
     const supabase = await createClient()
-
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
     // Sample chart of accounts data for demonstration - in production this would come from database
     const accounts = [
@@ -143,14 +144,14 @@ export async function GET(request: NextRequest) {
 
 // POST /api/finance/accounts - Create new account
 export async function POST(request: NextRequest) {
+  // Authenticate and authorize
+  const authResult = await authenticateAndAuthorize(request, 'finance', 'POST')
+  if (!authResult.success) {
+    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+  }
+
   try {
     const supabase = await createClient()
-
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
     const body = await request.json()
 

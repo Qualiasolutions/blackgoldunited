@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { authenticateAndAuthorize } from '@/lib/auth/api-auth'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -7,15 +8,14 @@ interface RouteParams {
 
 // GET /api/sales/clients/[id] - Get specific client
 export async function GET(request: NextRequest, { params }: RouteParams) {
+  const authResult = await authenticateAndAuthorize(request, 'clients', 'GET')
+  if (!authResult.success) {
+    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+  }
+
   const { id } = await params
   try {
     const supabase = await createClient()
-
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
     const { data: client, error } = await supabase
       .from('clients')
@@ -42,15 +42,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 // PUT /api/sales/clients/[id] - Update client
 export async function PUT(request: NextRequest, { params }: RouteParams) {
+  const authResult = await authenticateAndAuthorize(request, 'clients', 'PUT')
+  if (!authResult.success) {
+    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+  }
+
   const { id } = await params
   try {
     const supabase = await createClient()
-
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
     const body = await request.json()
 
@@ -87,15 +86,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 // DELETE /api/sales/clients/[id] - Soft delete client
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  const authResult = await authenticateAndAuthorize(request, 'clients', 'DELETE')
+  if (!authResult.success) {
+    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+  }
+
   const { id } = await params
   try {
     const supabase = await createClient()
-
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
     // Soft delete by setting deletedAt timestamp
     const { data: client, error } = await supabase

@@ -1,22 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { authenticateUser } from '@/lib/auth/api-auth'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Authenticate user
+    const authResult = await authenticateUser(request)
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
+
+    const supabase = await createClient()
 
     // Query notifications from database
     const { data: notifications, error: notificationsError } = await supabase
       .from('notifications')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', authResult.user.id)
       .order('created_at', { ascending: false })
       .limit(50)
 
@@ -41,14 +41,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Authenticate user
+    const authResult = await authenticateUser(request)
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
+
+    const supabase = await createClient()
 
     const body = await request.json()
     const { title, message, type, module, related_id, target_user_id } = body
@@ -67,7 +66,7 @@ export async function POST(request: NextRequest) {
     const { data: notification, error: insertError } = await supabase
       .from('notifications')
       .insert({
-        user_id: target_user_id || user.id,
+        user_id: target_user_id || authResult.user.id,
         title,
         message,
         type,

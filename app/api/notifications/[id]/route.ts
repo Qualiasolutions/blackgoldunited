@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { authenticateUser } from '@/lib/auth/api-auth'
 
 export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient()
-
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Authenticate user
+    const authResult = await authenticateUser(request)
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
+
+    const supabase = await createClient()
 
     const { read } = await request.json()
     const params = await context.params
@@ -24,7 +24,7 @@ export async function PATCH(
       .from('notifications')
       .update({ read })
       .eq('id', notificationId)
-      .eq('user_id', user.id)
+      .eq('user_id', authResult.user.id)
       .select()
       .single()
 
@@ -53,14 +53,13 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient()
-
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Authenticate user
+    const authResult = await authenticateUser(request)
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
     }
+
+    const supabase = await createClient()
 
     const params = await context.params
     const notificationId = params.id
@@ -70,7 +69,7 @@ export async function DELETE(
       .from('notifications')
       .delete()
       .eq('id', notificationId)
-      .eq('user_id', user.id)
+      .eq('user_id', authResult.user.id)
 
     if (deleteError) {
       console.error('Error deleting notification:', deleteError)

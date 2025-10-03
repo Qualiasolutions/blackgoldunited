@@ -91,11 +91,11 @@ export async function GET(
       .from('invoices')
       .select(`
         *,
-        client:clients!inner(id, companyName, contactPerson, email, address, city, state, country),
+        client:clients!inner(id, company_name, contact_person, email, address_line_1, city, state, country),
         items:invoice_items(*)
       `)
       .eq('id', id)
-      .is('deletedAt', null)
+      .is('deleted_at', null)
       .single();
 
     if (error) {

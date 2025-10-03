@@ -204,7 +204,7 @@ const ModuleCard = React.forwardRef<HTMLDivElement, ModuleCardProps>(
             </span>
             {stats.amount && stats.amount > 0 && (
               <span className={cn("font-semibold", colors.title)}>
-                ${stats.amount.toLocaleString()}
+                ${(stats.amount ?? 0).toLocaleString()}
               </span>
             )}
           </div>

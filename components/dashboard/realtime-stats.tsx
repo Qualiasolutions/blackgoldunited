@@ -14,7 +14,7 @@ interface StatCardProps {
 
 function StatCard({ title, value, change, icon, prefix = '' }: StatCardProps) {
   const formattedValue = typeof value === 'number'
-    ? value.toLocaleString()
+    ? (value ?? 0).toLocaleString()
     : value
 
   return (
@@ -64,7 +64,7 @@ function RecentActivityCard({ activities }: { activities: any[] }) {
                   </p>
                 </div>
                 <div className="text-sm font-medium">
-                  ${activity.amount.toLocaleString()}
+                  ${(activity.amount ?? 0).toLocaleString()}
                 </div>
               </div>
             ))
@@ -95,7 +95,7 @@ function TopProductsCard({ products }: { products: any[] }) {
                   </p>
                 </div>
                 <div className="text-sm font-medium">
-                  ${product.price.toLocaleString()}
+                  ${(product.price ?? 0).toLocaleString()}
                 </div>
               </div>
             ))

@@ -146,21 +146,21 @@ export function SummaryWidgets({ stats }: SummaryWidgetsProps) {
     },
     {
       title: "Active Clients",
-      value: stats.activeClients.value.toLocaleString(),
+      value: (stats.activeClients.value ?? 0).toLocaleString(),
       change: stats.activeClients.change,
       icon: Users,
       color: "blue"
     },
     {
       title: "Products in Stock",
-      value: stats.productsInStock.value.toLocaleString(),
+      value: (stats.productsInStock.value ?? 0).toLocaleString(),
       change: stats.productsInStock.change,
       icon: Package,
       color: "purple"
     },
     {
       title: "Pending Orders",
-      value: stats.pendingOrders.value.toLocaleString(),
+      value: (stats.pendingOrders.value ?? 0).toLocaleString(),
       change: stats.pendingOrders.change,
       icon: ShoppingCart,
       color: "orange"

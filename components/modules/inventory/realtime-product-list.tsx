@@ -186,11 +186,11 @@ export function RealtimeProductList() {
       cell: ({ row }) => (
         <div className="space-y-1">
           <div className="font-medium">
-            ${Number(row.getValue("sellingPrice")).toLocaleString()}
+            ${(Number(row.getValue("sellingPrice")) ?? 0).toLocaleString()}
           </div>
           {row.original.costPrice && (
             <div className="text-xs text-muted-foreground">
-              Cost: ${Number(row.original.costPrice).toLocaleString()}
+              Cost: ${(Number(row.original.costPrice) ?? 0).toLocaleString()}
             </div>
           )}
         </div>

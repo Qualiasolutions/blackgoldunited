@@ -122,7 +122,7 @@ const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
               {title}
             </p>
             <div className={cn("text-3xl font-bold", colors.value)}>
-              {typeof value === 'number' ? value.toLocaleString() : value}
+              {typeof value === 'number' ? (value ?? 0).toLocaleString() : value}
             </div>
             {description && (
               <p className={cn("text-xs", colors.trend)}>

@@ -34,7 +34,7 @@ export function RealtimeNotificationSystem() {
             id: `invoice-${payload.new.id}-${Date.now()}`,
             type: 'invoice',
             title: 'New Invoice Created',
-            message: `Invoice ${payload.new.invoiceNumber} has been created for $${Number(payload.new.totalAmount).toLocaleString()}`,
+            message: `Invoice ${payload.new.invoiceNumber} has been created for $${(Number(payload.new.totalAmount) ?? 0).toLocaleString()}`,
             data: payload.new,
             timestamp: new Date().toISOString(),
             read: false
@@ -131,7 +131,7 @@ export function RealtimeNotificationSystem() {
             id: `po-${payload.new.id}-${Date.now()}`,
             type: 'purchase_order',
             title: 'New Purchase Order',
-            message: `Purchase Order ${payload.new.poNumber} created for $${Number(payload.new.totalAmount).toLocaleString()}`,
+            message: `Purchase Order ${payload.new.poNumber} created for $${(Number(payload.new.totalAmount) ?? 0).toLocaleString()}`,
             data: payload.new,
             timestamp: new Date().toISOString(),
             read: false

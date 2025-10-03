@@ -42,7 +42,7 @@ export function RealtimeActivityFeed() {
             type: 'invoice',
             action: 'created',
             title: 'New Invoice Created',
-            description: `Invoice ${payload.new.invoiceNumber} for $${Number(payload.new.totalAmount).toLocaleString()}`,
+            description: `Invoice ${payload.new.invoiceNumber} for $${(Number(payload.new.totalAmount) ?? 0).toLocaleString()}`,
             timestamp: new Date().toISOString(),
             data: payload.new
           })
@@ -140,7 +140,7 @@ export function RealtimeActivityFeed() {
             type: 'purchase_order',
             action: 'created',
             title: 'Purchase Order Created',
-            description: `PO ${payload.new.poNumber} for $${Number(payload.new.totalAmount).toLocaleString()}`,
+            description: `PO ${payload.new.poNumber} for $${(Number(payload.new.totalAmount) ?? 0).toLocaleString()}`,
             timestamp: new Date().toISOString(),
             data: payload.new
           })

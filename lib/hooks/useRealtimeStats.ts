@@ -59,8 +59,8 @@ export function useRealtimeStats() {
       try {
         const { data: clients } = await supabase
           .from('clients')
-          .select('id, companyName, isActive, createdAt')
-          .eq('deletedAt', null)
+          .select('id, company_name, is_active, created_at')
+          .is('deleted_at', null)
         results.clients = clients || []
       } catch (err) {
         results.clients = []
@@ -70,8 +70,8 @@ export function useRealtimeStats() {
       try {
         const { data: invoices } = await supabase
           .from('invoices')
-          .select('id, totalAmount, paidAmount, status, createdAt, invoiceNumber')
-          .eq('deletedAt', null)
+          .select('id, total_amount, paid_amount, status, created_at, invoice_number')
+          .is('deleted_at', null)
         results.invoices = invoices || []
       } catch (err) {
         results.invoices = []
@@ -81,9 +81,9 @@ export function useRealtimeStats() {
       try {
         const { data: products } = await supabase
           .from('products')
-          .select('id, name, productCode, sellingPrice, reorderLevel, isActive')
-          .eq('deletedAt', null)
-          .eq('isActive', true)
+          .select('id, name, product_code, selling_price, reorder_level, is_active')
+          .is('deleted_at', null)
+          .eq('is_active', true)
         results.products = products || []
       } catch (err) {
         results.products = []
@@ -93,8 +93,8 @@ export function useRealtimeStats() {
       try {
         const { data: purchaseOrders } = await supabase
           .from('purchase_orders')
-          .select('id, status, totalAmount, createdAt')
-          .eq('deletedAt', null)
+          .select('id, status, total_amount, created_at')
+          .is('deleted_at', null)
         results.purchaseOrders = purchaseOrders || []
       } catch (err) {
         results.purchaseOrders = []
@@ -104,12 +104,12 @@ export function useRealtimeStats() {
       const { clients = [], invoices = [], products = [], purchaseOrders = [] } = results
 
       // Revenue calculations
-      const totalRevenue = invoices.reduce((sum: number, inv: any) => sum + (Number(inv.paidAmount) || Number(inv.totalAmount) || 0), 0)
+      const totalRevenue = invoices.reduce((sum: number, inv: any) => sum + (Number(inv.paid_amount) || Number(inv.total_amount) || 0), 0)
       const previousRevenue = totalRevenue * 0.9
       const revenueChange = previousRevenue > 0 ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 : 0
 
       // Client calculations
-      const activeClientsCount = clients.filter((c: any) => c.isActive !== false).length
+      const activeClientsCount = clients.filter((c: any) => c.is_active !== false).length
       const previousClients = Math.max(1, activeClientsCount - 2)
       const clientsChange = ((activeClientsCount - previousClients) / previousClients) * 100
 
@@ -130,16 +130,16 @@ export function useRealtimeStats() {
         ...invoices.slice(0, 3).map((inv: any) => ({
           id: inv.id || 'unknown',
           type: 'invoice',
-          description: `Invoice ${inv.invoiceNumber || 'N/A'}`,
-          amount: Number(inv.totalAmount) || 0,
-          timestamp: inv.createdAt || new Date().toISOString()
+          description: `Invoice ${inv.invoice_number || 'N/A'}`,
+          amount: Number(inv.total_amount) || 0,
+          timestamp: inv.created_at || new Date().toISOString()
         })),
         ...clients.slice(0, 2).map((client: any) => ({
           id: client.id || 'unknown',
           type: 'client',
-          description: `New client: ${client.companyName}`,
+          description: `New client: ${client.company_name}`,
           amount: 0,
-          timestamp: client.createdAt || new Date().toISOString()
+          timestamp: client.created_at || new Date().toISOString()
         }))
       ].sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 5)
 
@@ -148,8 +148,8 @@ export function useRealtimeStats() {
         .map((product: any) => ({
           id: product.id,
           name: product.name,
-          code: product.productCode,
-          price: Number(product.sellingPrice) || 0,
+          code: product.product_code,
+          price: Number(product.selling_price) || 0,
           totalStock: 100,
           warehouses: 1
         }))

@@ -3,6 +3,10 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { authenticateAndAuthorize } from '@/lib/auth/api-auth'
 
+// Cache departments data for 1 hour (3600 seconds)
+// Departments are relatively static organizational data
+export const revalidate = 3600
+
 // Department validation schema
 const departmentSchema = z.object({
   name: z.string().min(1, 'Department name is required').max(100),

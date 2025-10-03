@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { authenticateAndAuthorize } from '@/lib/auth/api-auth'
 
+// Cache accounting reports for 10 minutes (600 seconds)
+// Reports involve heavy computation and data aggregation
+export const revalidate = 600
+
 export async function GET(request: NextRequest) {
   try {
     // Authenticate and authorize

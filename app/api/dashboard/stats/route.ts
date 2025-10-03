@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { authenticateAndAuthorize } from '@/lib/auth/api-auth'
 
+// Cache dashboard stats for 5 minutes (300 seconds)
+// Dashboard data changes frequently but not on every request
+export const revalidate = 300
+
 export async function GET(request: NextRequest) {
   try {
     // Authenticate and authorize using the same pattern as other APIs

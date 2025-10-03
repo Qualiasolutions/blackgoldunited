@@ -82,6 +82,12 @@ export default function InvoicesPage() {
     totalPages: 0
   })
   const [searchDebounce, setSearchDebounce] = useState<NodeJS.Timeout>()
+  const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; invoiceId: string; invoiceNumber: string }>({
+    show: false,
+    invoiceId: '',
+    invoiceNumber: ''
+  })
+  const [deleting, setDeleting] = useState(false)
 
   const canManage = hasFullAccess('sales')
   const canRead = hasModuleAccess('sales')
@@ -180,6 +186,55 @@ export default function InvoicesPage() {
       page: pagination.page,
       limit: pagination.limit
     })
+  }
+
+  const handleDeleteClick = (invoiceId: string, invoiceNumber: string) => {
+    setDeleteConfirm({
+      show: true,
+      invoiceId,
+      invoiceNumber
+    })
+  }
+
+  const handleDeleteConfirm = async () => {
+    try {
+      setDeleting(true)
+      setError('')
+
+      const response = await fetch(`/api/sales/invoices/${deleteConfirm.invoiceId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete invoice')
+      }
+
+      // Close confirmation modal
+      setDeleteConfirm({ show: false, invoiceId: '', invoiceNumber: '' })
+
+      // Refresh the list
+      fetchInvoices({
+        query: searchTerm || undefined,
+        status: filterStatus || undefined,
+        paymentStatus: filterPaymentStatus || undefined,
+        page: pagination.page,
+        limit: pagination.limit
+      })
+    } catch (error) {
+      console.error('Error deleting invoice:', error)
+      setError(error instanceof Error ? error.message : 'Failed to delete invoice')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirm({ show: false, invoiceId: '', invoiceNumber: '' })
   }
 
   const getStatusBadge = (status: string) => {
@@ -514,7 +569,12 @@ export default function InvoicesPage() {
                               </Link>
 
                               {(invoice.status === 'DRAFT' || invoice.status === 'SENT') && (
-                                <Button variant="outline" size="sm" className="text-red-600 hover:bg-red-50">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-600 hover:bg-red-50"
+                                  onClick={() => handleDeleteClick(invoice.id, invoice.invoiceNumber)}
+                                >
                                   <Trash2 className="h-4 w-4 mr-1" />
                                   Delete
                                 </Button>
@@ -531,6 +591,55 @@ export default function InvoicesPage() {
           </Card>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader>
+              <CardTitle className="text-red-600 flex items-center gap-2">
+                <AlertCircle className="h-5 w-5" />
+                Confirm Delete
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-700 mb-4">
+                Are you sure you want to delete invoice <strong>{deleteConfirm.invoiceNumber}</strong>?
+              </p>
+              <p className="text-sm text-gray-500 mb-6">
+                This action cannot be undone. The invoice will be permanently deleted.
+              </p>
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={handleDeleteCancel}
+                  disabled={deleting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteConfirm}
+                  disabled={deleting}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Invoice
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

@@ -161,7 +161,7 @@ export async function PUT(
       .from('invoices')
       .select('id, status')
       .eq('id', id)
-      .is('deletedAt', null)
+      .is('deleted_at', null)
       .single();
 
     if (checkError) {
@@ -186,7 +186,7 @@ export async function PUT(
       const { error: deleteItemsError } = await supabase
         .from('invoice_items')
         .delete()
-        .eq('invoiceId', id);
+        .eq('invoice_id', id);
 
       if (deleteItemsError) {
         console.error('Database error:', deleteItemsError);
@@ -195,13 +195,13 @@ export async function PUT(
 
       // Insert new items
       const invoiceItems = validatedData.items.map(item => ({
-        invoiceId: id,
-        productId: item.productId,
+        invoice_id: id,
+        product_id: item.productId,
         description: item.description,
         quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        lineTotal: item.quantity * item.unitPrice,
-        taxRate: item.taxRate,
+        unit_price: item.unitPrice,
+        line_total: item.quantity * item.unitPrice,
+        tax_rate: item.taxRate,
       }));
 
       const { error: insertItemsError } = await supabase
@@ -228,7 +228,7 @@ export async function PUT(
 
       updatedTotals = {
         subtotal,
-        taxAmount,
+        tax_amount: taxAmount,
         total_amount,
       };
     }
@@ -239,13 +239,13 @@ export async function PUT(
       .update({
         ...validatedData,
         ...updatedTotals,
-        updatedAt: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         items: undefined, // Remove items from the update data
       })
       .eq('id', id)
       .select(`
         *,
-        client:clients!inner(id, companyName, contactPerson, email, address, city, state, country),
+        client:clients!inner(id, company_name, contact_person, email, address_line_1, city, state, country),
         items:invoice_items(*)
       `)
       .single();
@@ -317,7 +317,7 @@ export async function DELETE(
       .from('invoices')
       .select('id, invoice_number, status')
       .eq('id', id)
-      .is('deletedAt', null)
+      .is('deleted_at', null)
       .single();
 
     if (checkError) {
@@ -335,12 +335,12 @@ export async function DELETE(
       }, { status: 409 });
     }
 
-    // Soft delete by updating deletedAt timestamp
+    // Soft delete by updating deleted_at timestamp
     const { error } = await supabase
       .from('invoices')
       .update({
-        deletedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        deleted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       .eq('id', id);
 

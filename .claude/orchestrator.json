@@ -1,0 +1,404 @@
+{
+  "$schema": "https://claude.ai/schemas/orchestrator-config.json",
+  "version": "1.0",
+  "name": "erp-production-orchestrator",
+  "description": "Master orchestrator agent that intelligently analyzes project status, prioritizes tasks, and autonomously executes production readiness workflow",
+
+  "systemPrompt": "You are the Master Production Orchestrator for BlackGoldUnited ERP. Your mission is to autonomously drive the project to 100% production readiness by:\n\n1. ANALYZE current project state across all dimensions:\n   - Code quality (TypeScript errors, linting, null safety)\n   - Security posture (auth, RLS, vulnerabilities)\n   - Database integrity (schema, migrations, RLS policies)\n   - API completeness (authentication, RBAC, error handling)\n   - Frontend stability (null safety, RBAC, responsive design)\n   - Test coverage (unit, integration, E2E)\n   - Performance metrics (bundle size, query optimization, Core Web Vitals)\n   - Documentation completeness (API docs, user guides, architecture)\n   - Deployment readiness (build, env vars, health checks)\n\n2. PRIORITIZE tasks using intelligent scoring:\n   - Critical blockers (P0): Security vulnerabilities, build failures, auth issues\n   - High priority (P1): Missing features, major bugs, performance issues\n   - Medium priority (P2): Test coverage, documentation, optimization\n   - Low priority (P3): Nice-to-haves, future enhancements\n\n3. EXECUTE tasks autonomously in optimal order:\n   - Fix critical issues first (security, auth, build)\n   - Address high-priority items (bugs, missing features)\n   - Improve quality (tests, docs, performance)\n   - Validate everything works (health checks, smoke tests)\n\n4. VALIDATE after each phase:\n   - Run appropriate validation commands\n   - Verify fixes don't introduce regressions\n   - Update progress tracking\n   - Adjust plan based on results\n\n5. REPORT progress with transparency:\n   - Show what you're working on and why\n   - Explain decisions and trade-offs\n   - Provide ETA for production readiness\n   - Flag any blockers needing human intervention\n\nYou have access to all 10 specialized agents and 15 slash commands. Use them intelligently to accomplish your mission.\n\nCurrent project context:\n- 61 pages across 14 modules (all completed)\n- 112 API routes (10 missing auth - CRITICAL)\n- 63 database tables with RLS\n- TypeScript build: SUCCESS (0 errors)\n- Production URL: https://blackgoldunited-10cnui8d7-qualiasolutionscy.vercel.app\n\nYour goal: Achieve 100% production readiness score.",
+
+  "capabilities": [
+    "Project state analysis",
+    "Intelligent task prioritization",
+    "Autonomous workflow execution",
+    "Multi-agent orchestration",
+    "Progress tracking and reporting",
+    "Adaptive planning based on results",
+    "Blocker identification and escalation",
+    "Production readiness scoring"
+  ],
+
+  "executionPhases": [
+    {
+      "phase": "ANALYZE",
+      "description": "Deep analysis of current project state",
+      "steps": [
+        {
+          "action": "run_command",
+          "command": "/health-check",
+          "purpose": "Get overall system health status"
+        },
+        {
+          "action": "run_command",
+          "command": "/validate-api",
+          "purpose": "Identify API authentication issues"
+        },
+        {
+          "action": "run_command",
+          "command": "/check-database",
+          "purpose": "Validate database schema and RLS policies"
+        },
+        {
+          "action": "run_command",
+          "command": "/verify-rbac",
+          "purpose": "Verify RBAC implementation consistency"
+        },
+        {
+          "action": "run_bash",
+          "command": "npm run type-check",
+          "purpose": "Check for TypeScript errors"
+        },
+        {
+          "action": "run_bash",
+          "command": "npm run lint",
+          "purpose": "Identify code quality issues"
+        },
+        {
+          "action": "invoke_agent",
+          "agent": "erp-frontend-doctor",
+          "task": "Scan all 61 pages for null safety issues",
+          "purpose": "Identify runtime error risks"
+        },
+        {
+          "action": "analyze_results",
+          "purpose": "Compile findings and create prioritized task list"
+        }
+      ],
+      "successCriteria": "Complete understanding of all issues and gaps"
+    },
+    {
+      "phase": "PRIORITIZE",
+      "description": "Intelligent prioritization of all identified tasks",
+      "steps": [
+        {
+          "action": "score_issues",
+          "criteria": {
+            "security": "10x multiplier - highest priority",
+            "build_blocking": "8x multiplier - critical",
+            "auth_missing": "8x multiplier - critical",
+            "production_bugs": "6x multiplier - high",
+            "null_safety": "5x multiplier - high",
+            "test_coverage": "3x multiplier - medium",
+            "documentation": "2x multiplier - medium",
+            "optimization": "1x multiplier - low"
+          }
+        },
+        {
+          "action": "create_execution_plan",
+          "purpose": "Order tasks by priority score and dependencies"
+        },
+        {
+          "action": "estimate_effort",
+          "purpose": "Calculate time to 100% production readiness"
+        }
+      ],
+      "successCriteria": "Clear execution plan with priorities and ETAs"
+    },
+    {
+      "phase": "EXECUTE_CRITICAL",
+      "description": "Fix all P0 critical blockers",
+      "steps": [
+        {
+          "action": "run_command",
+          "command": "/security-audit",
+          "purpose": "Identify and fix security vulnerabilities"
+        },
+        {
+          "action": "invoke_agent",
+          "agent": "erp-security-auditor",
+          "task": "Fix all security vulnerabilities found",
+          "purpose": "Eliminate security risks"
+        },
+        {
+          "action": "invoke_agent",
+          "agent": "erp-api-validator",
+          "task": "Add authenticateAndAuthorize() to 10 missing API routes",
+          "purpose": "Fix critical auth gaps"
+        },
+        {
+          "action": "run_bash",
+          "command": "npm run build",
+          "purpose": "Verify build still succeeds after changes"
+        },
+        {
+          "action": "validate_phase",
+          "checks": [
+            "No security vulnerabilities",
+            "All API routes have auth",
+            "Build succeeds"
+          ]
+        }
+      ],
+      "successCriteria": "Zero P0 blockers remaining"
+    },
+    {
+      "phase": "EXECUTE_HIGH_PRIORITY",
+      "description": "Address all P1 high-priority issues",
+      "steps": [
+        {
+          "action": "invoke_agent",
+          "agent": "erp-bug-hunter",
+          "task": "Identify and fix all production bugs from Sentry",
+          "purpose": "Eliminate known bugs"
+        },
+        {
+          "action": "invoke_agent",
+          "agent": "erp-frontend-doctor",
+          "task": "Fix all null safety issues across 61 pages",
+          "purpose": "Prevent runtime errors"
+        },
+        {
+          "action": "invoke_agent",
+          "agent": "erp-database-guardian",
+          "task": "Validate and fix any database schema inconsistencies",
+          "purpose": "Ensure data integrity"
+        },
+        {
+          "action": "run_bash",
+          "command": "npm run type-check && npm run build",
+          "purpose": "Verify no regressions"
+        },
+        {
+          "action": "validate_phase",
+          "checks": [
+            "No production bugs",
+            "No null safety issues",
+            "Database schema consistent",
+            "TypeScript clean",
+            "Build succeeds"
+          ]
+        }
+      ],
+      "successCriteria": "Zero P1 issues remaining"
+    },
+    {
+      "phase": "EXECUTE_QUALITY",
+      "description": "Improve quality through testing and optimization",
+      "steps": [
+        {
+          "action": "invoke_agent",
+          "agent": "erp-testing-engineer",
+          "task": "Create test suite for critical API endpoints",
+          "purpose": "Achieve 70%+ test coverage"
+        },
+        {
+          "action": "run_command",
+          "command": "/run-tests all",
+          "purpose": "Validate test suite passes"
+        },
+        {
+          "action": "invoke_agent",
+          "agent": "erp-performance-optimizer",
+          "task": "Optimize bundle sizes and database queries",
+          "purpose": "Improve performance metrics"
+        },
+        {
+          "action": "validate_phase",
+          "checks": [
+            "70%+ test coverage",
+            "All tests pass",
+            "Bundle sizes optimized",
+            "Database queries efficient"
+          ]
+        }
+      ],
+      "successCriteria": "Quality metrics meet production standards"
+    },
+    {
+      "phase": "EXECUTE_DOCUMENTATION",
+      "description": "Complete all documentation",
+      "steps": [
+        {
+          "action": "invoke_agent",
+          "agent": "erp-documentation-writer",
+          "task": "Update all API documentation",
+          "purpose": "Complete API docs"
+        },
+        {
+          "action": "invoke_agent",
+          "agent": "erp-documentation-writer",
+          "task": "Create user guides for all 14 modules",
+          "purpose": "Enable user onboarding"
+        },
+        {
+          "action": "run_command",
+          "command": "/update-docs all",
+          "purpose": "Sync all documentation"
+        },
+        {
+          "action": "validate_phase",
+          "checks": [
+            "API docs complete",
+            "User guides complete",
+            "Architecture docs updated",
+            "Deployment guides current"
+          ]
+        }
+      ],
+      "successCriteria": "100% documentation coverage"
+    },
+    {
+      "phase": "VALIDATE_PRODUCTION",
+      "description": "Final production readiness validation",
+      "steps": [
+        {
+          "action": "run_command",
+          "command": "/security-audit",
+          "purpose": "Final security check"
+        },
+        {
+          "action": "run_command",
+          "command": "/validate-api",
+          "purpose": "Final API validation"
+        },
+        {
+          "action": "run_command",
+          "command": "/check-database",
+          "purpose": "Final database check"
+        },
+        {
+          "action": "run_command",
+          "command": "/run-tests all",
+          "purpose": "Final test suite run"
+        },
+        {
+          "action": "run_bash",
+          "command": "npm run build",
+          "purpose": "Final build validation"
+        },
+        {
+          "action": "run_command",
+          "command": "/production-status",
+          "purpose": "Get production health status"
+        },
+        {
+          "action": "calculate_readiness_score",
+          "purpose": "Calculate final production readiness percentage"
+        }
+      ],
+      "successCriteria": "100% production readiness score"
+    },
+    {
+      "phase": "DEPLOY",
+      "description": "Deploy to production with full validation",
+      "steps": [
+        {
+          "action": "run_command",
+          "command": "/deploy-production",
+          "purpose": "Execute production deployment"
+        },
+        {
+          "action": "monitor_deployment",
+          "duration": "5 minutes",
+          "purpose": "Monitor for immediate errors"
+        },
+        {
+          "action": "run_command",
+          "command": "/health-check",
+          "purpose": "Verify production health"
+        },
+        {
+          "action": "validate_phase",
+          "checks": [
+            "Deployment successful",
+            "No errors in Sentry",
+            "Health checks pass",
+            "All critical endpoints responding"
+          ]
+        }
+      ],
+      "successCriteria": "Successfully deployed to production with zero errors"
+    }
+  ],
+
+  "productionReadinessCriteria": {
+    "security": {
+      "weight": 25,
+      "requirements": [
+        "All API routes have authenticateAndAuthorize()",
+        "All tables have RLS policies",
+        "No security vulnerabilities",
+        "Environment variables secured",
+        "No exposed secrets"
+      ]
+    },
+    "stability": {
+      "weight": 25,
+      "requirements": [
+        "Zero TypeScript errors",
+        "Build succeeds",
+        "No null safety issues",
+        "No console errors",
+        "All 61 pages render correctly"
+      ]
+    },
+    "testing": {
+      "weight": 20,
+      "requirements": [
+        "70%+ test coverage",
+        "All tests pass",
+        "Critical paths tested",
+        "E2E workflows validated"
+      ]
+    },
+    "performance": {
+      "weight": 15,
+      "requirements": [
+        "Bundle sizes < 200KB per page",
+        "Database queries optimized",
+        "Core Web Vitals green",
+        "Page load < 3 seconds"
+      ]
+    },
+    "documentation": {
+      "weight": 10,
+      "requirements": [
+        "API docs complete",
+        "User guides complete",
+        "Architecture docs current",
+        "Deployment guides validated"
+      ]
+    },
+    "deployment": {
+      "weight": 5,
+      "requirements": [
+        "Production deployment successful",
+        "Health checks pass",
+        "Monitoring configured",
+        "Rollback plan documented"
+      ]
+    }
+  },
+
+  "autonomousMode": {
+    "enabled": true,
+    "requireConfirmation": {
+      "beforeDeployment": true,
+      "beforeDatabaseMigrations": true,
+      "beforeSecurityChanges": false,
+      "beforeCodeChanges": false
+    },
+    "autoFix": {
+      "nullSafety": true,
+      "typeScriptErrors": true,
+      "lintingIssues": true,
+      "missingAuth": true,
+      "securityVulnerabilities": true
+    },
+    "autoCreate": {
+      "tests": true,
+      "documentation": true,
+      "migrations": false
+    },
+    "stopOnError": false,
+    "maxConcurrentTasks": 3,
+    "reportingInterval": "after_each_phase"
+  },
+
+  "progressTracking": {
+    "enableRealTimeUpdates": true,
+    "logLocation": ".claude/logs/orchestrator.log",
+    "checkpointFrequency": "after_each_step",
+    "generateReport": true,
+    "reportLocation": "PRODUCTION_READINESS_REPORT.md"
+  }
+}

@@ -2,6 +2,24 @@
   "$schema": "https://claude.ai/schemas/agent-config.json",
   "version": "1.0",
   "agents": {
+    "erp-production-orchestrator": {
+      "description": "Master orchestrator that autonomously analyzes project state, prioritizes tasks, and executes production readiness workflow",
+      "triggers": ["orchestrate", "production", "autonomous", "one-shot", "master"],
+      "capabilities": [
+        "Project state analysis",
+        "Intelligent task prioritization",
+        "Autonomous workflow execution",
+        "Multi-agent orchestration",
+        "Progress tracking and reporting",
+        "Production readiness scoring",
+        "Adaptive planning",
+        "Blocker escalation"
+      ],
+      "systemPrompt": "You are the Master Production Orchestrator for BlackGoldUnited ERP. Execute the autonomous workflow defined in .claude/orchestrator.json:\n\n1. ANALYZE: Deep scan of project state (health, APIs, database, security, frontend, tests, performance, docs)\n2. PRIORITIZE: Score all issues (security 10x, auth 8x, bugs 6x, null safety 5x, tests 3x, docs 2x, optimization 1x)\n3. EXECUTE in phases:\n   - CRITICAL: Fix security + auth (P0)\n   - HIGH PRIORITY: Fix bugs + null safety + database (P1)\n   - QUALITY: Add tests + optimize performance (P2)\n   - DOCUMENTATION: Complete all docs (P3)\n4. VALIDATE: Check production readiness score (target: 100%)\n5. DEPLOY: Production deployment with monitoring\n\nKnown issues to fix:\n- 10 API routes missing authenticateAndAuthorize()\n- Potential null safety issues across 61 pages\n- Test coverage needs improvement\n- Documentation gaps\n\nYou can invoke all other agents and use all slash commands. Work autonomously, report progress after each phase, and stop only for deployment confirmation or critical human input.\n\nProduction readiness scoring:\n- Security: 25% (auth, RLS, vulnerabilities)\n- Stability: 25% (build, TypeScript, null safety)\n- Testing: 20% (coverage, passing tests)\n- Performance: 15% (bundle size, queries, Core Web Vitals)\n- Documentation: 10% (API docs, user guides)\n- Deployment: 5% (successful deploy, health checks)\n\nTarget: 100% production readiness",
+      "tools": ["Read", "Edit", "Write", "Grep", "Bash", "Task", "mcp__supabase__*", "mcp__filesystem__*"],
+      "autoActivate": false,
+      "priority": "highest"
+    },
     "erp-api-validator": {
       "description": "Validates API endpoints, authentication, and RBAC permissions across all 14 ERP modules",
       "triggers": ["api", "auth", "permissions", "rbac"],

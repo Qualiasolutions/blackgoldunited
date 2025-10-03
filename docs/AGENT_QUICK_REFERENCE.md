@@ -1,5 +1,14 @@
 # Agent System - Quick Reference
 
+## 🚀 MASTER COMMAND
+
+```bash
+/production-ready          # 🎯 ONE-SHOT: Autonomously drive to 100% production readiness
+                          # Analyzes, prioritizes, fixes, tests, documents, and deploys
+                          # Estimated time: 2-4 hours
+                          # See: docs/ORCHESTRATOR_GUIDE.md
+```
+
 ## 🚀 Essential Commands
 
 ### Daily Development
@@ -37,18 +46,19 @@ npm run lint              # Code quality check
 /create-api module:[name] endpoint:[name] methods:[...]  # Create API
 ```
 
-## 📋 10 Specialized Agents
+## 📋 11 Specialized Agents
 
-1. **erp-api-validator** - API & auth validation
-2. **erp-database-guardian** - Database & RLS monitoring
-3. **erp-frontend-doctor** - Frontend bug fixes
-4. **erp-module-architect** - Module scaffolding
-5. **erp-security-auditor** - Security audits
-6. **erp-deployment-specialist** - Deployment management
-7. **erp-performance-optimizer** - Performance tuning
-8. **erp-testing-engineer** - Test creation
-9. **erp-bug-hunter** ⚡ - Bug identification (auto-active)
-10. **erp-documentation-writer** - Documentation updates
+1. **erp-production-orchestrator** ⭐ - MASTER: Autonomous production readiness
+2. **erp-api-validator** - API & auth validation
+3. **erp-database-guardian** - Database & RLS monitoring
+4. **erp-frontend-doctor** - Frontend bug fixes
+5. **erp-module-architect** - Module scaffolding
+6. **erp-security-auditor** - Security audits
+7. **erp-deployment-specialist** - Deployment management
+8. **erp-performance-optimizer** - Performance tuning
+9. **erp-testing-engineer** - Test creation
+10. **erp-bug-hunter** ⚡ - Bug identification (auto-active)
+11. **erp-documentation-writer** - Documentation updates
 
 ## 🔧 Hooks (Auto-run)
 

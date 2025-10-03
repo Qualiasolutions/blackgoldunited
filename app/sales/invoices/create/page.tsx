@@ -108,7 +108,14 @@ export default function CreateInvoicePage() {
       }
 
       if (result.success) {
-        setClients(result.data || [])
+        // Transform snake_case to camelCase
+        const transformedClients = (result.data || []).map((client: any) => ({
+          id: client.id,
+          companyName: client.company_name,
+          contactPerson: client.contact_person,
+          email: client.email
+        }))
+        setClients(transformedClients)
       }
     } catch (error) {
       console.error('Error fetching clients:', error)

@@ -34,7 +34,7 @@ export function RealtimeNotificationSystem() {
             id: `invoice-${payload.new.id}-${Date.now()}`,
             type: 'invoice',
             title: 'New Invoice Created',
-            message: `Invoice ${payload.new.invoiceNumber} has been created for $${(Number(payload.new.totalAmount) ?? 0).toLocaleString()}`,
+            message: `Invoice ${payload.new.invoice_number} has been created for $${(Number(payload.new.total_amount) ?? 0).toLocaleString()}`,
             data: payload.new,
             timestamp: new Date().toISOString(),
             read: false
@@ -50,7 +50,7 @@ export function RealtimeNotificationSystem() {
               id: `invoice-status-${payload.new.id}-${Date.now()}`,
               type: 'invoice',
               title: 'Invoice Status Changed',
-              message: `Invoice ${payload.new.invoiceNumber} status changed to ${payload.new.status}`,
+              message: `Invoice ${payload.new.invoice_number} status changed to ${payload.new.status}`,
               data: payload.new,
               timestamp: new Date().toISOString(),
               read: false
@@ -111,7 +111,7 @@ export function RealtimeNotificationSystem() {
             id: `client-${payload.new.id}-${Date.now()}`,
             type: 'client',
             title: 'New Client Registered',
-            message: `${payload.new.companyName} has been added to the client database`,
+            message: `${payload.new.company_name} has been added to the client database`,
             data: payload.new,
             timestamp: new Date().toISOString(),
             read: false
@@ -131,7 +131,7 @@ export function RealtimeNotificationSystem() {
             id: `po-${payload.new.id}-${Date.now()}`,
             type: 'purchase_order',
             title: 'New Purchase Order',
-            message: `Purchase Order ${payload.new.poNumber} created for $${(Number(payload.new.totalAmount) ?? 0).toLocaleString()}`,
+            message: `Purchase Order ${payload.new.po_number} created for $${(Number(payload.new.total_amount) ?? 0).toLocaleString()}`,
             data: payload.new,
             timestamp: new Date().toISOString(),
             read: false

@@ -253,7 +253,12 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Database error:', error);
       if (error.code === '23505') { // Unique violation
-        return NextResponse.json({ error: 'A client with this email already exists' }, { status: 409 });
+        // Determine which field caused the duplicate
+        const errorMessage = error.message || '';
+        if (errorMessage.includes('client_code')) {
+          return NextResponse.json({ error: 'A client with this client code already exists' }, { status: 409 });
+        }
+        return NextResponse.json({ error: 'A client with this information already exists' }, { status: 409 });
       }
       return NextResponse.json({ error: 'Failed to create client' }, { status: 500 });
     }

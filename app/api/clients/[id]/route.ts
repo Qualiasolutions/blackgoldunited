@@ -110,13 +110,32 @@ export async function PUT(
       return NextResponse.json({ error: 'Failed to check client existence' }, { status: 500 });
     }
 
+    // Map camelCase to snake_case for database
+    const dbData: any = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (validatedData.clientCode !== undefined) dbData.client_code = validatedData.clientCode;
+    if (validatedData.companyName !== undefined) dbData.company_name = validatedData.companyName;
+    if (validatedData.contactPerson !== undefined) dbData.contact_person = validatedData.contactPerson;
+    if (validatedData.email !== undefined) dbData.email = validatedData.email;
+    if (validatedData.phone !== undefined) dbData.phone = validatedData.phone;
+    if (validatedData.mobile !== undefined) dbData.mobile = validatedData.mobile;
+    if (validatedData.address !== undefined) dbData.address_line_1 = validatedData.address;
+    if (validatedData.city !== undefined) dbData.city = validatedData.city;
+    if (validatedData.state !== undefined) dbData.state = validatedData.state;
+    if (validatedData.country !== undefined) dbData.country = validatedData.country;
+    if (validatedData.postalCode !== undefined) dbData.postal_code = validatedData.postalCode;
+    if (validatedData.taxNumber !== undefined) dbData.tax_number = validatedData.taxNumber;
+    if (validatedData.creditLimit !== undefined) dbData.credit_limit = validatedData.creditLimit;
+    if (validatedData.paymentTerms !== undefined) dbData.payment_terms = validatedData.paymentTerms;
+    if (validatedData.isActive !== undefined) dbData.is_active = validatedData.isActive;
+    if (validatedData.notes !== undefined) dbData.notes = validatedData.notes;
+
     // Update client
     const { data: updatedClient, error } = await supabase
       .from('clients')
-      .update({
-        ...validatedData,
-        updatedAt: new Date().toISOString(),
-      })
+      .update(dbData)
       .eq('id', id)
       .select()
       .single();
@@ -124,7 +143,12 @@ export async function PUT(
     if (error) {
       console.error('Database error:', error);
       if (error.code === '23505') { // Unique violation
-        return NextResponse.json({ error: 'A client with this email already exists' }, { status: 409 });
+        // Determine which field caused the duplicate
+        const errorMessage = error.message || '';
+        if (errorMessage.includes('client_code')) {
+          return NextResponse.json({ error: 'A client with this client code already exists' }, { status: 409 });
+        }
+        return NextResponse.json({ error: 'A client with this information already exists' }, { status: 409 });
       }
       return NextResponse.json({ error: 'Failed to update client' }, { status: 500 });
     }

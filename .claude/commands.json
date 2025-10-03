@@ -1,0 +1,293 @@
+{
+  "$schema": "https://claude.ai/schemas/command-config.json",
+  "version": "1.0",
+  "commands": {
+    "/validate-api": {
+      "description": "Validate all API endpoints for authentication, RBAC, and error handling",
+      "agent": "erp-api-validator",
+      "steps": [
+        "List all API routes in app/api/",
+        "Check each route has authenticateAndAuthorize() middleware",
+        "Verify RBAC permissions match ACCESS_CONTROL_MATRIX",
+        "Test error responses (401, 403, 400, 500)",
+        "Validate request/response schemas",
+        "Generate validation report"
+      ],
+      "outputFormat": "markdown-table"
+    },
+    "/check-database": {
+      "description": "Audit database schema, RLS policies, and data consistency",
+      "agent": "erp-database-guardian",
+      "steps": [
+        "Connect to Supabase and list all 63 tables",
+        "Verify RLS policies exist on all tables",
+        "Check foreign key relationships",
+        "Validate column naming (snake_case)",
+        "Compare schema with TypeScript types in lib/types/",
+        "Report any inconsistencies or missing policies"
+      ],
+      "outputFormat": "detailed-report"
+    },
+    "/fix-null-safety": {
+      "description": "Scan and fix null safety issues across all frontend pages",
+      "agent": "erp-frontend-doctor",
+      "arguments": [
+        {
+          "name": "module",
+          "type": "string",
+          "required": false,
+          "description": "Specific module to fix (sales, clients, inventory, etc.) or 'all'"
+        }
+      ],
+      "steps": [
+        "Scan pages for .toLocaleString(), .toFixed(), .map() without null checks",
+        "Replace with null-safe patterns: (value ?? 0).toLocaleString()",
+        "Add optional chaining where needed: data?.client?.company_name",
+        "Run type-check to verify fixes",
+        "Report files modified"
+      ],
+      "outputFormat": "summary"
+    },
+    "/create-module": {
+      "description": "Scaffold a new ERP module with API routes, database tables, and frontend pages",
+      "agent": "erp-module-architect",
+      "arguments": [
+        {
+          "name": "moduleName",
+          "type": "string",
+          "required": true,
+          "description": "Name of the new module (e.g., 'contracts', 'assets')"
+        },
+        {
+          "name": "features",
+          "type": "string[]",
+          "required": true,
+          "description": "List of features (e.g., ['create', 'list', 'edit', 'delete'])"
+        }
+      ],
+      "steps": [
+        "Create database schema in supabase/",
+        "Add RLS policies for 5 roles",
+        "Generate TypeScript types in lib/types/",
+        "Create API routes in app/api/[module]/",
+        "Build frontend pages in app/[module]/",
+        "Update middleware.ts with route protection",
+        "Update ACCESS_CONTROL_MATRIX",
+        "Generate documentation"
+      ],
+      "outputFormat": "detailed-report"
+    },
+    "/security-audit": {
+      "description": "Comprehensive security audit of authentication, authorization, and vulnerabilities",
+      "agent": "erp-security-auditor",
+      "steps": [
+        "Run scripts/security-audit-gate.sh",
+        "Verify all API routes have auth middleware",
+        "Check RLS policies on all tables",
+        "Audit environment variables for exposed secrets",
+        "Scan for SQL injection vulnerabilities",
+        "Validate CORS and security headers",
+        "Check for XSS vulnerabilities in user inputs",
+        "Generate security report with risk ratings"
+      ],
+      "outputFormat": "security-report"
+    },
+    "/deploy-production": {
+      "description": "Execute full production deployment checklist with validation",
+      "agent": "erp-deployment-specialist",
+      "steps": [
+        "Run npm run type-check",
+        "Run npm run lint",
+        "Run npm run build",
+        "Validate environment variables with npm run env:validate",
+        "Check git status is clean",
+        "Create deployment commit",
+        "Push to main branch",
+        "Wait for Vercel deployment",
+        "Run npm run health:check",
+        "Monitor Sentry for errors",
+        "Report deployment status"
+      ],
+      "outputFormat": "deployment-log"
+    },
+    "/optimize-performance": {
+      "description": "Analyze and optimize application performance",
+      "agent": "erp-performance-optimizer",
+      "arguments": [
+        {
+          "name": "target",
+          "type": "string",
+          "required": false,
+          "description": "Optimization target: 'bundle', 'database', 'rendering', or 'all'"
+        }
+      ],
+      "steps": [
+        "Analyze bundle sizes from npm run build output",
+        "Identify heavy dependencies and optimize imports",
+        "Review database queries for optimization opportunities",
+        "Check for missing indexes on frequently queried columns",
+        "Analyze React component rendering performance",
+        "Implement caching strategies where applicable",
+        "Generate performance optimization report"
+      ],
+      "outputFormat": "performance-metrics"
+    },
+    "/run-tests": {
+      "description": "Execute test suite for API, components, and E2E workflows",
+      "agent": "erp-testing-engineer",
+      "arguments": [
+        {
+          "name": "suite",
+          "type": "string",
+          "required": false,
+          "description": "Test suite: 'unit', 'integration', 'e2e', or 'all'"
+        }
+      ],
+      "steps": [
+        "Run npm test",
+        "Execute API endpoint tests",
+        "Run component tests",
+        "Execute E2E workflow tests",
+        "Check code coverage",
+        "Generate test report with pass/fail status"
+      ],
+      "outputFormat": "test-report"
+    },
+    "/hunt-bugs": {
+      "description": "Analyze production errors and fix bugs systematically",
+      "agent": "erp-bug-hunter",
+      "steps": [
+        "Check browser console for errors (if provided)",
+        "Query Sentry for recent production errors",
+        "Analyze error patterns and frequency",
+        "Identify root causes",
+        "Create fixes for each issue",
+        "Test fixes locally",
+        "Generate bug fix report"
+      ],
+      "outputFormat": "bug-report"
+    },
+    "/update-docs": {
+      "description": "Update project documentation including CLAUDE.md, API docs, and guides",
+      "agent": "erp-documentation-writer",
+      "arguments": [
+        {
+          "name": "scope",
+          "type": "string",
+          "required": false,
+          "description": "Documentation scope: 'api', 'architecture', 'user-guide', or 'all'"
+        }
+      ],
+      "steps": [
+        "Review recent code changes",
+        "Update CLAUDE.md with new features",
+        "Update API_DOCUMENTATION.md",
+        "Update README.md if needed",
+        "Synchronize .env.example with required variables",
+        "Generate documentation change summary"
+      ],
+      "outputFormat": "documentation-summary"
+    },
+    "/health-check": {
+      "description": "Quick health check of the entire ERP system",
+      "steps": [
+        "Run npm run type-check",
+        "Check build status",
+        "Verify Supabase connection",
+        "Check critical API endpoints",
+        "Validate environment variables",
+        "Report overall system health"
+      ],
+      "outputFormat": "health-status",
+      "quickCommand": true
+    },
+    "/fix-module": {
+      "description": "Fix common issues in a specific ERP module",
+      "agent": "erp-frontend-doctor",
+      "arguments": [
+        {
+          "name": "module",
+          "type": "string",
+          "required": true,
+          "description": "Module name (sales, clients, inventory, purchase, finance, accounting, employees, organizational, attendance, payroll, reports, templates, qhse, settings)"
+        }
+      ],
+      "steps": [
+        "Scan module pages for TypeScript errors",
+        "Fix null safety issues",
+        "Correct column name mismatches (snake_case vs camelCase)",
+        "Verify RBAC implementation",
+        "Check API integration",
+        "Test fixes",
+        "Generate fix report"
+      ],
+      "outputFormat": "fix-summary"
+    },
+    "/create-api": {
+      "description": "Generate a new API route with authentication and RBAC",
+      "agent": "erp-module-architect",
+      "arguments": [
+        {
+          "name": "module",
+          "type": "string",
+          "required": true,
+          "description": "Module name (e.g., 'sales', 'inventory')"
+        },
+        {
+          "name": "endpoint",
+          "type": "string",
+          "required": true,
+          "description": "Endpoint name (e.g., 'invoices', 'products')"
+        },
+        {
+          "name": "methods",
+          "type": "string[]",
+          "required": true,
+          "description": "HTTP methods (e.g., ['GET', 'POST', 'PUT', 'DELETE'])"
+        }
+      ],
+      "steps": [
+        "Create route file in app/api/[module]/[endpoint]/route.ts",
+        "Implement authenticateAndAuthorize() middleware",
+        "Add method handlers (GET, POST, PUT, DELETE)",
+        "Implement Supabase queries with RLS",
+        "Add error handling",
+        "Create TypeScript types",
+        "Generate API documentation"
+      ],
+      "outputFormat": "api-summary"
+    },
+    "/verify-rbac": {
+      "description": "Verify RBAC implementation across all modules and routes",
+      "agent": "erp-api-validator",
+      "steps": [
+        "Check ACCESS_CONTROL_MATRIX in lib/auth/permissions.ts",
+        "Verify middleware.ts route protection",
+        "Test all API routes have proper auth",
+        "Validate frontend permission checks (hasModuleAccess, hasFullAccess)",
+        "Check RLS policies match role permissions",
+        "Generate RBAC compliance report"
+      ],
+      "outputFormat": "rbac-report"
+    },
+    "/production-status": {
+      "description": "Get comprehensive production deployment status",
+      "agent": "erp-deployment-specialist",
+      "steps": [
+        "Check Vercel deployment status",
+        "Query Sentry for error count (last 24h)",
+        "Check Checkly uptime status",
+        "Verify database health",
+        "Check critical user workflows",
+        "Generate production status dashboard"
+      ],
+      "outputFormat": "dashboard",
+      "quickCommand": true
+    }
+  },
+  "globalSettings": {
+    "confirmBeforeExecute": true,
+    "logCommands": true,
+    "defaultTimeout": 300000
+  }
+}

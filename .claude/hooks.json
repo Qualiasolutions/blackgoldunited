@@ -1,0 +1,220 @@
+{
+  "$schema": "https://claude.ai/schemas/hooks-config.json",
+  "version": "1.0",
+  "hooks": {
+    "pre-tool-use": {
+      "Edit": {
+        "enabled": true,
+        "script": "scripts/hooks/pre-edit-validation.sh",
+        "description": "Validate file exists and create backup before editing",
+        "timeout": 5000
+      },
+      "Write": {
+        "enabled": true,
+        "script": "scripts/hooks/pre-write-validation.sh",
+        "description": "Check file doesn't exist or confirm overwrite",
+        "timeout": 5000
+      },
+      "Bash": {
+        "enabled": true,
+        "conditions": [
+          {
+            "pattern": "rm -rf",
+            "action": "block",
+            "message": "Destructive rm -rf command blocked. Use specific file paths instead."
+          },
+          {
+            "pattern": "git push --force",
+            "action": "confirm",
+            "message": "Force push detected. Are you sure you want to force push?"
+          },
+          {
+            "pattern": "npm publish",
+            "action": "confirm",
+            "message": "Publishing to npm. Confirm this is intentional."
+          }
+        ]
+      }
+    },
+    "post-tool-use": {
+      "Edit": {
+        "enabled": true,
+        "script": "scripts/hooks/post-edit-typecheck.sh",
+        "description": "Run TypeScript type-check after editing files",
+        "timeout": 30000,
+        "async": true
+      },
+      "Write": {
+        "enabled": true,
+        "script": "scripts/hooks/post-write-validation.sh",
+        "description": "Validate syntax and format after writing files",
+        "timeout": 10000,
+        "async": true
+      },
+      "mcp__supabase__apply_migration": {
+        "enabled": true,
+        "script": "scripts/hooks/post-migration-backup.sh",
+        "description": "Create database backup after migration",
+        "timeout": 60000,
+        "async": true
+      }
+    },
+    "on-error": {
+      "all": {
+        "enabled": true,
+        "script": "scripts/hooks/error-logger.sh",
+        "description": "Log all errors to .claude/logs/errors.log",
+        "timeout": 5000
+      }
+    },
+    "pre-commit": {
+      "enabled": true,
+      "steps": [
+        {
+          "name": "Type Check",
+          "command": "npm run type-check",
+          "required": true,
+          "timeout": 60000
+        },
+        {
+          "name": "Lint Check",
+          "command": "npm run lint",
+          "required": false,
+          "timeout": 30000
+        },
+        {
+          "name": "Security Audit",
+          "command": "./scripts/security-audit-gate.sh",
+          "required": true,
+          "timeout": 30000
+        }
+      ]
+    },
+    "pre-deployment": {
+      "enabled": true,
+      "steps": [
+        {
+          "name": "Type Check",
+          "command": "npm run type-check",
+          "required": true,
+          "timeout": 60000
+        },
+        {
+          "name": "Build Validation",
+          "command": "npm run build",
+          "required": true,
+          "timeout": 300000
+        },
+        {
+          "name": "Environment Validation",
+          "command": "npm run env:validate",
+          "required": true,
+          "timeout": 10000
+        },
+        {
+          "name": "Security Audit",
+          "command": "./scripts/security-audit-gate.sh",
+          "required": true,
+          "timeout": 30000
+        }
+      ]
+    },
+    "post-deployment": {
+      "enabled": true,
+      "steps": [
+        {
+          "name": "Health Check",
+          "command": "npm run health:check",
+          "required": true,
+          "timeout": 60000
+        },
+        {
+          "name": "Sentry Check",
+          "description": "Verify no new errors in Sentry",
+          "required": false,
+          "timeout": 30000
+        }
+      ]
+    },
+    "on-api-change": {
+      "enabled": true,
+      "trigger": {
+        "pattern": "app/api/**/*.ts",
+        "events": ["create", "modify"]
+      },
+      "actions": [
+        {
+          "name": "Validate Auth Middleware",
+          "script": "scripts/hooks/validate-api-auth.sh",
+          "timeout": 10000
+        },
+        {
+          "name": "Update API Documentation",
+          "agent": "erp-documentation-writer",
+          "scope": "api"
+        }
+      ]
+    },
+    "on-schema-change": {
+      "enabled": true,
+      "trigger": {
+        "pattern": "supabase/**/*.sql",
+        "events": ["create", "modify"]
+      },
+      "actions": [
+        {
+          "name": "Validate RLS Policies",
+          "agent": "erp-database-guardian"
+        },
+        {
+          "name": "Update TypeScript Types",
+          "script": "scripts/hooks/update-db-types.sh",
+          "timeout": 30000
+        },
+        {
+          "name": "Backup Schema",
+          "script": "scripts/hooks/backup-schema.sh",
+          "timeout": 10000
+        }
+      ]
+    },
+    "on-type-change": {
+      "enabled": true,
+      "trigger": {
+        "pattern": "lib/types/**/*.ts",
+        "events": ["modify"]
+      },
+      "actions": [
+        {
+          "name": "Type Check All Files",
+          "command": "npm run type-check",
+          "timeout": 60000
+        }
+      ]
+    },
+    "on-permission-change": {
+      "enabled": true,
+      "trigger": {
+        "pattern": "lib/auth/permissions.ts",
+        "events": ["modify"]
+      },
+      "actions": [
+        {
+          "name": "Verify RBAC Consistency",
+          "agent": "erp-api-validator"
+        },
+        {
+          "name": "Update Documentation",
+          "agent": "erp-documentation-writer",
+          "scope": "rbac"
+        }
+      ]
+    }
+  },
+  "globalSettings": {
+    "enableHooks": true,
+    "logHookExecution": true,
+    "failOnHookError": false,
+    "hooksDirectory": "scripts/hooks"
+  }
+}

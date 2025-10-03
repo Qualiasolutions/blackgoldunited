@@ -42,7 +42,7 @@ export function RealtimeActivityFeed() {
             type: 'invoice',
             action: 'created',
             title: 'New Invoice Created',
-            description: `Invoice ${payload.new.invoiceNumber} for $${(Number(payload.new.totalAmount) ?? 0).toLocaleString()}`,
+            description: `Invoice ${payload.new.invoice_number} for $${(Number(payload.new.total_amount) ?? 0).toLocaleString()}`,
             timestamp: new Date().toISOString(),
             data: payload.new
           })
@@ -57,7 +57,7 @@ export function RealtimeActivityFeed() {
               type: 'invoice',
               action: 'status_changed',
               title: 'Invoice Status Updated',
-              description: `Invoice ${payload.new.invoiceNumber} status changed to ${payload.new.status}`,
+              description: `Invoice ${payload.new.invoice_number} status changed to ${payload.new.status}`,
               timestamp: new Date().toISOString(),
               data: payload.new
             })
@@ -77,7 +77,7 @@ export function RealtimeActivityFeed() {
             type: 'client',
             action: 'created',
             title: 'New Client Added',
-            description: `${payload.new.companyName} added to client database`,
+            description: `${payload.new.company_name} added to client database`,
             timestamp: new Date().toISOString(),
             data: payload.new
           })
@@ -140,7 +140,7 @@ export function RealtimeActivityFeed() {
             type: 'purchase_order',
             action: 'created',
             title: 'Purchase Order Created',
-            description: `PO ${payload.new.poNumber} for $${(Number(payload.new.totalAmount) ?? 0).toLocaleString()}`,
+            description: `PO ${payload.new.po_number} for $${(Number(payload.new.total_amount) ?? 0).toLocaleString()}`,
             timestamp: new Date().toISOString(),
             data: payload.new
           })

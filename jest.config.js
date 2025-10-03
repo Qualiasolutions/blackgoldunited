@@ -40,19 +40,19 @@ const customJestConfig = {
     '!**/jest.config.js',
   ],
 
-  // Test match patterns
+  // Test match patterns - only match .test.ts and .spec.ts files
   testMatch: [
-    '**/__tests__/**/*.[jt]s?(x)',
+    '**/__tests__/**/*.test.[jt]s?(x)',
+    '**/__tests__/**/*.spec.[jt]s?(x)',
     '**/?(*.)+(spec|test).[jt]s?(x)',
   ],
 
-  // Exclude test helpers from being run as tests
+  // Exclude test helpers and utilities from being run as tests
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/',
     '<rootDir>/.next/',
     '<rootDir>/__tests__/test-helpers.ts',
     '<rootDir>/__tests__/helpers/',
-    '<rootDir>/helpers/',
   ],
 
   // Transform files
@@ -75,12 +75,6 @@ const customJestConfig = {
   //     statements: 5,
   //   },
   // },
-
-  // Ignore patterns
-  testPathIgnorePatterns: [
-    '<rootDir>/node_modules/',
-    '<rootDir>/.next/',
-  ],
 
   // Module file extensions
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],

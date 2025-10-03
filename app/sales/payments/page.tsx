@@ -66,43 +66,43 @@ export default function PaymentsPage() {
         .from('invoice_payments')
         .select(`
           id,
-          invoiceId,
+          invoice_id,
           amount,
-          paymentMethod,
+          payment_method,
           status,
-          paymentDate,
+          payment_date,
           reference,
           notes,
-          createdAt,
-          updatedAt,
-          invoices:invoiceId (
-            invoiceNumber,
-            clientId,
-            clients:clientId (
-              companyName
+          created_at,
+          updated_at,
+          invoices:invoice_id (
+            invoice_number,
+            client_id,
+            clients:client_id (
+              company_name
             )
           )
         `)
-        .eq('deletedAt', null)
-        .order('createdAt', { ascending: false })
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
 
       if (error) throw error
 
       const formattedPayments = (data || []).map(item => ({
         id: item.id,
         paymentNumber: `PAY-${item.id.slice(-6)}`,
-        invoiceId: item.invoiceId,
-        invoiceNumber: (item.invoices as any)?.invoiceNumber || 'Unknown',
-        clientId: (item.invoices as any)?.clientId || '',
+        invoiceId: item.invoice_id,
+        invoiceNumber: (item.invoices as any)?.invoice_number || 'Unknown',
+        clientId: (item.invoices as any)?.client_id || '',
         clientName: (item.invoices as any)?.clients?.company_name || 'Unknown Client',
         amount: Number(item.amount) || 0,
-        paymentMethod: item.paymentMethod || 'OTHER',
+        paymentMethod: item.payment_method || 'OTHER',
         status: item.status || 'PENDING',
-        paymentDate: item.paymentDate || '',
+        paymentDate: item.payment_date || '',
         reference: item.reference || '',
         notes: item.notes || '',
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt
+        createdAt: item.created_at,
+        updatedAt: item.updated_at
       }))
 
       setPayments(formattedPayments)

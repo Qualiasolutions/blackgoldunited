@@ -258,8 +258,8 @@ export default function InvoicesPage() {
     )
   }
 
-  const totalAmount = invoices.reduce((sum, inv) => sum + inv.totalAmount, 0)
-  const paidAmount = invoices.reduce((sum, inv) => sum + inv.paidAmount, 0)
+  const totalAmount = invoices.reduce((sum, inv) => sum + (inv.totalAmount ?? 0), 0)
+  const paidAmount = invoices.reduce((sum, inv) => sum + (inv.paidAmount ?? 0), 0)
   const overdueInvoices = invoices.filter(inv => inv.status === 'OVERDUE').length
   const outstandingAmount = totalAmount - paidAmount
 
@@ -527,11 +527,11 @@ export default function InvoicesPage() {
                           <div className="flex items-center space-x-4 text-xs text-gray-500">
                             <span className="flex items-center">
                               <Calendar className="h-3 w-3 mr-1" />
-                              Due: {new Date(invoice.dueDate).toLocaleDateString()}
+                              Due: {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}
                             </span>
                             <span className="flex items-center">
                               <User className="h-3 w-3 mr-1" />
-                              Created: {new Date(invoice.createdAt).toLocaleDateString()}
+                              Created: {invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString() : 'N/A'}
                             </span>
                             {invoice.paidAmount > 0 && (
                               <span className="flex items-center text-green-600">

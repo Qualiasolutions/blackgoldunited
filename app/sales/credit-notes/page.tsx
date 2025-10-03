@@ -62,40 +62,40 @@ export default function CreditNotesPage() {
         .from('credit_notes')
         .select(`
           id,
-          creditNoteNumber,
-          clientId,
-          invoiceId,
+          credit_note_number,
+          client_id,
+          invoice_id,
           reason,
           amount,
           status,
-          issueDate,
-          createdAt,
-          updatedAt,
-          clients:clientId (
-            companyName
+          issue_date,
+          created_at,
+          updated_at,
+          clients:client_id (
+            company_name
           ),
-          invoices:invoiceId (
-            invoiceNumber
+          invoices:invoice_id (
+            invoice_number
           )
         `)
-        .eq('deletedAt', null)
-        .order('createdAt', { ascending: false })
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
 
       if (error) throw error
 
       const formattedCreditNotes = (data || []).map(item => ({
         id: item.id,
-        creditNoteNumber: item.creditNoteNumber || `CN-${item.id.slice(-6)}`,
-        clientId: item.clientId,
+        creditNoteNumber: item.credit_note_number || `CN-${item.id.slice(-6)}`,
+        clientId: item.client_id,
         clientName: (item.clients as any)?.company_name || 'Unknown Client',
-        invoiceId: item.invoiceId,
-        invoiceNumber: (item.invoices as any)?.invoiceNumber || '',
+        invoiceId: item.invoice_id,
+        invoiceNumber: (item.invoices as any)?.invoice_number || '',
         reason: item.reason || '',
         amount: Number(item.amount) || 0,
         status: item.status || 'DRAFT',
-        issueDate: item.issueDate || '',
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt
+        issueDate: item.issue_date || '',
+        createdAt: item.created_at,
+        updatedAt: item.updated_at
       }))
 
       setCreditNotes(formattedCreditNotes)

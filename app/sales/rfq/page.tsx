@@ -62,36 +62,36 @@ export default function RFQPage() {
         .from('quotations')
         .select(`
           id,
-          quotationNumber,
-          clientId,
+          quotation_number,
+          client_id,
           title,
           description,
           status,
-          validUntil,
-          totalAmount,
-          createdAt,
-          updatedAt,
-          clients:clientId (
-            companyName
+          valid_until,
+          total_amount,
+          created_at,
+          updated_at,
+          clients:client_id (
+            company_name
           )
         `)
-        .eq('deletedAt', null)
-        .order('createdAt', { ascending: false })
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
 
       if (error) throw error
 
       const formattedRFQs = (data || []).map(item => ({
         id: item.id,
-        rfqNumber: item.quotationNumber || `RFQ-${item.id.slice(-6)}`,
-        clientId: item.clientId,
+        rfqNumber: item.quotation_number || `RFQ-${item.id.slice(-6)}`,
+        clientId: item.client_id,
         clientName: (item.clients as any)?.company_name || 'Unknown Client',
         title: item.title || 'Untitled RFQ',
         description: item.description || '',
         status: item.status || 'DRAFT',
-        validUntil: item.validUntil || '',
-        totalAmount: Number(item.totalAmount) || 0,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt
+        validUntil: item.valid_until || '',
+        totalAmount: Number(item.total_amount) || 0,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at
       }))
 
       setRfqs(formattedRFQs)

@@ -30,12 +30,7 @@ export async function GET(request: NextRequest) {
         template_data,
         is_active,
         created_at,
-        updated_at,
-        clients!recurring_invoices_client_id_fkey(
-          id,
-          company_name,
-          client_code
-        )
+        updated_at
       `)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
@@ -53,12 +48,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch recurring invoices' }, { status: 500 })
     }
 
+    // Fetch client data separately if needed
+    const clientIds = [...new Set(data?.map((item: any) => item.client_id).filter(Boolean))]
+    let clientsMap: Record<string, any> = {}
+
+    if (clientIds.length > 0) {
+      const { data: clientsData } = await supabase
+        .from('clients')
+        .select('id, company_name')
+        .in('id', clientIds)
+
+      if (clientsData) {
+        clientsMap = clientsData.reduce((acc: any, client: any) => {
+          acc[client.id] = client
+          return acc
+        }, {})
+      }
+    }
+
     // Format data for frontend
     const formattedData = data?.map((item: any) => ({
       id: item.id,
       templateName: item.template_name,
       clientId: item.client_id,
-      clientName: item.clients?.company_name || 'Unknown Client',
+      clientName: clientsMap[item.client_id]?.company_name || 'Unknown Client',
       amount: item.template_data?.total_amount || 0,
       frequency: item.frequency,
       startDate: item.start_date,

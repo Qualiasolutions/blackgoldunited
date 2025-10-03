@@ -202,26 +202,21 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = clientSchema.parse(body);
 
-    // Check if an ACTIVE client with the same email already exists
-    // Only check for clients that are explicitly active (is_active = true)
-    const { data: existingClients, error: checkError } = await supabase
+    // Check if client_code already exists (client_code has UNIQUE constraint)
+    const { data: existingByCode, error: codeCheckError } = await supabase
       .from('clients')
-      .select('id, email, is_active')
-      .eq('email', validatedData.email)
-      .eq('is_active', true);
+      .select('id, client_code')
+      .eq('client_code', validatedData.clientCode);
 
-    console.log(`[POST /api/clients] Duplicate check for ${validatedData.email}:`, {
-      found: existingClients?.length || 0,
-      clients: existingClients,
-      error: checkError
-    });
-
-    if (existingClients && existingClients.length > 0) {
+    if (existingByCode && existingByCode.length > 0) {
       return NextResponse.json({
-        error: 'An active client with this email already exists',
-        debug: { is_active: existingClients[0].is_active }
+        error: 'A client with this client code already exists',
+        field: 'clientCode'
       }, { status: 409 });
     }
+
+    // NOTE: Email does NOT have a unique constraint in the database
+    // Multiple clients can share the same email (e.g., multiple departments at same company)
 
     // Map camelCase to snake_case for database
     const dbData = {

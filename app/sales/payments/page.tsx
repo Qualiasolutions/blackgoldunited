@@ -74,36 +74,70 @@ export default function PaymentsPage() {
           reference,
           notes,
           created_at,
-          updated_at,
-          invoices:invoice_id (
-            invoice_number,
-            client_id,
-            clients:client_id (
-              company_name
-            )
-          )
+          updated_at
         `)
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
 
       if (error) throw error
 
-      const formattedPayments = (data || []).map(item => ({
-        id: item.id,
-        paymentNumber: `PAY-${item.id.slice(-6)}`,
-        invoiceId: item.invoice_id,
-        invoiceNumber: (item.invoices as any)?.invoice_number || 'Unknown',
-        clientId: (item.invoices as any)?.client_id || '',
-        clientName: (item.invoices as any)?.clients?.company_name || 'Unknown Client',
-        amount: Number(item.amount) || 0,
-        paymentMethod: item.payment_method || 'OTHER',
-        status: item.status || 'PENDING',
-        paymentDate: item.payment_date || '',
-        reference: item.reference || '',
-        notes: item.notes || '',
-        createdAt: item.created_at,
-        updatedAt: item.updated_at
-      }))
+      // Fetch invoice data separately
+      const invoiceIds = [...new Set(data?.map((item: any) => item.invoice_id).filter(Boolean))]
+      let invoicesMap: Record<string, any> = {}
+
+      if (invoiceIds.length > 0) {
+        const { data: invoicesData } = await supabase
+          .from('invoices')
+          .select('id, invoice_number, client_id')
+          .in('id', invoiceIds)
+
+        if (invoicesData) {
+          invoicesMap = invoicesData.reduce((acc: any, invoice: any) => {
+            acc[invoice.id] = invoice
+            return acc
+          }, {})
+        }
+      }
+
+      // Fetch client data separately
+      const clientIds = [...new Set(Object.values(invoicesMap).map((inv: any) => inv.client_id).filter(Boolean))]
+      let clientsMap: Record<string, any> = {}
+
+      if (clientIds.length > 0) {
+        const { data: clientsData } = await supabase
+          .from('clients')
+          .select('id, company_name')
+          .in('id', clientIds)
+
+        if (clientsData) {
+          clientsMap = clientsData.reduce((acc: any, client: any) => {
+            acc[client.id] = client
+            return acc
+          }, {})
+        }
+      }
+
+      const formattedPayments = (data || []).map(item => {
+        const invoice = invoicesMap[item.invoice_id]
+        const client = invoice ? clientsMap[invoice.client_id] : null
+
+        return {
+          id: item.id,
+          paymentNumber: `PAY-${item.id.slice(-6)}`,
+          invoiceId: item.invoice_id,
+          invoiceNumber: invoice?.invoice_number || 'Unknown',
+          clientId: invoice?.client_id || '',
+          clientName: client?.company_name || 'Unknown Client',
+          amount: Number(item.amount) || 0,
+          paymentMethod: item.payment_method || 'OTHER',
+          status: item.status || 'PENDING',
+          paymentDate: item.payment_date || '',
+          reference: item.reference || '',
+          notes: item.notes || '',
+          createdAt: item.created_at,
+          updatedAt: item.updated_at
+        }
+      })
 
       setPayments(formattedPayments)
     } catch (error) {

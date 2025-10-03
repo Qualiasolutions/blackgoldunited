@@ -344,14 +344,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create invoice items' }, { status: 500 });
     }
 
-    // Fetch the complete invoice with client and items
+    // Fetch the complete invoice
     const { data: completeInvoice, error: fetchError } = await supabase
       .from('invoices')
-      .select(`
-        *,
-        client:clients!inner(id, company_name, contact_person, email),
-        items:invoice_items(*)
-      `)
+      .select('*')
       .eq('id', newInvoice.id)
       .single();
 
@@ -360,9 +356,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch created invoice' }, { status: 500 });
     }
 
+    // Fetch client data separately
+    const { data: clientData } = await supabase
+      .from('clients')
+      .select('id, company_name, contact_person, email')
+      .eq('id', completeInvoice.client_id)
+      .single();
+
+    // Fetch invoice items separately
+    const { data: itemsData } = await supabase
+      .from('invoice_items')
+      .select('*')
+      .eq('invoice_id', completeInvoice.id);
+
+    // Combine data manually
+    const invoiceWithRelations = {
+      ...completeInvoice,
+      client: clientData || null,
+      items: itemsData || []
+    };
+
     return NextResponse.json({
       success: true,
-      data: completeInvoice,
+      data: invoiceWithRelations,
       message: 'Invoice created successfully'
     }, { status: 201 });
 

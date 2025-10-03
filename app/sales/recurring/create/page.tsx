@@ -139,8 +139,8 @@ export default function CreateRecurringInvoicePage() {
   }
 
   const filteredClients = clients.filter(client =>
-    client.companyName.toLowerCase().includes(clientSearch.toLowerCase()) ||
-    client.contactPerson.toLowerCase().includes(clientSearch.toLowerCase())
+    client.companyName?.toLowerCase().includes(clientSearch.toLowerCase()) ||
+    client.contactPerson?.toLowerCase().includes(clientSearch.toLowerCase())
   )
 
   const validateForm = (): boolean => {

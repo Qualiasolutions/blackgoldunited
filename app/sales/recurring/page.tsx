@@ -44,8 +44,8 @@ export default function RecurringInvoicesPage() {
   }
 
   const filteredInvoices = recurringInvoices.filter(inv => {
-    const matchesSearch = inv.templateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         inv.clientName.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = inv.templateName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         inv.clientName?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = !filterStatus || inv.status === filterStatus
     const matchesFrequency = !filterFrequency || inv.frequency === filterFrequency
     return matchesSearch && matchesStatus && matchesFrequency

@@ -118,8 +118,8 @@ export default function CreateInvoicePage() {
   }
 
   const filteredClients = clients.filter(client =>
-    client.companyName.toLowerCase().includes(clientSearch.toLowerCase()) ||
-    client.contactPerson.toLowerCase().includes(clientSearch.toLowerCase())
+    client.companyName?.toLowerCase().includes(clientSearch.toLowerCase()) ||
+    client.contactPerson?.toLowerCase().includes(clientSearch.toLowerCase())
   )
 
   const calculateItemTotal = (quantity: number, unitPrice: number, taxRate: number) => {

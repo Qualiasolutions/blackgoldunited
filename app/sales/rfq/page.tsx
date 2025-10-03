@@ -124,9 +124,9 @@ export default function RFQPage() {
   }
 
   const filteredRFQs = rfqs.filter(rfq => {
-    const matchesSearch = rfq.rfqNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         rfq.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         rfq.title.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = rfq.rfqNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         rfq.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         rfq.title?.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesFilter = filterStatus === '' || rfq.status === filterStatus
 

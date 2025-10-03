@@ -27,9 +27,9 @@ export async function GET(request: NextRequest) {
     try {
       const { data: clients } = await supabase
         .from('clients')
-        .select('id, companyName, email, phone')
-        .eq('deletedAt', null)
-        .ilike('companyName', `%${query}%`)
+        .select('id, company_name, email, phone')
+        .eq('deleted_at', null)
+        .ilike('company_name', `%${query}%`)
         .limit(5)
 
       if (clients) {
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
           searchResults.push({
             id: client.id,
             type: 'client',
-            title: client.companyName,
+            title: client.company_name,
             description: client.email || 'Client',
             module: 'clients',
             href: `/clients/${client.id}`,
@@ -54,9 +54,9 @@ export async function GET(request: NextRequest) {
     try {
       const { data: invoices } = await supabase
         .from('invoices')
-        .select('id, invoiceNumber, totalAmount, status')
-        .eq('deletedAt', null)
-        .ilike('invoiceNumber', `%${query}%`)
+        .select('id, invoice_number, total_amount, status')
+        .eq('deleted_at', null)
+        .ilike('invoice_number', `%${query}%`)
         .limit(5)
 
       if (invoices) {
@@ -64,8 +64,8 @@ export async function GET(request: NextRequest) {
           searchResults.push({
             id: invoice.id,
             type: 'invoice',
-            title: `Invoice #${invoice.invoiceNumber}`,
-            description: `AED ${invoice.totalAmount} - ${invoice.status}`,
+            title: `Invoice #${invoice.invoice_number}`,
+            description: `AED ${invoice.total_amount} - ${invoice.status}`,
             module: 'sales',
             href: `/sales/invoices/${invoice.id}`,
             match: 'invoice',
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
       const { data: products } = await supabase
         .from('products')
         .select('id, name, productCode, sellingPrice')
-        .eq('deletedAt', null)
+        .eq('deleted_at', null)
         .eq('isActive', true)
         .ilike('name', `%${query}%`)
         .limit(5)

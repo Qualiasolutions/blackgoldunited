@@ -20,22 +20,22 @@ export async function GET(request: NextRequest) {
     try {
       const { data: invoices } = await supabase
         .from('invoices')
-        .select('id, invoiceNumber, totalAmount, paidAmount, status, createdAt')
-        .eq('deletedAt', null)
-        .order('createdAt', { ascending: false })
+        .select('id, invoice_number, total_amount, paid_amount, status, created_at')
+        .eq('deleted_at', null)
+        .order('created_at', { ascending: false })
         .limit(3)
 
       if (invoices) {
         invoices.forEach((invoice: any) => {
-          if (invoice.paidAmount > 0) {
+          if (invoice.paid_amount > 0) {
             recentTransactions.push({
               id: invoice.id,
               type: 'invoice_payment',
-              title: `Invoice #${invoice.invoiceNumber || 'N/A'}`,
-              description: `Payment received - Invoice #${invoice.invoiceNumber || 'N/A'}`,
-              amount: Number(invoice.paidAmount),
+              title: `Invoice #${invoice.invoice_number || 'N/A'}`,
+              description: `Payment received - Invoice #${invoice.invoice_number || 'N/A'}`,
+              amount: Number(invoice.paid_amount),
               module: 'sales',
-              created_at: invoice.createdAt,
+              created_at: invoice.created_at,
               status: 'completed'
             })
           }
@@ -49,9 +49,9 @@ export async function GET(request: NextRequest) {
     try {
       const { data: purchaseOrders } = await supabase
         .from('purchase_orders')
-        .select('id, orderNumber, totalAmount, status, createdAt')
-        .eq('deletedAt', null)
-        .order('createdAt', { ascending: false })
+        .select('id, po_number, total_amount, status, created_at')
+        .eq('deleted_at', null)
+        .order('created_at', { ascending: false })
         .limit(2)
 
       if (purchaseOrders) {
@@ -59,11 +59,11 @@ export async function GET(request: NextRequest) {
           recentTransactions.push({
             id: po.id,
             type: 'purchase_order',
-            title: `Purchase Order #${po.orderNumber || 'N/A'}`,
-            description: `Purchase order - ${po.orderNumber || 'N/A'}`,
-            amount: -Number(po.totalAmount || 0),
+            title: `Purchase Order #${po.po_number || 'N/A'}`,
+            description: `Purchase order - ${po.po_number || 'N/A'}`,
+            amount: -Number(po.total_amount || 0),
             module: 'purchase',
-            created_at: po.createdAt,
+            created_at: po.created_at,
             status: po.status?.toLowerCase() || 'pending'
           })
         })
@@ -76,9 +76,9 @@ export async function GET(request: NextRequest) {
     try {
       const { data: clients } = await supabase
         .from('clients')
-        .select('id, companyName, createdAt')
-        .eq('deletedAt', null)
-        .order('createdAt', { ascending: false })
+        .select('id, company_name, created_at')
+        .eq('deleted_at', null)
+        .order('created_at', { ascending: false })
         .limit(2)
 
       if (clients) {
@@ -86,10 +86,10 @@ export async function GET(request: NextRequest) {
           systemActivity.push({
             id: client.id,
             action: 'Client registered',
-            description: `${client.companyName} successfully added to client database`,
+            description: `${client.company_name} successfully added to client database`,
             user: 'System',
             module: 'clients',
-            created_at: client.createdAt,
+            created_at: client.created_at,
             type: 'success'
           })
         })

@@ -30,9 +30,9 @@ const purchaseOrderUpdateSchema = z.object({
   notes: z.string().optional(),
   deliveryAddress: z.string().optional(),
   billingAddress: z.string().optional(),
-  taxRate: z.number().min(0).max(100).optional(),
-  shippingCost: z.number().min(0).optional(),
-  discountAmount: z.number().min(0).optional(),
+  tax_rate: z.number().min(0).max(100).optional(),
+  shipping_cost: z.number().min(0).optional(),
+  discount_amount: z.number().min(0).optional(),
   status: z.enum(['DRAFT', 'SENT', 'CONFIRMED', 'PARTIALLY_RECEIVED', 'RECEIVED', 'CANCELLED']).optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional()
 })
@@ -129,8 +129,8 @@ export async function GET(
     // Calculate totals and completion status
     const items = purchaseOrder.items || []
     const subtotal = items.reduce((sum: number, item: any) => sum + (item.totalAmount || 0), 0)
-    const taxAmount = subtotal * (purchaseOrder.taxRate || 0) / 100
-    const totalAmount = subtotal + taxAmount + (purchaseOrder.shippingCost || 0) - (purchaseOrder.discountAmount || 0)
+    const taxAmount = subtotal * (purchaseOrder.tax_rate || 0) / 100
+    const totalAmount = subtotal + taxAmount + (purchaseOrder.shipping_cost || 0) - (purchaseOrder.discount_amount || 0)
 
     // Calculate received percentages
     const totalQuantity = items.reduce((sum: number, item: any) => sum + item.quantity, 0)
@@ -251,8 +251,8 @@ export async function PUT(
 
       // Recalculate totals
       const subtotal = itemsWithTotals.reduce((sum, item) => sum + item.totalAmount, 0)
-      const taxAmount = subtotal * (poUpdate.taxRate || 0) / 100
-      const totalAmount = subtotal + taxAmount + (poUpdate.shippingCost || 0) - (poUpdate.discountAmount || 0)
+      const taxAmount = subtotal * (poUpdate.tax_rate || 0) / 100
+      const totalAmount = subtotal + taxAmount + (poUpdate.shipping_cost || 0) - (poUpdate.discount_amount || 0)
 
       // Add calculated fields to the update data
       const calculatedFields = {
@@ -312,7 +312,7 @@ export async function DELETE(
     // Check PO status - can only cancel DRAFT or SENT orders
     const { data: existingPO, error: poError } = await supabase
       .from('purchase_orders')
-      .select('id, status, poNumber')
+      .select('id, status, po_number')
       .eq('id', orderId)
       .is('deletedAt', null)
       .single()
@@ -347,7 +347,7 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       data: {
-        message: `Purchase order ${existingPO.poNumber} cancelled successfully`,
+        message: `Purchase order ${existingPO.po_number} cancelled successfully`,
         purchaseOrder: cancelledPO
       }
     })

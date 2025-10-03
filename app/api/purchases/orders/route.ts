@@ -14,7 +14,7 @@ const purchaseOrderItemSchema = z.object({
 
 // Purchase Order schema
 const purchaseOrderSchema = z.object({
-  supplierId: z.string().uuid('Supplier ID is required'),
+  supplier_id: z.string().uuid('Supplier ID is required'),
   orderDate: z.string().datetime().default(new Date().toISOString()),
   expectedDeliveryDate: z.string().datetime(),
 
@@ -31,9 +31,9 @@ const purchaseOrderSchema = z.object({
   billingAddress: z.string().optional(),
 
   // Financial
-  taxRate: z.number().min(0).max(100).default(0),
-  shippingCost: z.number().min(0).default(0),
-  discountAmount: z.number().min(0).default(0),
+  tax_rate: z.number().min(0).max(100).default(0),
+  shipping_cost: z.number().min(0).default(0),
+  discount_amount: z.number().min(0).default(0),
 
   // Workflow
   status: z.enum(['DRAFT', 'SENT', 'CONFIRMED', 'PARTIALLY_RECEIVED', 'RECEIVED', 'CANCELLED']).default('DRAFT'),
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     // Extract query parameters
     const query = searchParams.get('query') || ''
     const status = searchParams.get('status') || ''
-    const supplierId = searchParams.get('supplierId') || ''
+    const supplier_id = searchParams.get('supplier_id') || ''
     const priority = searchParams.get('priority') || ''
     const startDate = searchParams.get('startDate') || ''
     const endDate = searchParams.get('endDate') || ''
@@ -101,15 +101,15 @@ export async function GET(request: NextRequest) {
 
     // Apply filters
     if (query) {
-      queryBuilder = queryBuilder.or(`poNumber.ilike.%${query}%,notes.ilike.%${query}%`)
+      queryBuilder = queryBuilder.or(`po_number.ilike.%${query}%,notes.ilike.%${query}%`)
     }
 
     if (status) {
       queryBuilder = queryBuilder.eq('status', status)
     }
 
-    if (supplierId) {
-      queryBuilder = queryBuilder.eq('supplierId', supplierId)
+    if (supplier_id) {
+      queryBuilder = queryBuilder.eq('supplier_id', supplier_id)
     }
 
     if (priority) {
@@ -138,8 +138,8 @@ export async function GET(request: NextRequest) {
     const ordersWithTotals = purchaseOrders?.map(po => {
       const items = po.items || []
       const subtotal = items.reduce((sum: number, item: any) => sum + (item.totalAmount || 0), 0)
-      const tax = subtotal * (po.taxRate || 0) / 100
-      const total = subtotal + tax + (po.shippingCost || 0) - (po.discountAmount || 0)
+      const tax = subtotal * (po.tax_rate || 0) / 100
+      const total = subtotal + tax + (po.shipping_cost || 0) - (po.discount_amount || 0)
 
       return {
         ...po,
@@ -195,7 +195,7 @@ export async function POST(request: NextRequest) {
     const { data: supplier, error: supplierError } = await supabase
       .from('suppliers')
       .select('id, isActive, paymentTerms')
-      .eq('id', orderData.supplierId)
+      .eq('id', orderData.supplier_id)
       .is('deletedAt', null)
       .single()
 
@@ -229,14 +229,14 @@ export async function POST(request: NextRequest) {
     // Generate PO number
     const { data: lastPO } = await supabase
       .from('purchase_orders')
-      .select('poNumber')
+      .select('po_number')
       .order('createdAt', { ascending: false })
       .limit(1)
       .single()
 
-    const lastNumber = lastPO?.poNumber ?
-      parseInt(lastPO.poNumber.replace('PO-', '')) || 0 : 0
-    const poNumber = `PO-${String(lastNumber + 1).padStart(6, '0')}`
+    const lastNumber = lastPO?.po_number ?
+      parseInt(lastPO.po_number.replace('PO-', '')) || 0 : 0
+    const po_number = `PO-${String(lastNumber + 1).padStart(6, '0')}`
 
     // Calculate totals
     const itemsWithTotals = items.map(item => ({
@@ -245,8 +245,8 @@ export async function POST(request: NextRequest) {
     }))
 
     const subtotal = itemsWithTotals.reduce((sum, item) => sum + item.totalAmount, 0)
-    const taxAmount = subtotal * (poData.taxRate || 0) / 100
-    const totalAmount = subtotal + taxAmount + (poData.shippingCost || 0) - (poData.discountAmount || 0)
+    const taxAmount = subtotal * (poData.tax_rate || 0) / 100
+    const totalAmount = subtotal + taxAmount + (poData.shipping_cost || 0) - (poData.discount_amount || 0)
 
     // Determine approval status
     const requiresApproval = poData.requiresApproval && totalAmount >= poData.approvalThreshold
@@ -260,7 +260,7 @@ export async function POST(request: NextRequest) {
       .from('purchase_orders')
       .insert([{
         ...poData,
-        poNumber,
+        po_number,
         paymentTerms,
         subtotal,
         taxAmount,

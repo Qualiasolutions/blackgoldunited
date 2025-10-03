@@ -224,12 +224,12 @@ export async function PUT(
         return sum + itemTax;
       }, 0);
 
-      const totalAmount = subtotal + taxAmount - (validatedData.discountAmount || 0);
+      const total_amount = subtotal + taxAmount - (validatedData.discountAmount || 0);
 
       updatedTotals = {
         subtotal,
         taxAmount,
-        totalAmount,
+        total_amount,
       };
     }
 
@@ -315,7 +315,7 @@ export async function DELETE(
     // Check if invoice exists and get some info for the response
     const { data: existingInvoice, error: checkError } = await supabase
       .from('invoices')
-      .select('id, invoiceNumber, status')
+      .select('id, invoice_number, status')
       .eq('id', id)
       .is('deletedAt', null)
       .single();
@@ -351,7 +351,7 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: `Invoice "${existingInvoice.invoiceNumber}" has been deleted`
+      message: `Invoice "${existingInvoice.invoice_number}" has been deleted`
     });
 
   } catch (error) {

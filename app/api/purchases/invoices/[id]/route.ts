@@ -5,14 +5,14 @@ import { authenticateAndAuthorize } from '@/lib/auth/api-auth'
 
 // Purchase Invoice update schema
 const purchaseInvoiceUpdateSchema = z.object({
-  supplierInvoiceNumber: z.string().min(1).optional(),
+  supplier_invoice_number: z.string().min(1).optional(),
   invoiceDate: z.string().datetime().optional(),
   dueDate: z.string().datetime().optional(),
-  taxRate: z.number().min(0).max(100).optional(),
-  discountAmount: z.number().min(0).optional(),
-  shippingCost: z.number().min(0).optional(),
+  tax_rate: z.number().min(0).max(100).optional(),
+  discount_amount: z.number().min(0).optional(),
+  shipping_cost: z.number().min(0).optional(),
   status: z.enum(['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'PAID', 'CANCELLED']).optional(),
-  paymentStatus: z.enum(['UNPAID', 'PARTIALLY_PAID', 'PAID', 'OVERDUE']).optional(),
+  payment_status: z.enum(['UNPAID', 'PARTIALLY_PAID', 'PAID', 'OVERDUE']).optional(),
   notes: z.string().optional(),
   internalNotes: z.string().optional(),
   attachmentUrl: z.string().url().optional(),
@@ -58,7 +58,7 @@ export async function GET(
         ),
         purchaseOrder:purchase_orders(
           id,
-          poNumber,
+          po_number,
           status,
           orderDate,
           expectedDeliveryDate
@@ -109,8 +109,8 @@ export async function GET(
     const payments = invoice.payments || []
 
     const subtotal = items.reduce((sum: number, item: any) => sum + (item.totalAmount || 0), 0)
-    const taxAmount = subtotal * (invoice.taxRate || 0) / 100
-    const totalAmount = subtotal + taxAmount + (invoice.shippingCost || 0) - (invoice.discountAmount || 0)
+    const taxAmount = subtotal * (invoice.tax_rate || 0) / 100
+    const totalAmount = subtotal + taxAmount + (invoice.shipping_cost || 0) - (invoice.discount_amount || 0)
 
     const paidAmount = payments
       .filter((p: any) => p.status === 'COMPLETED')
@@ -207,7 +207,7 @@ export async function PUT(
     // Check if invoice exists and can be updated
     const { data: existingInvoice, error: invoiceError } = await supabase
       .from('purchase_invoices')
-      .select('id, status, paymentStatus, supplierId, supplierInvoiceNumber, taxRate, shippingCost, discountAmount')
+      .select('id, status, payment_status, supplier_id, supplier_invoice_number, tax_rate, shipping_cost, discount_amount')
       .eq('id', invoiceId)
       .is('deletedAt', null)
       .single()
@@ -224,12 +224,12 @@ export async function PUT(
     }
 
     // If updating supplier invoice number, check for duplicates
-    if (updateData.supplierInvoiceNumber && updateData.supplierInvoiceNumber !== existingInvoice.supplierInvoiceNumber) {
+    if (updateData.supplier_invoice_number && updateData.supplier_invoice_number !== existingInvoice.supplier_invoice_number) {
       const { data: duplicateInvoice } = await supabase
         .from('purchase_invoices')
         .select('id')
-        .eq('supplierId', existingInvoice.supplierId)
-        .eq('supplierInvoiceNumber', updateData.supplierInvoiceNumber)
+        .eq('supplier_id', existingInvoice.supplier_id)
+        .eq('supplier_invoice_number', updateData.supplier_invoice_number)
         .neq('id', invoiceId)
         .is('deletedAt', null)
         .single()
@@ -243,7 +243,7 @@ export async function PUT(
 
     // If financial fields are updated, recalculate totals
     let recalculatedFields = {}
-    if (updateData.taxRate !== undefined || updateData.shippingCost !== undefined || updateData.discountAmount !== undefined) {
+    if (updateData.tax_rate !== undefined || updateData.shipping_cost !== undefined || updateData.discount_amount !== undefined) {
       // Get current items to recalculate
       const { data: items } = await supabase
         .from('purchase_invoice_items')
@@ -252,12 +252,12 @@ export async function PUT(
 
       if (items) {
         const subtotal = items.reduce((sum, item) => sum + item.totalAmount, 0)
-        const taxRate = updateData.taxRate !== undefined ? updateData.taxRate : existingInvoice.taxRate || 0
-        const shippingCost = updateData.shippingCost !== undefined ? updateData.shippingCost : existingInvoice.shippingCost || 0
-        const discountAmount = updateData.discountAmount !== undefined ? updateData.discountAmount : existingInvoice.discountAmount || 0
+        const tax_rate = updateData.tax_rate !== undefined ? updateData.tax_rate : existingInvoice.tax_rate || 0
+        const shipping_cost = updateData.shipping_cost !== undefined ? updateData.shipping_cost : existingInvoice.shipping_cost || 0
+        const discount_amount = updateData.discount_amount !== undefined ? updateData.discount_amount : existingInvoice.discount_amount || 0
 
-        const taxAmount = subtotal * taxRate / 100
-        const totalAmount = subtotal + taxAmount + shippingCost - discountAmount
+        const taxAmount = subtotal * tax_rate / 100
+        const totalAmount = subtotal + taxAmount + shipping_cost - discount_amount
 
         recalculatedFields = {
           subtotal,
@@ -314,7 +314,7 @@ export async function DELETE(
     // Check invoice status - can only cancel unpaid invoices
     const { data: existingInvoice, error: invoiceError } = await supabase
       .from('purchase_invoices')
-      .select('id, status, paymentStatus, invoiceNumber')
+      .select('id, status, payment_status, invoice_number')
       .eq('id', invoiceId)
       .is('deletedAt', null)
       .single()
@@ -323,7 +323,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Purchase invoice not found' }, { status: 404 })
     }
 
-    if (existingInvoice.paymentStatus === 'PAID' || existingInvoice.paymentStatus === 'PARTIALLY_PAID') {
+    if (existingInvoice.payment_status === 'PAID' || existingInvoice.payment_status === 'PARTIALLY_PAID') {
       return NextResponse.json({
         error: 'Cannot cancel paid or partially paid invoices'
       }, { status: 400 })
@@ -348,7 +348,7 @@ export async function DELETE(
       .from('purchase_invoices')
       .update({
         status: 'CANCELLED',
-        paymentStatus: 'UNPAID',
+        payment_status: 'UNPAID',
         deletedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       })
@@ -364,7 +364,7 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       data: {
-        message: `Purchase invoice ${existingInvoice.invoiceNumber} cancelled successfully`,
+        message: `Purchase invoice ${existingInvoice.invoice_number} cancelled successfully`,
         invoice: cancelledInvoice
       }
     })

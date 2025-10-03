@@ -15,11 +15,11 @@ const purchaseInvoiceItemSchema = z.object({
 
 // Purchase Invoice schema
 const purchaseInvoiceSchema = z.object({
-  supplierId: z.string().uuid('Supplier ID is required'),
+  supplier_id: z.string().uuid('Supplier ID is required'),
   purchaseOrderId: z.string().uuid().optional(), // Optional - can create direct invoices
 
   // Invoice Details
-  supplierInvoiceNumber: z.string().min(1, 'Supplier invoice number is required'),
+  supplier_invoice_number: z.string().min(1, 'Supplier invoice number is required'),
   invoiceDate: z.string().datetime(),
   dueDate: z.string().datetime(),
 
@@ -27,14 +27,14 @@ const purchaseInvoiceSchema = z.object({
   items: z.array(purchaseInvoiceItemSchema).min(1, 'At least one item is required'),
 
   // Financial Details
-  taxRate: z.number().min(0).max(100).default(0),
-  discountAmount: z.number().min(0).default(0),
-  shippingCost: z.number().min(0).default(0),
+  tax_rate: z.number().min(0).max(100).default(0),
+  discount_amount: z.number().min(0).default(0),
+  shipping_cost: z.number().min(0).default(0),
   currency: z.string().default('USD'),
 
   // Status
   status: z.enum(['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'PAID', 'CANCELLED']).default('DRAFT'),
-  paymentStatus: z.enum(['UNPAID', 'PARTIALLY_PAID', 'PAID', 'OVERDUE']).default('UNPAID'),
+  payment_status: z.enum(['UNPAID', 'PARTIALLY_PAID', 'PAID', 'OVERDUE']).default('UNPAID'),
 
   // Notes
   notes: z.string().optional(),
@@ -63,8 +63,8 @@ export async function GET(request: NextRequest) {
     // Extract query parameters
     const query = searchParams.get('query') || ''
     const status = searchParams.get('status') || ''
-    const paymentStatus = searchParams.get('paymentStatus') || ''
-    const supplierId = searchParams.get('supplierId') || ''
+    const payment_status = searchParams.get('payment_status') || ''
+    const supplier_id = searchParams.get('supplier_id') || ''
     const purchaseOrderId = searchParams.get('purchaseOrderId') || ''
     const startDate = searchParams.get('startDate') || ''
     const endDate = searchParams.get('endDate') || ''
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
       .select(`
         *,
         supplier:suppliers(id, name, supplierCode, email),
-        purchaseOrder:purchase_orders(id, poNumber, status),
+        purchaseOrder:purchase_orders(id, po_number, status),
         items:purchase_invoice_items(
           id,
           productId,
@@ -101,19 +101,19 @@ export async function GET(request: NextRequest) {
 
     // Apply filters
     if (query) {
-      queryBuilder = queryBuilder.or(`invoiceNumber.ilike.%${query}%,supplierInvoiceNumber.ilike.%${query}%,notes.ilike.%${query}%`)
+      queryBuilder = queryBuilder.or(`invoice_number.ilike.%${query}%,supplier_invoice_number.ilike.%${query}%,notes.ilike.%${query}%`)
     }
 
     if (status) {
       queryBuilder = queryBuilder.eq('status', status)
     }
 
-    if (paymentStatus) {
-      queryBuilder = queryBuilder.eq('paymentStatus', paymentStatus)
+    if (payment_status) {
+      queryBuilder = queryBuilder.eq('payment_status', payment_status)
     }
 
-    if (supplierId) {
-      queryBuilder = queryBuilder.eq('supplierId', supplierId)
+    if (supplier_id) {
+      queryBuilder = queryBuilder.eq('supplier_id', supplier_id)
     }
 
     if (purchaseOrderId) {
@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (overdue) {
-      queryBuilder = queryBuilder.lt('dueDate', new Date().toISOString()).neq('paymentStatus', 'PAID')
+      queryBuilder = queryBuilder.lt('dueDate', new Date().toISOString()).neq('payment_status', 'PAID')
     }
 
     // Get paginated results
@@ -144,8 +144,8 @@ export async function GET(request: NextRequest) {
       const payments = invoice.payments || []
 
       const subtotal = items.reduce((sum: number, item: any) => sum + (item.totalAmount || 0), 0)
-      const taxAmount = subtotal * (invoice.taxRate || 0) / 100
-      const totalAmount = subtotal + taxAmount + (invoice.shippingCost || 0) - (invoice.discountAmount || 0)
+      const taxAmount = subtotal * (invoice.tax_rate || 0) / 100
+      const totalAmount = subtotal + taxAmount + (invoice.shipping_cost || 0) - (invoice.discount_amount || 0)
 
       const paidAmount = payments
         .filter((p: any) => p.status === 'COMPLETED')
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
     const { data: supplier, error: supplierError } = await supabase
       .from('suppliers')
       .select('id, isActive, name')
-      .eq('id', invoiceData.supplierId)
+      .eq('id', invoiceData.supplier_id)
       .is('deletedAt', null)
       .single()
 
@@ -228,7 +228,7 @@ export async function POST(request: NextRequest) {
     if (invoiceData.purchaseOrderId) {
       const { data: purchaseOrder, error: poError } = await supabase
         .from('purchase_orders')
-        .select('id, supplierId, status, poNumber')
+        .select('id, supplier_id, status, po_number')
         .eq('id', invoiceData.purchaseOrderId)
         .single()
 
@@ -236,7 +236,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Purchase order not found' }, { status: 404 })
       }
 
-      if (purchaseOrder.supplierId !== invoiceData.supplierId) {
+      if (purchaseOrder.supplier_id !== invoiceData.supplier_id) {
         return NextResponse.json({
           error: 'Purchase order does not belong to the specified supplier'
         }, { status: 400 })
@@ -253,8 +253,8 @@ export async function POST(request: NextRequest) {
     const { data: existingInvoice } = await supabase
       .from('purchase_invoices')
       .select('id')
-      .eq('supplierId', invoiceData.supplierId)
-      .eq('supplierInvoiceNumber', invoiceData.supplierInvoiceNumber)
+      .eq('supplier_id', invoiceData.supplier_id)
+      .eq('supplier_invoice_number', invoiceData.supplier_invoice_number)
       .is('deletedAt', null)
       .single()
 
@@ -279,14 +279,14 @@ export async function POST(request: NextRequest) {
     // Generate invoice number
     const { data: lastInvoice } = await supabase
       .from('purchase_invoices')
-      .select('invoiceNumber')
+      .select('invoice_number')
       .order('createdAt', { ascending: false })
       .limit(1)
       .single()
 
-    const lastNumber = lastInvoice?.invoiceNumber ?
-      parseInt(lastInvoice.invoiceNumber.replace('PINV-', '')) || 0 : 0
-    const invoiceNumber = `PINV-${String(lastNumber + 1).padStart(6, '0')}`
+    const lastNumber = lastInvoice?.invoice_number ?
+      parseInt(lastInvoice.invoice_number.replace('PINV-', '')) || 0 : 0
+    const invoice_number = `PINV-${String(lastNumber + 1).padStart(6, '0')}`
 
     // Calculate item totals
     const itemsWithTotals = items.map(item => ({
@@ -295,15 +295,15 @@ export async function POST(request: NextRequest) {
     }))
 
     const subtotal = itemsWithTotals.reduce((sum, item) => sum + item.totalAmount, 0)
-    const taxAmount = subtotal * (invoiceDetails.taxRate || 0) / 100
-    const totalAmount = subtotal + taxAmount + (invoiceDetails.shippingCost || 0) - (invoiceDetails.discountAmount || 0)
+    const taxAmount = subtotal * (invoiceDetails.tax_rate || 0) / 100
+    const totalAmount = subtotal + taxAmount + (invoiceDetails.shipping_cost || 0) - (invoiceDetails.discount_amount || 0)
 
     // Create the purchase invoice
     const { data: invoice, error } = await supabase
       .from('purchase_invoices')
       .insert([{
         ...invoiceDetails,
-        invoiceNumber,
+        invoice_number,
         subtotal,
         taxAmount,
         totalAmount,

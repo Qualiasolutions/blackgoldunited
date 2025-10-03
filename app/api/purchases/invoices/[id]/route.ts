@@ -46,57 +46,57 @@ export async function GET(
         supplier:suppliers(
           id,
           name,
-          supplierCode,
+          supplier_code,
           email,
           phone,
           address,
           city,
           state,
           country,
-          contactPersonName,
-          contactPersonEmail
+          contact_person_name,
+          contact_person_email
         ),
         purchaseOrder:purchase_orders(
           id,
           po_number,
           status,
-          orderDate,
-          expectedDeliveryDate
+          order_date,
+          expected_delivery_date
         ),
         items:purchase_invoice_items(
           id,
-          purchaseOrderItemId,
-          productId,
+          purchase_order_item_id,
+          product_id,
           quantity,
-          unitPrice,
-          totalAmount,
+          unit_price,
+          total_amount,
           description,
-          product:products(id, name, productCode, unit, costPrice),
-          purchaseOrderItem:purchase_order_items(id, quantity, unitPrice)
+          product:products(id, name, product_code, unit, cost_price),
+          purchaseOrderItem:purchase_order_items(id, quantity, unit_price)
         ),
         payments:purchase_payments(
           id,
           amount,
-          paymentDate,
-          paymentMethod,
+          payment_date,
+          payment_method,
           status,
-          referenceNumber,
+          reference_number,
           notes,
-          createdBy,
-          paidBy:users!purchase_payments_createdBy_fkey(firstName, lastName)
+          created_by,
+          paidBy:users!purchase_payments_createdBy_fkey(first_name, last_name)
         ),
         approvals:purchase_invoice_approvals(
           id,
           status,
-          approvedBy,
-          approvedAt,
+          approved_by,
+          approved_at,
           comments,
-          approver:users!purchase_invoice_approvals_approvedBy_fkey(firstName, lastName, email)
+          approver:users!purchase_invoice_approvals_approvedBy_fkey(first_name, last_name, email)
         ),
-        createdByUser:users!purchase_invoices_createdBy_fkey(firstName, lastName, email)
+        createdByUser:users!purchase_invoices_createdBy_fkey(first_name, last_name, email)
       `)
       .eq('id', invoiceId)
-      .is('deletedAt', null)
+      .is('deleted_at', null)
       .single()
 
     if (error) {
@@ -108,7 +108,7 @@ export async function GET(
     const items = invoice.items || []
     const payments = invoice.payments || []
 
-    const subtotal = items.reduce((sum: number, item: any) => sum + (item.totalAmount || 0), 0)
+    const subtotal = items.reduce((sum: number, item: any) => sum + (item.total_amount || 0), 0)
     const taxAmount = subtotal * (invoice.tax_rate || 0) / 100
     const totalAmount = subtotal + taxAmount + (invoice.shipping_cost || 0) - (invoice.discount_amount || 0)
 
@@ -121,11 +121,11 @@ export async function GET(
       .reduce((sum: number, payment: any) => sum + payment.amount, 0)
 
     const remainingAmount = totalAmount - paidAmount
-    const isOverdue = new Date(invoice.dueDate) < new Date() && remainingAmount > 0
+    const isOverdue = new Date(invoice.due_date) < new Date() && remainingAmount > 0
 
     // Calculate days overdue
     const daysOverdue = isOverdue
-      ? Math.floor((new Date().getTime() - new Date(invoice.dueDate).getTime()) / (1000 * 60 * 60 * 24))
+      ? Math.floor((new Date().getTime() - new Date(invoice.due_date).getTime()) / (1000 * 60 * 60 * 24))
       : 0
 
     const invoiceWithCalculations = {
@@ -209,7 +209,7 @@ export async function PUT(
       .from('purchase_invoices')
       .select('id, status, payment_status, supplier_id, supplier_invoice_number, tax_rate, shipping_cost, discount_amount')
       .eq('id', invoiceId)
-      .is('deletedAt', null)
+      .is('deleted_at', null)
       .single()
 
     if (invoiceError || !existingInvoice) {
@@ -231,7 +231,7 @@ export async function PUT(
         .eq('supplier_id', existingInvoice.supplier_id)
         .eq('supplier_invoice_number', updateData.supplier_invoice_number)
         .neq('id', invoiceId)
-        .is('deletedAt', null)
+        .is('deleted_at', null)
         .single()
 
       if (duplicateInvoice) {
@@ -247,22 +247,22 @@ export async function PUT(
       // Get current items to recalculate
       const { data: items } = await supabase
         .from('purchase_invoice_items')
-        .select('totalAmount')
-        .eq('purchaseInvoiceId', invoiceId)
+        .select('total_amount')
+        .eq('purchase_invoice_id', invoiceId)
 
       if (items) {
-        const subtotal = items.reduce((sum, item) => sum + item.totalAmount, 0)
+        const subtotal = items.reduce((sum, item) => sum + item.total_amount, 0)
         const tax_rate = updateData.tax_rate !== undefined ? updateData.tax_rate : existingInvoice.tax_rate || 0
         const shipping_cost = updateData.shipping_cost !== undefined ? updateData.shipping_cost : existingInvoice.shipping_cost || 0
         const discount_amount = updateData.discount_amount !== undefined ? updateData.discount_amount : existingInvoice.discount_amount || 0
 
-        const taxAmount = subtotal * tax_rate / 100
-        const totalAmount = subtotal + taxAmount + shipping_cost - discount_amount
+        const tax_amount = subtotal * tax_rate / 100
+        const total_amount = subtotal + tax_amount + shipping_cost - discount_amount
 
         recalculatedFields = {
           subtotal,
-          taxAmount,
-          totalAmount
+          tax_amount,
+          total_amount
         }
       }
     }
@@ -273,10 +273,10 @@ export async function PUT(
       .update({
         ...updateData,
         ...recalculatedFields,
-        updatedAt: new Date().toISOString()
+        updated_at: new Date().toISOString()
       })
       .eq('id', invoiceId)
-      .is('deletedAt', null)
+      .is('deleted_at', null)
       .select()
       .single()
 
@@ -316,7 +316,7 @@ export async function DELETE(
       .from('purchase_invoices')
       .select('id, status, payment_status, invoice_number')
       .eq('id', invoiceId)
-      .is('deletedAt', null)
+      .is('deleted_at', null)
       .single()
 
     if (invoiceError || !existingInvoice) {
@@ -333,7 +333,7 @@ export async function DELETE(
     const { data: pendingPayments } = await supabase
       .from('purchase_payments')
       .select('id')
-      .eq('purchaseInvoiceId', invoiceId)
+      .eq('purchase_invoice_id', invoiceId)
       .eq('status', 'PENDING')
       .limit(1)
 
@@ -349,8 +349,8 @@ export async function DELETE(
       .update({
         status: 'CANCELLED',
         payment_status: 'UNPAID',
-        deletedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        deleted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       })
       .eq('id', invoiceId)
       .select()

@@ -67,7 +67,7 @@ export default function PurchaseInvoicesPage() {
                 <p className="text-gray-600 mt-2">Manage supplier invoices and payment processing</p>
               </div>
               {hasFullAccess('purchase') && (
-                <Link href="/purchase/invoices/create">
+                <Link href="/purchases/invoices/create">
                   <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white">
                     <Plus className="h-4 w-4 mr-2" />
                     Record Invoice
@@ -394,7 +394,7 @@ export default function PurchaseInvoicesPage() {
                 <p className="text-gray-500 text-lg">No purchase invoices found</p>
                 <p className="text-gray-400 mt-2">Record your first supplier invoice to get started</p>
                 {hasFullAccess('purchase') && (
-                  <Link href="/purchase/invoices/create" className="mt-4 inline-block">
+                  <Link href="/purchases/invoices/create" className="mt-4 inline-block">
                     <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white">
                       <Plus className="h-4 w-4 mr-2" />
                       Record First Invoice

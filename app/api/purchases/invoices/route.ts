@@ -78,26 +78,26 @@ export async function GET(request: NextRequest) {
       .from('purchase_invoices')
       .select(`
         *,
-        supplier:suppliers(id, name, supplierCode, email),
+        supplier:suppliers(id, name, supplier_code, email),
         purchaseOrder:purchase_orders(id, po_number, status),
         items:purchase_invoice_items(
           id,
-          productId,
+          product_id,
           quantity,
-          unitPrice,
-          totalAmount,
+          unit_price,
+          total_amount,
           description,
-          product:products(id, name, productCode, unit)
+          product:products(id, name, product_code, unit)
         ),
         payments:purchase_payments(
           id,
           amount,
-          paymentDate,
-          paymentMethod,
+          payment_date,
+          payment_method,
           status
         )
       `, { count: 'exact' })
-      .is('deletedAt', null)
+      .is('deleted_at', null)
 
     // Apply filters
     if (query) {
@@ -117,20 +117,20 @@ export async function GET(request: NextRequest) {
     }
 
     if (purchaseOrderId) {
-      queryBuilder = queryBuilder.eq('purchaseOrderId', purchaseOrderId)
+      queryBuilder = queryBuilder.eq('purchase_order_id', purchaseOrderId)
     }
 
     if (startDate && endDate) {
-      queryBuilder = queryBuilder.gte('invoiceDate', startDate).lte('invoiceDate', endDate)
+      queryBuilder = queryBuilder.gte('invoice_date', startDate).lte('invoice_date', endDate)
     }
 
     if (overdue) {
-      queryBuilder = queryBuilder.lt('dueDate', new Date().toISOString()).neq('payment_status', 'PAID')
+      queryBuilder = queryBuilder.lt('due_date', new Date().toISOString()).neq('payment_status', 'PAID')
     }
 
     // Get paginated results
     const { data: invoices, error, count } = await queryBuilder
-      .order('createdAt', { ascending: false })
+      .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
     if (error) {
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
       const items = invoice.items || []
       const payments = invoice.payments || []
 
-      const subtotal = items.reduce((sum: number, item: any) => sum + (item.totalAmount || 0), 0)
+      const subtotal = items.reduce((sum: number, item: any) => sum + (item.total_amount || 0), 0)
       const taxAmount = subtotal * (invoice.tax_rate || 0) / 100
       const totalAmount = subtotal + taxAmount + (invoice.shipping_cost || 0) - (invoice.discount_amount || 0)
 
@@ -152,7 +152,7 @@ export async function GET(request: NextRequest) {
         .reduce((sum: number, payment: any) => sum + payment.amount, 0)
 
       const remainingAmount = totalAmount - paidAmount
-      const isOverdue = new Date(invoice.dueDate) < new Date() && remainingAmount > 0
+      const isOverdue = new Date(invoice.due_date) < new Date() && remainingAmount > 0
 
       return {
         ...invoice,
@@ -211,16 +211,16 @@ export async function POST(request: NextRequest) {
     // Verify supplier exists and is active
     const { data: supplier, error: supplierError } = await supabase
       .from('suppliers')
-      .select('id, isActive, name')
+      .select('id, is_active, name')
       .eq('id', invoiceData.supplier_id)
-      .is('deletedAt', null)
+      .is('deleted_at', null)
       .single()
 
     if (supplierError || !supplier) {
       return NextResponse.json({ error: 'Supplier not found' }, { status: 404 })
     }
 
-    if (!supplier.isActive) {
+    if (!supplier.is_active) {
       return NextResponse.json({ error: 'Supplier is not active' }, { status: 400 })
     }
 
@@ -255,7 +255,7 @@ export async function POST(request: NextRequest) {
       .select('id')
       .eq('supplier_id', invoiceData.supplier_id)
       .eq('supplier_invoice_number', invoiceData.supplier_invoice_number)
-      .is('deletedAt', null)
+      .is('deleted_at', null)
       .single()
 
     if (existingInvoice) {
@@ -268,9 +268,9 @@ export async function POST(request: NextRequest) {
     const productIds = items.map(item => item.productId)
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, name, isActive')
+      .select('id, name, is_active')
       .in('id', productIds)
-      .is('deletedAt', null)
+      .is('deleted_at', null)
 
     if (productsError || !products || products.length !== productIds.length) {
       return NextResponse.json({ error: 'One or more products not found' }, { status: 404 })
@@ -280,7 +280,7 @@ export async function POST(request: NextRequest) {
     const { data: lastInvoice } = await supabase
       .from('purchase_invoices')
       .select('invoice_number')
-      .order('createdAt', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(1)
       .single()
 
@@ -295,8 +295,8 @@ export async function POST(request: NextRequest) {
     }))
 
     const subtotal = itemsWithTotals.reduce((sum, item) => sum + item.totalAmount, 0)
-    const taxAmount = subtotal * (invoiceDetails.tax_rate || 0) / 100
-    const totalAmount = subtotal + taxAmount + (invoiceDetails.shipping_cost || 0) - (invoiceDetails.discount_amount || 0)
+    const tax_amount = subtotal * (invoiceDetails.tax_rate || 0) / 100
+    const total_amount = subtotal + tax_amount + (invoiceDetails.shipping_cost || 0) - (invoiceDetails.discount_amount || 0)
 
     // Create the purchase invoice
     const { data: invoice, error } = await supabase
@@ -305,11 +305,11 @@ export async function POST(request: NextRequest) {
         ...invoiceDetails,
         invoice_number,
         subtotal,
-        taxAmount,
-        totalAmount,
-        createdBy: authResult.user.id,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        tax_amount,
+        total_amount,
+        created_by: authResult.user.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }])
       .select()
       .single()
@@ -322,8 +322,8 @@ export async function POST(request: NextRequest) {
     // Create invoice items
     const itemsToInsert = itemsWithTotals.map(item => ({
       ...item,
-      purchaseInvoiceId: invoice.id,
-      createdAt: new Date().toISOString()
+      purchase_invoice_id: invoice.id,
+      created_at: new Date().toISOString()
     }))
 
     const { data: createdItems, error: itemsError } = await supabase
@@ -331,7 +331,7 @@ export async function POST(request: NextRequest) {
       .insert(itemsToInsert)
       .select(`
         *,
-        product:products(id, name, productCode, unit)
+        product:products(id, name, product_code, unit)
       `)
 
     if (itemsError) {

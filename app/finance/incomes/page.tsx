@@ -187,7 +187,7 @@ export default function IncomesPage() {
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Statuses</SelectItem>
+                    <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="PENDING">Pending</SelectItem>
                     <SelectItem value="RECEIVED">Received</SelectItem>
                     <SelectItem value="CANCELLED">Cancelled</SelectItem>

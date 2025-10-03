@@ -324,7 +324,7 @@ export default function InventoryPage() {
                       <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Categories</SelectItem>
+                      <SelectItem value="all">All Categories</SelectItem>
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}
@@ -338,7 +338,7 @@ export default function InventoryPage() {
                       <SelectValue placeholder="All Types" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Types</SelectItem>
+                      <SelectItem value="all">All Types</SelectItem>
                       <SelectItem value="PRODUCT">Product</SelectItem>
                       <SelectItem value="SERVICE">Service</SelectItem>
                     </SelectContent>
@@ -349,7 +349,7 @@ export default function InventoryPage() {
                       <SelectValue placeholder="All Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Status</SelectItem>
+                      <SelectItem value="all">All Status</SelectItem>
                       <SelectItem value="true">Active</SelectItem>
                       <SelectItem value="false">Inactive</SelectItem>
                     </SelectContent>

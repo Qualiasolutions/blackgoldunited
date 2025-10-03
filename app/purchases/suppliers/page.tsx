@@ -249,7 +249,7 @@ export default function SuppliersPage() {
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Categories</SelectItem>
+                    <SelectItem value="all">All Categories</SelectItem>
                     <SelectItem value="RAW_MATERIALS">Raw Materials</SelectItem>
                     <SelectItem value="SERVICES">Services</SelectItem>
                     <SelectItem value="EQUIPMENT">Equipment</SelectItem>
@@ -266,7 +266,7 @@ export default function SuppliersPage() {
                     <SelectValue placeholder="Type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Types</SelectItem>
+                    <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="COMPANY">Company</SelectItem>
                     <SelectItem value="INDIVIDUAL">Individual</SelectItem>
                   </SelectContent>
@@ -280,7 +280,7 @@ export default function SuppliersPage() {
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Status</SelectItem>
+                    <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="true">Active</SelectItem>
                     <SelectItem value="false">Inactive</SelectItem>
                   </SelectContent>

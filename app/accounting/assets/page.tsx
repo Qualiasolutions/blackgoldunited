@@ -209,7 +209,7 @@ export default function AssetsPage() {
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Status</SelectItem>
+                    <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="ACTIVE">Active</SelectItem>
                     <SelectItem value="DISPOSED">Disposed</SelectItem>
                     <SelectItem value="SOLD">Sold</SelectItem>

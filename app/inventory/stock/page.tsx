@@ -463,7 +463,7 @@ export default function StockTrackingPage() {
                           <SelectValue placeholder="All Warehouses" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">All Warehouses</SelectItem>
+                          <SelectItem value="all">All Warehouses</SelectItem>
                           {warehouses.map((warehouse) => (
                             <SelectItem key={warehouse.id} value={warehouse.id}>
                               {warehouse.name}
@@ -477,7 +477,7 @@ export default function StockTrackingPage() {
                           <SelectValue placeholder="All Categories" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">All Categories</SelectItem>
+                          <SelectItem value="all">All Categories</SelectItem>
                           {categories.map((category) => (
                             <SelectItem key={category.id} value={category.id}>
                               {category.name}
@@ -629,7 +629,7 @@ export default function StockTrackingPage() {
                         <SelectValue placeholder="All Types" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Types</SelectItem>
+                        <SelectItem value="all">All Types</SelectItem>
                         <SelectItem value="IN">Stock In</SelectItem>
                         <SelectItem value="OUT">Stock Out</SelectItem>
                         <SelectItem value="TRANSFER">Transfer</SelectItem>

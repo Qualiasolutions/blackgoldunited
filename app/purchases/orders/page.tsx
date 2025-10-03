@@ -292,7 +292,7 @@ export default function PurchaseOrdersPage() {
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Status</SelectItem>
+                    <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="DRAFT">Draft</SelectItem>
                     <SelectItem value="SENT">Sent</SelectItem>
                     <SelectItem value="CONFIRMED">Confirmed</SelectItem>
@@ -310,7 +310,7 @@ export default function PurchaseOrdersPage() {
                     <SelectValue placeholder="Priority" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Priorities</SelectItem>
+                    <SelectItem value="all">All Priorities</SelectItem>
                     <SelectItem value="LOW">Low</SelectItem>
                     <SelectItem value="MEDIUM">Medium</SelectItem>
                     <SelectItem value="HIGH">High</SelectItem>
@@ -326,7 +326,7 @@ export default function PurchaseOrdersPage() {
                     <SelectValue placeholder="Approval" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Approvals</SelectItem>
+                    <SelectItem value="all">All Approvals</SelectItem>
                     <SelectItem value="PENDING">Pending</SelectItem>
                     <SelectItem value="APPROVED">Approved</SelectItem>
                     <SelectItem value="REJECTED">Rejected</SelectItem>

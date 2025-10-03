@@ -243,7 +243,7 @@ export default function WarehousesPage() {
                       <SelectValue placeholder="All Locations" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Locations</SelectItem>
+                      <SelectItem value="all">All Locations</SelectItem>
                       {/* You can populate this dynamically from warehouse locations */}
                       <SelectItem value="Main">Main</SelectItem>
                       <SelectItem value="Secondary">Secondary</SelectItem>
@@ -256,7 +256,7 @@ export default function WarehousesPage() {
                       <SelectValue placeholder="All Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Status</SelectItem>
+                      <SelectItem value="all">All Status</SelectItem>
                       <SelectItem value="true">Active</SelectItem>
                       <SelectItem value="false">Inactive</SelectItem>
                     </SelectContent>

@@ -198,7 +198,7 @@ export default function AttendanceLogsPage() {
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Status</SelectItem>
+                    <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="PRESENT">Present</SelectItem>
                     <SelectItem value="ABSENT">Absent</SelectItem>
                     <SelectItem value="LATE">Late</SelectItem>

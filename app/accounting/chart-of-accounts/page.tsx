@@ -206,7 +206,7 @@ export default function ChartOfAccountsPage() {
                     <SelectValue placeholder="Filter by type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Types</SelectItem>
+                    <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="ASSET">Assets</SelectItem>
                     <SelectItem value="LIABILITY">Liabilities</SelectItem>
                     <SelectItem value="EQUITY">Equity</SelectItem>

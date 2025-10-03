@@ -1,0 +1,7 @@
+Continue the production readiness work from 90% to 100%. Read AGENT_HANDOFF.md for complete context, then execute Phases 10 and 11:
+
+Phase 10 (90% → 95%): Apply database indexes from supabase/performance_indexes.sql and implement response caching on high-traffic routes.
+
+Phase 11 (95% → 100%): Expand test coverage to 100+ tests, create user guides for top 5 modules, and configure production monitoring.
+
+Start with the quick wins: apply database indexes via Supabase SQL Editor and add response caching to dashboard/reports routes.

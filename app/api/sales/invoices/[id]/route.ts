@@ -86,14 +86,10 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid invoice ID format' }, { status: 400 });
     }
 
-    // Fetch invoice with client and items
+    // Fetch invoice
     const { data: invoice, error } = await supabase
       .from('invoices')
-      .select(`
-        *,
-        client:clients!inner(id, company_name, contact_person, email, address_line_1, city, state, country),
-        items:invoice_items(*)
-      `)
+      .select('*')
       .eq('id', id)
       .is('deleted_at', null)
       .single();
@@ -106,9 +102,29 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch invoice' }, { status: 500 });
     }
 
+    // Fetch client data separately
+    const { data: clientData } = await supabase
+      .from('clients')
+      .select('id, company_name, contact_person, email, address_line_1, city, state, country')
+      .eq('id', invoice.client_id)
+      .single();
+
+    // Fetch invoice items separately
+    const { data: itemsData } = await supabase
+      .from('invoice_items')
+      .select('*')
+      .eq('invoice_id', invoice.id);
+
+    // Combine data manually
+    const invoiceWithRelations = {
+      ...invoice,
+      client: clientData || null,
+      items: itemsData || []
+    };
+
     return NextResponse.json({
       success: true,
-      data: invoice
+      data: invoiceWithRelations
     });
 
   } catch (error) {
@@ -243,11 +259,7 @@ export async function PUT(
         items: undefined, // Remove items from the update data
       })
       .eq('id', id)
-      .select(`
-        *,
-        client:clients!inner(id, company_name, contact_person, email, address_line_1, city, state, country),
-        items:invoice_items(*)
-      `)
+      .select('*')
       .single();
 
     if (error) {
@@ -258,9 +270,29 @@ export async function PUT(
       return NextResponse.json({ error: 'Failed to update invoice' }, { status: 500 });
     }
 
+    // Fetch client data separately
+    const { data: clientData } = await supabase
+      .from('clients')
+      .select('id, company_name, contact_person, email, address_line_1, city, state, country')
+      .eq('id', updatedInvoice.client_id)
+      .single();
+
+    // Fetch invoice items separately
+    const { data: itemsData } = await supabase
+      .from('invoice_items')
+      .select('*')
+      .eq('invoice_id', updatedInvoice.id);
+
+    // Combine data manually
+    const invoiceWithRelations = {
+      ...updatedInvoice,
+      client: clientData || null,
+      items: itemsData || []
+    };
+
     return NextResponse.json({
       success: true,
-      data: updatedInvoice,
+      data: invoiceWithRelations,
       message: 'Invoice updated successfully'
     });
 

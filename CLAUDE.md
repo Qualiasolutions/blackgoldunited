@@ -32,29 +32,71 @@ The application consists of 14 main modules accessible via the sidebar navigatio
 
 **Total Pages**: 61 pages across all modules
 **Status**: ✅ **ALL 61 PAGES COMPLETED** with full backend integration (September 2025)
-**Latest Update**: October 4, 2025 - Phase 7: RLS security fixes applied ✅ 0 critical security issues
+**Latest Update**: October 4, 2025 - Comprehensive Agentic Development System deployed
 
-## 🤖 AI Agent System - NEW!
+## 🤖 Agentic Development System - COMPREHENSIVE
 
-**Deployment Date**: October 3, 2025
-**Version**: 1.0
+**Deployment Date**: October 4, 2025
+**Version**: 2.0 (Complete Overhaul)
+**Inspired by**: BMad Method (SophiaAI project)
 
-The project now includes a comprehensive AI agent system with 10 specialized agents, 15 custom slash commands, and automated hooks for quality assurance:
+The project now features a **comprehensive agentic development system** with orchestrator-based architecture for systematic, high-quality development:
 
-**Quick Start**:
-- Run `/health-check` for system status
-- Run `/validate-api` to check all API endpoints
-- Run `/security-audit` before deployment
-- See `docs/AGENT_SYSTEM.md` for complete documentation
-- See `docs/AGENT_QUICK_REFERENCE.md` for quick command reference
+### System Components
 
-**Key Features**:
-✅ 10 specialized agents (API validator, database guardian, frontend doctor, etc.)
-✅ 15 custom slash commands for common tasks
-✅ Automated hooks for pre/post tool execution
-✅ Enhanced MCP server integration (Supabase, Filesystem, Context7, Shadcn)
-✅ Pre-deployment validation pipeline
-✅ Auto-active bug hunter agent
+**1 Master Orchestrator**:
+- ERP Master Orchestrator - Coordinates all development activities
+- Transform to specialists on demand
+- Track project progress and health
+- Route tasks to appropriate experts
+
+**6 Specialist Agents**:
+- 🛡️ **Backend Guard** - API routes, server logic, authentication
+- 🎨 **Frontend Doctor** - Pages, components, UI/UX
+- 💾 **Database Guardian** - Schema, migrations, RLS policies
+- 🔒 **Security Auditor** - Vulnerability scanning, compliance
+- 🚀 **DevOps Engineer** - Deployments, CI/CD, monitoring
+- ✅ **QA Validator** - Testing, validation, quality gates
+
+**6 Systematic Workflows**:
+- Feature Implementation (end-to-end)
+- Bug Fix (systematic debugging)
+- Security Improvements
+- Performance Optimization
+- Third-party Integration
+- Database Migration
+
+**Real-time Project Tracking**:
+- Live status dashboard (project-status.json)
+- Module coverage tracking
+- Quality metrics monitoring
+- Security baseline tracking
+- Phase completion history
+
+### Quick Start
+```
+*help               # Show all commands and project status
+*status             # Project health dashboard
+*agent [name]       # Transform to specialist
+*workflow [type]    # Start systematic workflow
+*deploy             # Pre-deployment validation
+```
+
+### Key Features
+✅ Orchestrator-based architecture (1 coordinator + 6 specialists)
+✅ Command system with `*` prefix (like BMad Method)
+✅ Systematic workflows for all development scenarios
+✅ Real-time project tracking and health monitoring
+✅ MCP server integration (Supabase, Filesystem, Context7, Shadcn, Playwright)
+✅ Automated quality gates and validation
+✅ Comprehensive documentation and examples
+
+### Documentation
+- **Main Guide**: `.erp-agents/README.md`
+- **Configuration**: `.erp-agents/erp-config.yaml`
+- **Project Status**: `.erp-agents/data/project-status.json`
+- **Agents**: `.erp-agents/agents/*.md`
+- **Workflows**: `.erp-agents/workflows/*.md`
 
 ## 🎉 Phase 4: Missing Frontend Pages - COMPLETED
 

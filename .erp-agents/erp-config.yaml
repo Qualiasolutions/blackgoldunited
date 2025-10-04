@@ -1,0 +1,298 @@
+# BlackGoldUnited ERP - Agent System Configuration
+# Version: 1.0.0
+# Last Updated: October 4, 2025
+
+project:
+  name: BlackGoldUnited ERP
+  version: 1.0.0
+  environment: production
+  deployment_url: https://blackgoldunited-10cnui8d7-qualiasolutionscy.vercel.app
+  repository: https://github.com/Qualiasolutions/blackgoldunited
+  documentation_root: docs/
+
+tech_stack:
+  framework: Next.js 15.5.3
+  runtime: React 19
+  language: TypeScript
+  database: Supabase PostgreSQL
+  hosting: Vercel
+  auth: Supabase Auth + JWT
+  styling: Tailwind CSS + shadcn/ui
+
+integrations:
+  monitoring:
+    sentry:
+      enabled: true
+      purpose: Error tracking and performance monitoring
+    checkly:
+      enabled: true
+      purpose: API monitoring and uptime checks
+  notifications:
+    novu:
+      enabled: true
+      purpose: Multi-channel notifications (in-app, email)
+  email:
+    resend:
+      enabled: true
+      purpose: Transactional email delivery
+  jobs:
+    inngest:
+      enabled: true
+      purpose: Background job processing and workflows
+
+architecture:
+  total_pages: 61
+  total_modules: 14
+  total_api_routes: 45+
+  total_db_tables: 63
+
+  modules:
+    dashboard:
+      pages: 1
+      status: complete
+      routes: ["/"]
+
+    sales:
+      pages: 11
+      status: complete
+      routes: ["/sales/*"]
+      apis: ["/api/sales/*"]
+
+    clients:
+      pages: 4
+      status: complete
+      routes: ["/clients/*"]
+      apis: ["/api/clients/*"]
+
+    inventory:
+      pages: 12
+      status: complete
+      routes: ["/inventory/*"]
+      apis: ["/api/inventory/*"]
+
+    purchase:
+      pages: 7
+      status: complete
+      routes: ["/purchase/*"]
+      apis: ["/api/purchase/*"]
+
+    finance:
+      pages: 4
+      status: complete
+      routes: ["/finance/*"]
+      apis: ["/api/finance/*"]
+
+    accounting:
+      pages: 6
+      status: complete
+      routes: ["/accounting/*"]
+      apis: ["/api/accounting/*"]
+
+    employees:
+      pages: 3
+      status: complete
+      routes: ["/employees/*"]
+      apis: ["/api/hr/*"]
+
+    organizational:
+      pages: 5
+      status: complete
+      routes: ["/organizational/*"]
+      apis: ["/api/hr/*"]
+
+    attendance:
+      pages: 9
+      status: complete
+      routes: ["/attendance/*"]
+      apis: ["/api/hr/attendance/*"]
+
+    payroll:
+      pages: 7
+      status: complete
+      routes: ["/payroll/*"]
+      apis: ["/api/payroll/*"]
+
+    reports:
+      pages: 7
+      status: complete
+      routes: ["/reports/*"]
+      apis: ["/api/reports/*"]
+
+    templates:
+      pages: 5
+      status: complete
+      routes: ["/templates/*"]
+      apis: ["/api/documents/*"]
+
+    qhse:
+      pages: 4
+      status: complete
+      routes: ["/qhse/*"]
+      apis: ["/api/qhse/*"]
+
+security:
+  rbac:
+    enabled: true
+    roles:
+      - MANAGEMENT         # Full system access
+      - FINANCE_TEAM      # Finance, accounting, payroll
+      - PROCUREMENT_BD    # Purchase, inventory, sales
+      - ADMIN_HR          # Employees, attendance, organizational
+      - IMS_QHSE          # QHSE, compliance, templates
+
+    access_levels:
+      - NONE              # No access
+      - READ              # View only
+      - FULL              # Full CRUD access
+
+  rls:
+    enabled: true
+    tables_protected: 63
+    policies_created: 250+
+    critical_fix_applied: "Phase 7 - October 4, 2025"
+
+  authentication:
+    type: JWT-based
+    middleware: authenticateAndAuthorize()
+    route_protection: middleware.ts
+    session_storage: Cookies
+
+development:
+  phases_completed:
+    - phase: 1
+      name: Core Infrastructure
+      status: complete
+
+    - phase: 2
+      name: Backend Integration (12 pages)
+      status: complete
+
+    - phase: 3
+      name: Complete Backend Integration (30 pages)
+      status: complete
+
+    - phase: 4
+      name: Missing Frontend Pages (17 pages)
+      status: complete
+
+    - phase: 5
+      name: Production Bug Fixes
+      status: complete
+      critical_fixes: 50+
+
+    - phase: 6
+      name: PostgREST Foreign Key Fixes
+      status: complete
+      date: "October 4, 2025"
+
+    - phase: 7
+      name: RLS Security Enforcement
+      status: complete
+      date: "October 4, 2025"
+      migrations_applied: 3
+
+  quality_metrics:
+    typescript_errors: 0
+    build_status: passing
+    deployment_status: stable
+    test_coverage: manual
+    security_issues_critical: 0
+    security_issues_warning: 3
+
+agents:
+  orchestrator:
+    id: erp-orchestrator
+    file: .erp-agents/agents/erp-orchestrator.md
+    activation_command: "*help"
+
+  specialists:
+    - id: backend-guard
+      file: .erp-agents/agents/backend-guard.md
+      activation_command: "*agent backend-guard"
+      expertise: [api, server, auth]
+
+    - id: frontend-doctor
+      file: .erp-agents/agents/frontend-doctor.md
+      activation_command: "*agent frontend-doctor"
+      expertise: [ui, components, pages]
+
+    - id: database-guardian
+      file: .erp-agents/agents/database-guardian.md
+      activation_command: "*agent database-guardian"
+      expertise: [schema, migrations, rls]
+
+    - id: security-auditor
+      file: .erp-agents/agents/security-auditor.md
+      activation_command: "*agent security-auditor"
+      expertise: [security, vulnerabilities, compliance]
+
+    - id: devops-engineer
+      file: .erp-agents/agents/devops-engineer.md
+      activation_command: "*agent devops-engineer"
+      expertise: [deployment, ci_cd, monitoring]
+
+    - id: qa-validator
+      file: .erp-agents/agents/qa-validator.md
+      activation_command: "*agent qa-validator"
+      expertise: [testing, validation, quality]
+
+workflows:
+  - id: feature
+    file: .erp-agents/workflows/feature-workflow.md
+    purpose: Implement new feature end-to-end
+
+  - id: bugfix
+    file: .erp-agents/workflows/bugfix-workflow.md
+    purpose: Fix production issues systematically
+
+  - id: security
+    file: .erp-agents/workflows/security-workflow.md
+    purpose: Security improvements and vulnerability fixes
+
+  - id: optimization
+    file: .erp-agents/workflows/optimization-workflow.md
+    purpose: Performance tuning and optimization
+
+  - id: integration
+    file: .erp-agents/workflows/integration-workflow.md
+    purpose: Integrate third-party services
+
+  - id: migration
+    file: .erp-agents/workflows/migration-workflow.md
+    purpose: Database schema changes and migrations
+
+paths:
+  agents: .erp-agents/agents/
+  workflows: .erp-agents/workflows/
+  tasks: .erp-agents/tasks/
+  checklists: .erp-agents/checklists/
+  templates: .erp-agents/templates/
+  data: .erp-agents/data/
+  docs: docs/
+  scripts: scripts/
+
+commands:
+  dev: npm run dev
+  build: npm run build
+  type_check: npm run type-check
+  lint: npm run lint
+  security_audit: ./scripts/security-check-detailed.sh
+  deploy: git push origin main
+
+best_practices:
+  - Maintain 0 TypeScript errors
+  - Run type-check before commits
+  - Use authenticateAndAuthorize() in all API routes
+  - Enable RLS immediately after creating policies
+  - Use separate queries over nested PostgREST joins
+  - Document all major changes in CLAUDE.md
+  - Create session notes for complex work
+  - Test before deploy
+
+anti_patterns:
+  - Nested PostgREST foreign key joins
+  - RLS policies without enabling RLS
+  - Missing API authentication
+  - Hardcoded credentials
+  - Exposing service role key
+  - Skipping type checks

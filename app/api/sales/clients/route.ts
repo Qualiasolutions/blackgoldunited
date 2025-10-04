@@ -18,16 +18,15 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    // Build query
+    // Build query with CORRECT snake_case column names
     let query = supabase
       .from('clients')
       .select('*')
-      .eq('deletedAt', null)
-      .order('createdAt', { ascending: false })
+      .order('created_at', { ascending: false })
 
-    // Add search filter if provided
+    // Add search filter if provided (using snake_case)
     if (search) {
-      query = query.or(`companyName.ilike.%${search}%,contactPerson.ilike.%${search}%,email.ilike.%${search}%`)
+      query = query.or(`company_name.ilike.%${search}%,contact_person.ilike.%${search}%,email.ilike.%${search}%`)
     }
 
     // Add pagination
@@ -68,32 +67,28 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     // Validate required fields
-    const { companyName, email } = body
-    if (!companyName) {
+    const { company_name, email } = body
+    if (!company_name) {
       return NextResponse.json({ error: 'Company name is required' }, { status: 400 })
     }
 
     // Generate client code if not provided
-    if (!body.clientCode) {
+    if (!body.client_code) {
       const { data: lastClient } = await supabase
         .from('clients')
-        .select('clientCode')
-        .order('createdAt', { ascending: false })
+        .select('client_code')
+        .order('created_at', { ascending: false })
         .limit(1)
         .single()
 
-      const lastNumber = lastClient?.clientCode ? parseInt(lastClient.clientCode.replace('CL', '')) || 0 : 0
-      body.clientCode = `CL${String(lastNumber + 1).padStart(4, '0')}`
+      const lastNumber = lastClient?.client_code ? parseInt(lastClient.client_code.replace('CL', '')) || 0 : 0
+      body.client_code = `CL${String(lastNumber + 1).padStart(4, '0')}`
     }
 
-    // Insert new client
+    // Insert new client (Supabase automatically handles created_at, updated_at if they have defaults)
     const { data: client, error } = await supabase
       .from('clients')
-      .insert({
-        ...body,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      })
+      .insert(body)
       .select()
       .single()
 

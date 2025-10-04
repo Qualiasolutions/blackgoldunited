@@ -202,7 +202,6 @@ async function handleCheckInOut(supabase: any, body: any, authResult: any) {
     .from('employees')
     .select('id, firstName, lastName, employeeNumber, userId')
     .eq('id', targetEmployeeId)
-    .is('deletedAt', null)
     .single()
 
   if (empError || !employee) {
@@ -395,7 +394,6 @@ async function handleManualAttendanceEntry(supabase: any, body: any, authResult:
     .from('employees')
     .select('id, firstName, lastName, employeeNumber')
     .eq('id', validatedData.employeeId)
-    .is('deletedAt', null)
     .single()
 
   if (empError || !employee) {

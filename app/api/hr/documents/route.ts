@@ -86,9 +86,7 @@ export async function GET(request: NextRequest) {
         department:departments(name)
       `)
       .in('id', employeeIds)
-      .is('deletedAt', null)
-
-    const employeeMap = employees?.reduce((acc, emp) => {
+      const employeeMap = employees?.reduce((acc, emp) => {
       acc[emp.id] = emp
       return acc
     }, {} as any) || {}
@@ -205,7 +203,6 @@ export async function POST(request: NextRequest) {
       .from('employees')
       .select('id, firstName, lastName, employeeNumber, userId')
       .eq('id', validatedData.employeeId)
-      .is('deletedAt', null)
       .single()
 
     if (empError || !employee) {

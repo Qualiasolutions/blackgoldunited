@@ -195,7 +195,6 @@ export async function PUT(
         .from('employees')
         .select('id, firstName, lastName')
         .eq('id', validatedData.managerId)
-        .is('deletedAt', null)
         .single()
 
       if (!manager) {
@@ -322,9 +321,7 @@ export async function DELETE(
       .from('employees')
       .select('id, firstName, lastName')
       .eq('departmentId', id)
-      .is('deletedAt', null)
-
-    if (employees && employees.length > 0) {
+      if (employees && employees.length > 0) {
       return NextResponse.json({
         error: 'Cannot delete department with active employees. Please reassign employees first.',
         employees: employees.map(emp => `${emp.firstName} ${emp.lastName}`)

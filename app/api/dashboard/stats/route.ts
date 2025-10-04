@@ -24,9 +24,7 @@ export async function GET(request: NextRequest) {
       const { data: clients, error: clientsError } = await supabase
         .from('clients')
         .select('id, company_name, is_active, created_at')
-        .is('deleted_at', null)
-
-      if (!clientsError) {
+        if (!clientsError) {
         results.clients = clients || []
       }
     } catch (err) {
@@ -39,9 +37,7 @@ export async function GET(request: NextRequest) {
       const { data: invoices, error: invoicesError } = await supabase
         .from('invoices')
         .select('id, total_amount, paid_amount, status, created_at, invoice_number')
-        .is('deleted_at', null)
-
-      if (!invoicesError) {
+        if (!invoicesError) {
         results.invoices = invoices || []
       }
     } catch (err) {
@@ -54,7 +50,6 @@ export async function GET(request: NextRequest) {
       const { data: products, error: productsError } = await supabase
         .from('products')
         .select('id, name, product_code, selling_price, reorder_level, is_active')
-        .is('deleted_at', null)
         .eq('is_active', true)
 
       if (!productsError) {
@@ -70,9 +65,7 @@ export async function GET(request: NextRequest) {
       const { data: purchaseOrders, error: ordersError } = await supabase
         .from('purchase_orders')
         .select('id, status, total_amount, created_at')
-        .is('deleted_at', null)
-
-      if (!ordersError) {
+        if (!ordersError) {
         results.purchaseOrders = purchaseOrders || []
       }
     } catch (err) {

@@ -49,7 +49,6 @@ export async function GET(
         )
       `)
       .eq('id', employeeId)
-      .is('deletedAt', null)
       .single()
 
     if (empError || !employee) {

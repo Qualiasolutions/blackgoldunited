@@ -20,7 +20,6 @@ export async function GET(request: NextRequest) {
     const { data: purchaseOrders, error: poError } = await supabase
       .from('purchase_orders')
       .select('id, po_number, total_amount, status, order_date, supplier_id, created_at')
-      .is('deleted_at', null)
       .order('created_at', { ascending: false })
 
     if (poError) {
@@ -32,9 +31,7 @@ export async function GET(request: NextRequest) {
     const { data: suppliers } = await supabase
       .from('suppliers')
       .select('id, company_name, is_active')
-      .is('deleted_at', null)
-
-    const poList = purchaseOrders || []
+      const poList = purchaseOrders || []
     const suppliersList = suppliers || []
 
     // Calculate report metrics

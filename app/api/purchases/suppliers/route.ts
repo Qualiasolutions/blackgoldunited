@@ -78,9 +78,7 @@ export async function GET(request: NextRequest) {
         *,
         _count:purchase_orders(count)
       `, { count: 'exact' })
-      .is('deletedAt', null)
-
-    // Apply filters
+      // Apply filters
     if (query) {
       queryBuilder = queryBuilder.or(`name.ilike.%${query}%,supplierCode.ilike.%${query}%,email.ilike.%${query}%`)
     }
@@ -156,7 +154,6 @@ export async function POST(request: NextRequest) {
       .from('suppliers')
       .select('id, supplierCode, email')
       .or(`supplierCode.eq.${supplierData.supplierCode},email.eq.${supplierData.email}`)
-      .is('deletedAt', null)
       .single()
 
     if (existingSupplier) {

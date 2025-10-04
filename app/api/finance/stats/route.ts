@@ -16,9 +16,7 @@ export async function GET(request: NextRequest) {
     const { data: invoices, error: invoicesError } = await supabase
       .from('invoices')
       .select('total_amount, paid_amount, status')
-      .is('deleted_at', null)
-
-    if (invoicesError) {
+      if (invoicesError) {
       console.error('Error fetching invoices:', invoicesError)
     }
 
@@ -26,9 +24,7 @@ export async function GET(request: NextRequest) {
     const { data: purchaseOrders, error: poError } = await supabase
       .from('purchase_orders')
       .select('total_amount, status')
-      .is('deleted_at', null)
-
-    if (poError) {
+      if (poError) {
       console.error('Error fetching purchase orders:', poError)
     }
 
@@ -37,9 +33,7 @@ export async function GET(request: NextRequest) {
       .from('products')
       .select('cost_price, selling_price')
       .eq('is_active', true)
-      .is('deleted_at', null)
-
-    if (productsError) {
+      if (productsError) {
       console.error('Error fetching products:', productsError)
     }
 
@@ -48,9 +42,7 @@ export async function GET(request: NextRequest) {
       .from('employees')
       .select('salary')
       .eq('is_active', true)
-      .is('deleted_at', null)
-
-    if (employeesError) {
+      if (employeesError) {
       console.error('Error fetching employees:', employeesError)
     }
 

@@ -59,7 +59,6 @@ export async function GET(request: NextRequest) {
         department:departments(id, name),
         designation:designations(id, title)
       `)
-      .is('deletedAt', null)
       .order('hireDate', { ascending: false })
 
     if (employeeId) {
@@ -164,7 +163,6 @@ export async function POST(request: NextRequest) {
       .from('employees')
       .select('id, firstName, lastName, employeeNumber, hireDate')
       .eq('id', employeeId)
-      .is('deletedAt', null)
       .single()
 
     if (empError || !employee) {

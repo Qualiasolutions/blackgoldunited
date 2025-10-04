@@ -16,7 +16,6 @@ export async function GET(request: NextRequest) {
     const { data: purchaseOrders, error: poError } = await supabase
       .from('purchase_orders')
       .select('id, po_number, total_amount, status, order_date, created_at, supplier_id')
-      .is('deleted_at', null)
       .order('created_at', { ascending: false })
 
     if (poError) {
@@ -31,7 +30,6 @@ export async function GET(request: NextRequest) {
     const { data: suppliers, error: suppliersError } = await supabase
       .from('suppliers')
       .select('id, company_name, is_active')
-      .is('deleted_at', null)
       .eq('is_active', true)
 
     if (suppliersError) {
@@ -44,9 +42,7 @@ export async function GET(request: NextRequest) {
       .select('id')
       .eq('is_active', true)
       .eq('type', 'PRODUCT')
-      .is('deleted_at', null)
-
-    if (productsError) {
+      if (productsError) {
       console.error('Error fetching products:', productsError)
     }
 

@@ -60,7 +60,6 @@ export async function POST(
         supplier:suppliers(name)
       `)
       .eq('id', orderId)
-      .is('deletedAt', null)
       .single()
 
     if (poError || !purchaseOrder) {

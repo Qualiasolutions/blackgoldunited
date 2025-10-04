@@ -118,7 +118,6 @@ export async function GET(
         )
       `)
       .eq('id', orderId)
-      .is('deletedAt', null)
       .single()
 
     if (error) {
@@ -200,7 +199,6 @@ export async function PUT(
       .from('purchase_orders')
       .select('id, status, approvalStatus')
       .eq('id', orderId)
-      .is('deletedAt', null)
       .single()
 
     if (poError || !existingPO) {
@@ -271,7 +269,6 @@ export async function PUT(
         updatedAt: new Date().toISOString()
       })
       .eq('id', orderId)
-      .is('deletedAt', null)
       .select()
       .single()
 
@@ -314,7 +311,6 @@ export async function DELETE(
       .from('purchase_orders')
       .select('id, status, po_number')
       .eq('id', orderId)
-      .is('deletedAt', null)
       .single()
 
     if (poError || !existingPO) {

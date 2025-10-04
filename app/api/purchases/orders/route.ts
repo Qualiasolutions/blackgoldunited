@@ -97,9 +97,7 @@ export async function GET(request: NextRequest) {
           approver:users!purchase_order_approvals_approvedBy_fkey(firstName, lastName, email)
         )
       `, { count: 'exact' })
-      .is('deletedAt', null)
-
-    // Apply filters
+      // Apply filters
     if (query) {
       queryBuilder = queryBuilder.or(`po_number.ilike.%${query}%,notes.ilike.%${query}%`)
     }
@@ -196,7 +194,6 @@ export async function POST(request: NextRequest) {
       .from('suppliers')
       .select('id, isActive, paymentTerms')
       .eq('id', orderData.supplier_id)
-      .is('deletedAt', null)
       .single()
 
     if (supplierError || !supplier) {
@@ -213,9 +210,7 @@ export async function POST(request: NextRequest) {
       .from('products')
       .select('id, name, isActive')
       .in('id', productIds)
-      .is('deletedAt', null)
-
-    if (productsError || !products || products.length !== productIds.length) {
+      if (productsError || !products || products.length !== productIds.length) {
       return NextResponse.json({ error: 'One or more products not found' }, { status: 404 })
     }
 

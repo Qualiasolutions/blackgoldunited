@@ -96,7 +96,6 @@ export async function GET(
         createdByUser:users!purchase_invoices_createdBy_fkey(first_name, last_name, email)
       `)
       .eq('id', invoiceId)
-      .is('deleted_at', null)
       .single()
 
     if (error) {
@@ -209,7 +208,6 @@ export async function PUT(
       .from('purchase_invoices')
       .select('id, status, payment_status, supplier_id, supplier_invoice_number, tax_rate, shipping_cost, discount_amount')
       .eq('id', invoiceId)
-      .is('deleted_at', null)
       .single()
 
     if (invoiceError || !existingInvoice) {
@@ -231,7 +229,6 @@ export async function PUT(
         .eq('supplier_id', existingInvoice.supplier_id)
         .eq('supplier_invoice_number', updateData.supplier_invoice_number)
         .neq('id', invoiceId)
-        .is('deleted_at', null)
         .single()
 
       if (duplicateInvoice) {
@@ -276,7 +273,6 @@ export async function PUT(
         updated_at: new Date().toISOString()
       })
       .eq('id', invoiceId)
-      .is('deleted_at', null)
       .select()
       .single()
 
@@ -316,7 +312,6 @@ export async function DELETE(
       .from('purchase_invoices')
       .select('id, status, payment_status, invoice_number')
       .eq('id', invoiceId)
-      .is('deleted_at', null)
       .single()
 
     if (invoiceError || !existingInvoice) {

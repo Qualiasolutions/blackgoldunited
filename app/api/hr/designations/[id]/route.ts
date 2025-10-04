@@ -277,9 +277,7 @@ export async function DELETE(
       .from('employees')
       .select('id, firstName, lastName')
       .eq('id', id)
-      .is('deletedAt', null)
-
-    if (employees && employees.length > 0) {
+      if (employees && employees.length > 0) {
       return NextResponse.json({
         error: 'Cannot delete designation with active employees. Please reassign employees first.',
         employees: employees.map(emp => `${emp.firstName} ${emp.lastName}`)

@@ -86,7 +86,6 @@ export async function GET(request: NextRequest) {
           employeeNumber
         )
       `, { count: 'exact' })
-      .is('deletedAt', null)
       .order('createdAt', { ascending: false })
 
     // Apply filters
@@ -185,7 +184,6 @@ export async function POST(request: NextRequest) {
         .from('employees')
         .select('id')
         .eq('email', validatedData.email)
-        .is('deletedAt', null)
         .single()
 
       if (existingEmployee) {
@@ -199,7 +197,6 @@ export async function POST(request: NextRequest) {
       .from('employees')
       .select('id')
       .eq('employeeNumber', employeeNumber)
-      .is('deletedAt', null)
       .single()
 
     if (existingEmpNum) {

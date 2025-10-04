@@ -97,9 +97,7 @@ export async function GET(request: NextRequest) {
           status
         )
       `, { count: 'exact' })
-      .is('deleted_at', null)
-
-    // Apply filters
+      // Apply filters
     if (query) {
       queryBuilder = queryBuilder.or(`invoice_number.ilike.%${query}%,supplier_invoice_number.ilike.%${query}%,notes.ilike.%${query}%`)
     }
@@ -213,7 +211,6 @@ export async function POST(request: NextRequest) {
       .from('suppliers')
       .select('id, is_active, name')
       .eq('id', invoiceData.supplier_id)
-      .is('deleted_at', null)
       .single()
 
     if (supplierError || !supplier) {
@@ -255,7 +252,6 @@ export async function POST(request: NextRequest) {
       .select('id')
       .eq('supplier_id', invoiceData.supplier_id)
       .eq('supplier_invoice_number', invoiceData.supplier_invoice_number)
-      .is('deleted_at', null)
       .single()
 
     if (existingInvoice) {
@@ -270,9 +266,7 @@ export async function POST(request: NextRequest) {
       .from('products')
       .select('id, name, is_active')
       .in('id', productIds)
-      .is('deleted_at', null)
-
-    if (productsError || !products || products.length !== productIds.length) {
+      if (productsError || !products || products.length !== productIds.length) {
       return NextResponse.json({ error: 'One or more products not found' }, { status: 404 })
     }
 

@@ -20,7 +20,6 @@ export async function GET(request: NextRequest) {
     const { data: invoices, error: invoicesError } = await supabase
       .from('invoices')
       .select('id, invoice_number, total_amount, paid_amount, status, issue_date, due_date, client_id, created_at')
-      .is('deleted_at', null)
       .order('created_at', { ascending: false })
 
     if (invoicesError) {
@@ -32,9 +31,7 @@ export async function GET(request: NextRequest) {
     const { data: clients } = await supabase
       .from('clients')
       .select('id, company_name, is_active')
-      .is('deleted_at', null)
-
-    const invoicesList = invoices || []
+      const invoicesList = invoices || []
     const clientsList = clients || []
 
     // Calculate report metrics

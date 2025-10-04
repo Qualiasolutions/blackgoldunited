@@ -75,7 +75,6 @@ export async function GET(
         )
       `)
       .eq('id', id)
-      .is('deletedAt', null)
       .single()
 
     if (error) {
@@ -149,7 +148,6 @@ export async function PUT(
       .from('products')
       .select('id, productCode')
       .eq('id', id)
-      .is('deletedAt', null)
       .single()
 
     if (fetchError || !existingProduct) {
@@ -163,7 +161,6 @@ export async function PUT(
         .select('id')
         .eq('productCode', productData.productCode)
         .neq('id', id)
-        .is('deletedAt', null)
         .single()
 
       if (duplicateProduct) {
@@ -247,7 +244,6 @@ export async function DELETE(
       .from('products')
       .select('id, name, totalStock:stocks(quantity)')
       .eq('id', id)
-      .is('deletedAt', null)
       .single()
 
     if (fetchError || !existingProduct) {

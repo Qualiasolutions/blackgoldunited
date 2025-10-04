@@ -64,7 +64,6 @@ export async function GET(
         designation:designations(id, title)
       `)
       .eq('id', documentLog.entityId)
-      .is('deletedAt', null)
       .single()
 
     if (empError || !employee) {
@@ -185,7 +184,6 @@ export async function PUT(
       .from('employees')
       .select('id, firstName, lastName, employeeNumber, userId')
       .eq('id', existingDoc.entityId)
-      .is('deletedAt', null)
       .single()
 
     if (empError || !employee) {
@@ -335,7 +333,6 @@ export async function DELETE(
       .from('employees')
       .select('firstName, lastName, employeeNumber')
       .eq('id', documentLog.entityId)
-      .is('deletedAt', null)
       .single()
 
     // Soft delete by updating metadata

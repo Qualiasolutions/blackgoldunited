@@ -77,7 +77,6 @@ export async function GET(
         )
       `)
       .eq('id', employeeId)
-      .is('deletedAt', null)
       .single()
 
     if (error || !employee) {
@@ -135,7 +134,6 @@ export async function PUT(
       .from('employees')
       .select('id, firstName, lastName, employeeNumber, email')
       .eq('id', employeeId)
-      .is('deletedAt', null)
       .single()
 
     if (checkError || !existingEmployee) {
@@ -148,7 +146,6 @@ export async function PUT(
         .from('employees')
         .select('id')
         .eq('email', validatedData.email)
-        .is('deletedAt', null)
         .neq('id', employeeId)
         .single()
 
@@ -263,7 +260,6 @@ export async function DELETE(
       .from('employees')
       .select('id, firstName, lastName, employeeNumber')
       .eq('id', employeeId)
-      .is('deletedAt', null)
       .single()
 
     if (checkError || !employee) {
@@ -275,9 +271,7 @@ export async function DELETE(
       .from('employees')
       .select('id, firstName, lastName')
       .eq('reportingManagerId', employeeId)
-      .is('deletedAt', null)
-
-    if (subordinates && subordinates.length > 0) {
+      if (subordinates && subordinates.length > 0) {
       return NextResponse.json({
         error: 'Cannot delete employee with active subordinates. Please reassign subordinates first.',
         subordinates: subordinates.map(sub => `${sub.firstName} ${sub.lastName}`)

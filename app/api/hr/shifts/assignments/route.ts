@@ -172,7 +172,6 @@ export async function POST(request: NextRequest) {
       .from('employees')
       .select('id, firstName, lastName, employeeNumber')
       .eq('id', validatedData.employeeId)
-      .is('deletedAt', null)
       .single()
 
     if (empError || !employee) {

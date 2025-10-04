@@ -127,9 +127,7 @@ async function generatePurchaseSummaryReport(supabase: any, params: any) {
     `)
     .gte('orderDate', startDate)
     .lte('orderDate', endDate)
-    .is('deletedAt', null)
-
-  if (supplierId) {
+    if (supplierId) {
     poQuery = poQuery.eq('supplierId', supplierId)
   }
 
@@ -192,9 +190,7 @@ async function generateSupplierPerformanceReport(supabase: any, params: any) {
         )
       )
     `)
-    .is('deletedAt', null)
-
-  if (supplierId) {
+    if (supplierId) {
     query = query.eq('id', supplierId)
   }
 
@@ -271,9 +267,7 @@ async function generateSpendAnalysisReport(supabase: any, params: any) {
     .gte('orderDate', startDate)
     .lte('orderDate', endDate)
     .eq('status', 'RECEIVED')
-    .is('deletedAt', null)
-
-  if (supplierId) {
+    if (supplierId) {
     spendQuery = spendQuery.eq('supplierId', supplierId)
   }
 
@@ -349,7 +343,6 @@ async function generatePendingApprovalsReport(supabase: any, params: any) {
       createdBy:users!purchase_orders_createdBy_fkey(firstName, lastName, email)
     `)
     .eq('approvalStatus', 'PENDING')
-    .is('deletedAt', null)
     .order('orderDate', { ascending: true })
     .limit(limit)
 
@@ -399,7 +392,6 @@ async function generateOverdueInvoicesReport(supabase: any, params: any) {
     `)
     .lt('dueDate', currentDate)
     .neq('paymentStatus', 'PAID')
-    .is('deletedAt', null)
     .order('dueDate', { ascending: true })
     .limit(limit)
 
@@ -497,9 +489,7 @@ async function generatePurchaseTrendsReport(supabase: any, params: any) {
     .select('orderDate, totalAmount, status')
     .gte('orderDate', startDate)
     .lte('orderDate', endDate)
-    .is('deletedAt', null)
-
-  if (error) throw error
+    if (error) throw error
 
   // Group by month
   const monthlyTrends = trendData?.reduce((acc: any, po: any) => {

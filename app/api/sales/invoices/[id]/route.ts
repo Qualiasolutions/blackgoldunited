@@ -91,7 +91,6 @@ export async function GET(
       .from('invoices')
       .select('*')
       .eq('id', id)
-      .is('deleted_at', null)
       .single();
 
     if (error) {
@@ -177,7 +176,6 @@ export async function PUT(
       .from('invoices')
       .select('id, status')
       .eq('id', id)
-      .is('deleted_at', null)
       .single();
 
     if (checkError) {
@@ -349,7 +347,6 @@ export async function DELETE(
       .from('invoices')
       .select('id, invoice_number, status')
       .eq('id', id)
-      .is('deleted_at', null)
       .single();
 
     if (checkError) {

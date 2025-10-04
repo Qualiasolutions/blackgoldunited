@@ -17,7 +17,6 @@ export async function GET(request: NextRequest) {
     const { data: invoices } = await supabase
       .from('invoices')
       .select('id, invoice_number, total_amount, paid_amount, status, created_at')
-      .is('deleted_at', null)
       .in('status', ['PAID', 'PARTIAL'])
       .order('created_at', { ascending: false })
       .limit(10)
@@ -42,7 +41,6 @@ export async function GET(request: NextRequest) {
     const { data: purchaseOrders } = await supabase
       .from('purchase_orders')
       .select('id, po_number, total_amount, status, created_at')
-      .is('deleted_at', null)
       .in('status', ['CONFIRMED', 'DELIVERED', 'INVOICED'])
       .order('created_at', { ascending: false })
       .limit(10)

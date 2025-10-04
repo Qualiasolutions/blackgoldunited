@@ -17,9 +17,7 @@ export async function GET(request: NextRequest) {
       .from('employees')
       .select('*', { count: 'exact', head: true })
       .eq('is_active', true)
-      .is('deleted_at', null)
-
-    // Get current month's pay runs
+      // Get current month's pay runs
     const currentDate = new Date()
     const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().split('T')[0]
     const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString().split('T')[0]

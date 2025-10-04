@@ -21,9 +21,7 @@ export async function GET(request: NextRequest) {
       .from('employees')
       .select('*', { count: 'exact', head: true })
       .eq('is_active', true)
-      .is('deleted_at', null)
-
-    // Get attendance logs for the date range
+      // Get attendance logs for the date range
     const { data: attendanceLogs, error } = await supabase
       .from('attendance_logs')
       .select('*')

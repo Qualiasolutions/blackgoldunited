@@ -114,7 +114,6 @@ export async function POST(
       .from('suppliers')
       .select('id')
       .eq('id', supplierId)
-      .is('deletedAt', null)
       .single()
 
     if (supplierError || !supplier) {

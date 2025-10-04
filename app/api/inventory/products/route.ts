@@ -63,9 +63,7 @@ export async function GET(request: NextRequest) {
           warehouse:warehouses(id, name, code)
         )
       `)
-      .is('deletedAt', null)
-
-    // Apply filters
+      // Apply filters
     if (query) {
       queryBuilder = queryBuilder.or(`name.ilike.%${query}%,productCode.ilike.%${query}%,description.ilike.%${query}%`)
     }
@@ -156,7 +154,6 @@ export async function POST(request: NextRequest) {
       .from('products')
       .select('id')
       .eq('productCode', productData.productCode)
-      .is('deletedAt', null)
       .single()
 
     if (existingProduct) {

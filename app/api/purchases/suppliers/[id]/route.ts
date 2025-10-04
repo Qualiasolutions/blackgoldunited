@@ -79,7 +79,6 @@ export async function GET(
         )
       `)
       .eq('id', supplierId)
-      .is('deletedAt', null)
       .single()
 
     if (error) {
@@ -160,7 +159,6 @@ export async function PUT(
         .select('id')
         .eq('email', updateData.email)
         .neq('id', supplierId)
-        .is('deletedAt', null)
         .single()
 
       if (existingSupplier) {
@@ -178,7 +176,6 @@ export async function PUT(
         updatedAt: new Date().toISOString()
       })
       .eq('id', supplierId)
-      .is('deletedAt', null)
       .select()
       .single()
 
@@ -241,7 +238,6 @@ export async function DELETE(
         updatedAt: new Date().toISOString()
       })
       .eq('id', supplierId)
-      .is('deletedAt', null)
       .select()
       .single()
 

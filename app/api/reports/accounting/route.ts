@@ -20,15 +20,11 @@ export async function GET(request: NextRequest) {
     const { data: invoices } = await supabase
       .from('invoices')
       .select('total_amount, paid_amount, status, created_at')
-      .is('deleted_at', null)
-
-    // Get purchase orders for expenses
+      // Get purchase orders for expenses
     const { data: purchaseOrders } = await supabase
       .from('purchase_orders')
       .select('total_amount, status, created_at')
-      .is('deleted_at', null)
-
-    // Get payroll data
+      // Get payroll data
     const { data: payRuns } = await supabase
       .from('pay_runs')
       .select('total_net, pay_date, created_at')
@@ -39,9 +35,7 @@ export async function GET(request: NextRequest) {
       .from('products')
       .select('cost_price, selling_price')
       .eq('is_active', true)
-      .is('deleted_at', null)
-
-    const invoicesList = invoices || []
+      const invoicesList = invoices || []
     const poList = purchaseOrders || []
     const payRunsList = payRuns || []
     const productsList = products || []

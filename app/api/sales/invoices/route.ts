@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('invoices')
       .select(OPTIMIZED_SELECTS.invoices, { count: 'exact' })
-      .is('deleted_at', null);
+      ;
 
     // Apply search filter
     if (validatedParams.query) {

@@ -177,6 +177,16 @@ const dbData = {
 - Converted all database column references to snake_case
 - Removed reference to non-existent `deleted_at` column
 
+### Commit 3: `3fde5c06` - deletedAt Column Fixes
+- Fixed 10 instances of non-existent `deletedAt`/`deleted_at` column references
+- Files: RFQ create, employees, search API, dashboard activity, suppliers, client detail
+- Changed soft delete in client detail API to use `is_active=false` instead
+
+### Remaining Work
+- **37 additional files** found with `deletedAt`/`deleted_at` references
+- Most in HR, Inventory, Purchase, Sales, Payroll, Reports modules
+- Need systematic batch fix across all modules
+
 ---
 
 ## 🚨 Deployment Issues
@@ -199,15 +209,20 @@ const dbData = {
 ## 📋 Recommended Action Plan
 
 ### Immediate (Critical)
-1. ✅ Fix `/api/sales/clients` - DONE
-2. ⚠️ Fix `/api/clients` - Need to verify schema usage
-3. ⚠️ Deploy and verify production works
+1. ✅ Fix `/api/sales/clients` - DONE (commit 191e681b)
+2. ✅ Fix `/api/clients` - DONE (commit 7dbdc8eb)
+3. ✅ Fix `deletedAt`/`deleted_at` references - DONE (commit 3fde5c06)
+   - Fixed 10 instances across 6 files
+   - RFQ create page, employees, search, dashboard, suppliers, client detail
+4. ⚠️ **REMAINING**: 37 more files with `deletedAt` references found
+5. ⚠️ Deploy and verify production works - IN PROGRESS
 
 ### Short Term (High Priority)
-1. Create automated script to find all camelCase DB column references
-2. Systematically fix all 63+ instances
-3. Add ESLint rule to prevent future camelCase in `.eq()`, `.order()`, `.select()` calls
-4. Create type-safe query builder wrapper
+1. ✅ Created automated script to find all camelCase DB column references
+2. ⚠️ Systematically fix remaining 37+ files with deletedAt
+3. ⚠️ Systematically fix all 63+ camelCase column name instances
+4. Add ESLint rule to prevent future camelCase in `.eq()`, `.order()`, `.select()` calls
+5. Create type-safe query builder wrapper
 
 ### Medium Term (Important)
 1. Add integration tests for all API endpoints

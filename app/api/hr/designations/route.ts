@@ -56,11 +56,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (departmentId) {
-      query = query.eq('departmentId', departmentId)
+      query = query.eq('department_id', departmentId)
     }
 
     if (isActive !== null) {
-      query = query.eq('isActive', isActive === 'true')
+      query = query.eq('is_active', isActive === 'true')
     }
 
     const { data: designations, error } = await query
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
       .eq('title', validatedData.title)
 
     if (validatedData.departmentId) {
-      duplicateQuery = duplicateQuery.eq('departmentId', validatedData.departmentId)
+      duplicateQuery = duplicateQuery.eq('department_id', validatedData.departmentId)
     } else {
       duplicateQuery = duplicateQuery.is('departmentId', null)
     }

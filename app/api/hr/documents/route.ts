@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
         user:users!activity_logs_userId_fkey(firstName, lastName)
       `)
       .eq('entityType', 'employee_document')
-      .order('createdAt', { ascending: false })
+      .order('created_at', { ascending: false })
 
     // Apply filters
     if (employeeId) {

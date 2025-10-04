@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
           employeeNumber
         )
       `, { count: 'exact' })
-      .order('createdAt', { ascending: false })
+      .order('created_at', { ascending: false })
 
     // Apply filters
     if (search.trim()) {
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (departmentId) {
-      query = query.eq('departmentId', departmentId)
+      query = query.eq('department_id', departmentId)
     }
 
     if (designationId) {
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (isActive !== null) {
-      query = query.eq('isActive', isActive === 'true')
+      query = query.eq('is_active', isActive === 'true')
     }
 
     // Apply pagination
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
       const { data: lastEmployee } = await supabase
         .from('employees')
         .select('employeeNumber')
-        .order('createdAt', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1)
         .single()
 
@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
     const { data: existingEmpNum } = await supabase
       .from('employees')
       .select('id')
-      .eq('employeeNumber', employeeNumber)
+      .eq('employee_number', employeeNumber)
       .single()
 
     if (existingEmpNum) {

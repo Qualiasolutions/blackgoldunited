@@ -159,7 +159,7 @@ export async function PUT(
       const { data: duplicateProduct } = await supabase
         .from('products')
         .select('id')
-        .eq('productCode', productData.productCode)
+        .eq('product_code', productData.productCode)
         .neq('id', id)
         .single()
 

@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
       const { data: products } = await supabase
         .from('products')
         .select('id, name, productCode, sellingPrice')
-        .eq('isActive', true)
+        .eq('is_active', true)
         .ilike('name', `%${query}%`)
         .limit(5)
 

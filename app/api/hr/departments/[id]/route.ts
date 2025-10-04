@@ -320,7 +320,7 @@ export async function DELETE(
     const { data: employees } = await supabase
       .from('employees')
       .select('id, firstName, lastName')
-      .eq('departmentId', id)
+      .eq('department_id', id)
       if (employees && employees.length > 0) {
       return NextResponse.json({
         error: 'Cannot delete department with active employees. Please reassign employees first.',
@@ -332,7 +332,7 @@ export async function DELETE(
     const { data: subdepartments } = await supabase
       .from('departments')
       .select('id, name')
-      .eq('parentId', id)
+      .eq('parent_id', id)
 
     if (subdepartments && subdepartments.length > 0) {
       return NextResponse.json({

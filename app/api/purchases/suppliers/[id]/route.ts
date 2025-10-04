@@ -214,7 +214,7 @@ export async function DELETE(
     const { data: activePOs, error: poError } = await supabase
       .from('purchase_orders')
       .select('id')
-      .eq('supplierId', supplierId)
+      .eq('supplier_id', supplierId)
       .in('status', ['DRAFT', 'SENT', 'CONFIRMED'])
       .limit(1)
 

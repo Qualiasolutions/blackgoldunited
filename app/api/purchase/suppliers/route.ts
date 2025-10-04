@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('suppliers')
       .select('*')
-      .order('createdAt', { ascending: false })
+      .order('created_at', { ascending: false })
 
     // Add search filter if provided
     if (search) {
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     // Add active filter
     if (isActive !== null) {
-      query = query.eq('isActive', isActive === 'true')
+      query = query.eq('is_active', isActive === 'true')
     }
 
     // Add pagination
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       const { data: lastSupplier } = await supabase
         .from('suppliers')
         .select('supplierCode')
-        .order('createdAt', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1)
         .single()
 

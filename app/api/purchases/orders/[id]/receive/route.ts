@@ -138,7 +138,7 @@ export async function POST(
     const { data: lastReceipt } = await supabase
       .from('purchase_receipts')
       .select('receiptNumber')
-      .order('createdAt', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(1)
       .single()
 
@@ -212,8 +212,8 @@ export async function POST(
         const { data: currentStock, error: stockError } = await supabase
           .from('stocks')
           .select('quantity')
-          .eq('productId', poItem.productId)
-          .eq('warehouseId', receiptItem.warehouseId)
+          .eq('product_id', poItem.productId)
+          .eq('warehouse_id', receiptItem.warehouseId)
           .single()
 
         if (stockError && stockError.code !== 'PGRST116') { // PGRST116 = no rows found
@@ -372,7 +372,7 @@ export async function GET(
         receivedByUser:users!purchase_receipts_receivedBy_fkey(firstName, lastName, email)
       `)
       .eq('purchaseOrderId', purchaseOrderId)
-      .order('createdAt', { ascending: false })
+      .order('created_at', { ascending: false })
 
     if (error) {
       console.error('Database error:', error)

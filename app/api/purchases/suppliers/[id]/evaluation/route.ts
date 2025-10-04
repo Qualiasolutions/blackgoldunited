@@ -48,7 +48,7 @@ export async function GET(
           email
         )
       `)
-      .eq('supplierId', supplierId)
+      .eq('supplier_id', supplierId)
       .order('evaluationDate', { ascending: false })
 
     if (error) {
@@ -148,7 +148,7 @@ export async function POST(
     const { data: recentEvaluations } = await supabase
       .from('supplier_evaluations')
       .select('overallRating')
-      .eq('supplierId', supplierId)
+      .eq('supplier_id', supplierId)
       .order('evaluationDate', { ascending: false })
       .limit(5) // Consider last 5 evaluations
 

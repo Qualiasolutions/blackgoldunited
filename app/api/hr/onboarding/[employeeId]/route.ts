@@ -68,7 +68,7 @@ export async function GET(
       `)
       .eq('entityType', 'onboarding_task')
       .eq('entityId', employeeId)
-      .order('createdAt', { ascending: true })
+      .order('created_at', { ascending: true })
 
     if (taskError) {
       console.error('Database error:', taskError)
@@ -132,7 +132,7 @@ export async function GET(
       `)
       .eq('entityType', 'onboarding_task')
       .eq('entityId', employeeId)
-      .order('createdAt', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(10)
 
     const onboardingData = {

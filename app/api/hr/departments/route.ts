@@ -66,11 +66,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (isActive !== null) {
-      query = query.eq('isActive', isActive === 'true')
+      query = query.eq('is_active', isActive === 'true')
     }
 
     if (parentId) {
-      query = query.eq('parentId', parentId)
+      query = query.eq('parent_id', parentId)
     } else if (includeHierarchy) {
       // Get all root departments (no parent)
       query = query.is('parentId', null)

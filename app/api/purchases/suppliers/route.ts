@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (isActive !== null) {
-      queryBuilder = queryBuilder.eq('isActive', isActive === 'true')
+      queryBuilder = queryBuilder.eq('is_active', isActive === 'true')
     }
 
     if (paymentTerms) {
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
 
     // Get paginated results
     const { data: suppliers, error, count } = await queryBuilder
-      .order('createdAt', { ascending: false })
+      .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
     if (error) {
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
       const { data: lastSupplier } = await supabase
         .from('suppliers')
         .select('supplierCode')
-        .order('createdAt', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1)
         .single()
 

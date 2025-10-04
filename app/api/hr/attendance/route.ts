@@ -70,11 +70,11 @@ export async function GET(request: NextRequest) {
         )
       `, { count: 'exact' })
       .order('date', { ascending: false })
-      .order('createdAt', { ascending: false })
+      .order('created_at', { ascending: false })
 
     // Apply filters
     if (employeeId) {
-      query = query.eq('employeeId', employeeId)
+      query = query.eq('employee_id', employeeId)
     }
 
     if (startDate) {
@@ -225,7 +225,7 @@ async function handleCheckInOut(supabase: any, body: any, authResult: any) {
   let { data: attendanceRecord, error: findError } = await supabase
     .from('attendance_logs')
     .select('*')
-    .eq('employeeId', targetEmployeeId)
+    .eq('employee_id', targetEmployeeId)
     .eq('date', today)
     .single()
 
@@ -404,7 +404,7 @@ async function handleManualAttendanceEntry(supabase: any, body: any, authResult:
   const { data: existingRecord } = await supabase
     .from('attendance_logs')
     .select('id')
-    .eq('employeeId', validatedData.employeeId)
+    .eq('employee_id', validatedData.employeeId)
     .eq('date', validatedData.date)
     .single()
 

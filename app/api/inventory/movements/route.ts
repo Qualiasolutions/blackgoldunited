@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     // Apply filters
     if (warehouse) {
-      movementsQuery = movementsQuery.eq('warehouseId', warehouse)
+      movementsQuery = movementsQuery.eq('warehouse_id', warehouse)
     }
 
     if (type) {
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (productId) {
-      movementsQuery = movementsQuery.eq('productId', productId)
+      movementsQuery = movementsQuery.eq('product_id', productId)
     }
 
     if (dateFrom) {
@@ -95,13 +95,13 @@ export async function GET(request: NextRequest) {
 
     // Apply same filters to count query
     if (warehouse) {
-      countQuery.eq('warehouseId', warehouse)
+      countQuery.eq('warehouse_id', warehouse)
     }
     if (type) {
       countQuery.eq('type', type)
     }
     if (productId) {
-      countQuery.eq('productId', productId)
+      countQuery.eq('product_id', productId)
     }
     if (dateFrom) {
       countQuery.gte('createdAt', dateFrom)
@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
     // Execute main query with pagination
     const { data: movements, error } = await movementsQuery
       .range(offset, offset + limit - 1)
-      .order('createdAt', { ascending: false })
+      .order('created_at', { ascending: false })
 
     if (error) {
       console.error('Database error:', error)
@@ -238,8 +238,8 @@ async function handleStockMovement(
   const { data: currentStock, error: stockError } = await supabase
     .from('product_stock')
     .select('*')
-    .eq('productId', productId)
-    .eq('warehouseId', warehouseId)
+    .eq('product_id', productId)
+    .eq('warehouse_id', warehouseId)
     .single()
 
   let previousStock = 0

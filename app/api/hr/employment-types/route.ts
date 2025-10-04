@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (isActive !== null) {
-      query = query.eq('isActive', isActive === 'true')
+      query = query.eq('is_active', isActive === 'true')
     }
 
     const { data: employmentTypes, error } = await query

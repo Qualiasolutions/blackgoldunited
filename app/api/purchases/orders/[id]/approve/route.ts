@@ -249,7 +249,7 @@ export async function GET(
         )
       `)
       .eq('purchaseOrderId', orderId)
-      .order('createdAt', { ascending: true })
+      .order('created_at', { ascending: true })
 
     if (error) {
       console.error('Database error:', error)

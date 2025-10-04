@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
 
     // Get paginated results
     const { data: purchaseOrders, error, count } = await queryBuilder
-      .order('createdAt', { ascending: false })
+      .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
     if (error) {
@@ -225,7 +225,7 @@ export async function POST(request: NextRequest) {
     const { data: lastPO } = await supabase
       .from('purchase_orders')
       .select('po_number')
-      .order('createdAt', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(1)
       .single()
 

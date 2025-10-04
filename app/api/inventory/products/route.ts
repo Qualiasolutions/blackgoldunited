@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (category) {
-      queryBuilder = queryBuilder.eq('categoryId', category)
+      queryBuilder = queryBuilder.eq('category_id', category)
     }
 
     if (type) {
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (isActive !== null) {
-      queryBuilder = queryBuilder.eq('isActive', isActive === 'true')
+      queryBuilder = queryBuilder.eq('is_active', isActive === 'true')
     }
 
     // Get total count for pagination
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
 
     // Get paginated results
     const { data: products, error } = await queryBuilder
-      .order('createdAt', { ascending: false })
+      .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
     if (error) {
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
     const { data: existingProduct } = await supabase
       .from('products')
       .select('id')
-      .eq('productCode', productData.productCode)
+      .eq('product_code', productData.productCode)
       .single()
 
     if (existingProduct) {
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
       const { data: lastProduct } = await supabase
         .from('products')
         .select('productCode')
-        .order('createdAt', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1)
         .single()
 
@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
     const { data: warehouses } = await supabase
       .from('warehouses')
       .select('id')
-      .eq('isActive', true)
+      .eq('is_active', true)
 
     if (warehouses && warehouses.length > 0) {
       const stockEntries = warehouses.map(warehouse => ({

@@ -45,11 +45,11 @@ export async function GET(request: NextRequest) {
     if (parentId === 'null' || parentId === '') {
       queryBuilder = queryBuilder.is('parentId', null)
     } else if (parentId) {
-      queryBuilder = queryBuilder.eq('parentId', parentId)
+      queryBuilder = queryBuilder.eq('parent_id', parentId)
     }
 
     if (isActive !== null) {
-      queryBuilder = queryBuilder.eq('isActive', isActive === 'true')
+      queryBuilder = queryBuilder.eq('is_active', isActive === 'true')
     }
 
     const { data: categories, error } = await queryBuilder.order('name')
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
       .eq('name', categoryData.name)
 
     if (categoryData.parentId) {
-      duplicateQuery = duplicateQuery.eq('parentId', categoryData.parentId)
+      duplicateQuery = duplicateQuery.eq('parent_id', categoryData.parentId)
     } else {
       duplicateQuery = duplicateQuery.is('parentId', null)
     }
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
         .from('categories')
         .select('id')
         .eq('id', categoryData.parentId)
-        .eq('isActive', true)
+        .eq('is_active', true)
         .single()
 
       if (!parentCategory) {

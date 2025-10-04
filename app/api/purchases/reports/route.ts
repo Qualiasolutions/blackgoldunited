@@ -128,7 +128,7 @@ async function generatePurchaseSummaryReport(supabase: any, params: any) {
     .gte('orderDate', startDate)
     .lte('orderDate', endDate)
     if (supplierId) {
-    poQuery = poQuery.eq('supplierId', supplierId)
+    poQuery = poQuery.eq('supplier_id', supplierId)
   }
 
   const { data: purchaseOrders, error: poError } = await poQuery
@@ -268,7 +268,7 @@ async function generateSpendAnalysisReport(supabase: any, params: any) {
     .lte('orderDate', endDate)
     .eq('status', 'RECEIVED')
     if (supplierId) {
-    spendQuery = spendQuery.eq('supplierId', supplierId)
+    spendQuery = spendQuery.eq('supplier_id', supplierId)
   }
 
   const { data: spendData, error } = await spendQuery

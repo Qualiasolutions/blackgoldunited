@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (isActive !== null) {
-      queryBuilder = queryBuilder.eq('isActive', isActive === 'true')
+      queryBuilder = queryBuilder.eq('is_active', isActive === 'true')
     }
 
     // Get total count for pagination
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
       countQuery.ilike('location', `%${location}%`)
     }
     if (isActive !== null) {
-      countQuery.eq('isActive', isActive === 'true')
+      countQuery.eq('is_active', isActive === 'true')
     }
 
     const { count: totalCount } = await countQuery

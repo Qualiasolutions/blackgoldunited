@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
 
     // Apply warehouse filter
     if (warehouse) {
-      stockQuery = stockQuery.eq('warehouseId', warehouse)
+      stockQuery = stockQuery.eq('warehouse_id', warehouse)
     }
 
     // Apply category filter
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
 
     // Apply same filters to count query
     if (warehouse) {
-      countQuery.eq('warehouseId', warehouse)
+      countQuery.eq('warehouse_id', warehouse)
     }
 
     const { count: totalCount } = await countQuery
@@ -173,8 +173,8 @@ export async function POST(request: NextRequest) {
     const { data: currentStock, error: stockError } = await supabase
       .from('product_stock')
       .select('*')
-      .eq('productId', productId)
-      .eq('warehouseId', warehouseId)
+      .eq('product_id', productId)
+      .eq('warehouse_id', warehouseId)
       .single()
 
     if (stockError || !currentStock) {

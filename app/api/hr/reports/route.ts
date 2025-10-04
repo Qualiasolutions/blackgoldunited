@@ -241,9 +241,9 @@ async function generateEmployeeSummaryReport(supabase: any, filters: any = {}) {
       designation:designations(id, title),
       employmentType:employment_types(id, typeName)
     `)
-    if (filters.departmentId) query = query.eq('departmentId', filters.departmentId)
+    if (filters.departmentId) query = query.eq('department_id', filters.departmentId)
   if (filters.designationId) query = query.eq('designationId', filters.designationId)
-  if (filters.isActive !== undefined) query = query.eq('isActive', filters.isActive)
+  if (filters.isActive !== undefined) query = query.eq('is_active', filters.isActive)
 
   const { data: employees, error } = await query
 
@@ -274,7 +274,7 @@ async function generateDepartmentBreakdownReport(supabase: any) {
         salary
       )
     `)
-    .eq('isActive', true)
+    .eq('is_active', true)
 
   if (error) throw error
 
@@ -350,7 +350,7 @@ async function generateProbationStatusReport(supabase: any) {
       department:departments(name),
       designation:designations(title)
     `)
-    .eq('isActive', true)
+    .eq('is_active', true)
 
   if (error) throw error
 
@@ -373,7 +373,7 @@ async function generateDocumentComplianceReport(supabase: any) {
   const { data: employees } = await supabase
     .from('employees')
     .select('id, firstName, lastName, employeeNumber')
-    .eq('isActive', true)
+    .eq('is_active', true)
     // Get all document logs
   const { data: documentLogs } = await supabase
     .from('activity_logs')
@@ -423,7 +423,7 @@ async function generateOnboardingStatusReport(supabase: any) {
       department:departments(name)
     `)
     .gte('hireDate', ninetyDaysAgo)
-    .eq('isActive', true)
+    .eq('is_active', true)
     if (error) throw error
 
   // Get onboarding tasks for these employees
@@ -481,8 +481,8 @@ async function generateSalaryRangesReport(supabase: any, filters: any = {}) {
       designation:designations(id, title)
     `)
     .not('salary', 'is', null)
-    .eq('isActive', true)
-    if (filters.departmentId) query = query.eq('departmentId', filters.departmentId)
+    .eq('is_active', true)
+    if (filters.departmentId) query = query.eq('department_id', filters.departmentId)
 
   const { data: employees, error } = await query
 

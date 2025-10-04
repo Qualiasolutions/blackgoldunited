@@ -136,7 +136,7 @@ export async function PUT(
           .neq('id', id)
 
         if (newDepartmentId) {
-          duplicateQuery = duplicateQuery.eq('departmentId', newDepartmentId)
+          duplicateQuery = duplicateQuery.eq('department_id', newDepartmentId)
         } else {
           duplicateQuery = duplicateQuery.is('departmentId', null)
         }

@@ -63,11 +63,11 @@ export async function GET(request: NextRequest) {
         )
       `, { count: 'exact' })
       .order('effectiveFrom', { ascending: false })
-      .order('createdAt', { ascending: false })
+      .order('created_at', { ascending: false })
 
     // Apply filters
     if (employeeId) {
-      query = query.eq('employeeId', employeeId)
+      query = query.eq('employee_id', employeeId)
     }
 
     if (shiftId) {
@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
     const { data: overlappingAssignments } = await supabase
       .from('employee_shifts')
       .select('id, effectiveFrom, effectiveTo')
-      .eq('employeeId', validatedData.employeeId)
+      .eq('employee_id', validatedData.employeeId)
       .lte('effectiveFrom', validatedData.effectiveTo || '9999-12-31')
       .or(`effectiveTo.is.null,effectiveTo.gte.${validatedData.effectiveFrom}`)
 

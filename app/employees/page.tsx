@@ -41,10 +41,9 @@ export default function EmployeesPage() {
   const fetchEmployees = async () => {
     try {
       const supabase = createClient()
-      const { data, error } = await supabase
+      const { data, error} = await supabase
         .from('employees')
         .select('*')
-        .eq('deletedAt', null)
         .order('firstName')
 
       if (error) throw error

@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
       const { data: invoices } = await supabase
         .from('invoices')
         .select('id, invoice_number, total_amount, paid_amount, status, created_at')
-        .eq('deleted_at', null)
         .order('created_at', { ascending: false })
         .limit(3)
 
@@ -50,7 +49,6 @@ export async function GET(request: NextRequest) {
       const { data: purchaseOrders } = await supabase
         .from('purchase_orders')
         .select('id, po_number, total_amount, status, created_at')
-        .eq('deleted_at', null)
         .order('created_at', { ascending: false })
         .limit(2)
 
@@ -77,7 +75,6 @@ export async function GET(request: NextRequest) {
       const { data: clients } = await supabase
         .from('clients')
         .select('id, company_name, created_at')
-        .eq('deleted_at', null)
         .order('created_at', { ascending: false })
         .limit(2)
 

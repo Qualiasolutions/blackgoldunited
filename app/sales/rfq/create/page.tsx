@@ -76,7 +76,6 @@ export default function CreateRFQPage() {
       const { data, error } = await supabase
         .from('clients')
         .select('id, company_name, contact_person, email')
-        .eq('deletedAt', null)
         .eq('is_active', true)
         .order('company_name')
 

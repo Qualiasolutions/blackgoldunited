@@ -28,7 +28,6 @@ export async function GET(request: NextRequest) {
       const { data: clients } = await supabase
         .from('clients')
         .select('id, company_name, email, phone')
-        .eq('deleted_at', null)
         .ilike('company_name', `%${query}%`)
         .limit(5)
 
@@ -55,7 +54,6 @@ export async function GET(request: NextRequest) {
       const { data: invoices } = await supabase
         .from('invoices')
         .select('id, invoice_number, total_amount, status')
-        .eq('deleted_at', null)
         .ilike('invoice_number', `%${query}%`)
         .limit(5)
 
@@ -82,7 +80,6 @@ export async function GET(request: NextRequest) {
       const { data: products } = await supabase
         .from('products')
         .select('id, name, productCode, sellingPrice')
-        .eq('deleted_at', null)
         .eq('isActive', true)
         .ilike('name', `%${query}%`)
         .limit(5)

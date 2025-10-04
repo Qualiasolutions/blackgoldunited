@@ -21,7 +21,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .from('clients')
       .select('*')
       .eq('id', id)
-      .eq('deletedAt', null)
       .single()
 
     if (error) {
@@ -61,7 +60,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       .from('clients')
       .update(updateData)
       .eq('id', id)
-      .eq('deletedAt', null)
       .select()
       .single()
 
@@ -95,15 +93,14 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const supabase = await createClient()
 
-    // Soft delete by setting deletedAt timestamp
+    // Set is_active to false (soft delete)
     const { data: client, error } = await supabase
       .from('clients')
       .update({
-        deletedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        is_active: false,
+        updated_at: new Date().toISOString()
       })
       .eq('id', id)
-      .eq('deletedAt', null)
       .select()
       .single()
 

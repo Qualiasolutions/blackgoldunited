@@ -23,7 +23,6 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('suppliers')
       .select('*')
-      .eq('deletedAt', null)
       .order('createdAt', { ascending: false })
 
     // Add search filter if provided

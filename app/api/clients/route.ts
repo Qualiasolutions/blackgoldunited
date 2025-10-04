@@ -101,7 +101,16 @@ export async function GET(request: NextRequest) {
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);
-    const validatedParams = searchSchema.parse(Object.fromEntries(searchParams.entries()));
+    let validatedParams;
+    try {
+      validatedParams = searchSchema.parse(Object.fromEntries(searchParams.entries()));
+    } catch (zodError) {
+      console.error('[Clients API] Zod validation error:', zodError);
+      return NextResponse.json({
+        error: 'Invalid query parameters',
+        details: zodError instanceof Error ? zodError.message : 'Validation failed'
+      }, { status: 400 });
+    }
 
     // PERFORMANCE OPTIMIZATION: Use specific columns instead of SELECT *
     // This reduces data transfer by ~50% and improves query speed by ~40%
@@ -163,8 +172,15 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('API error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('[Clients API GET] Error:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      type: error?.constructor?.name
+    });
+    return NextResponse.json({
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
 

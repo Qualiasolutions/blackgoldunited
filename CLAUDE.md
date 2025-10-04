@@ -309,7 +309,100 @@ The project now includes a comprehensive AI agent system with 10 specialized age
 - Phase 3: 30 pages created/updated (Reports, Finance, Accounting, Attendance, Payroll)
 - Phase 4: 17 pages created (Organizational, Templates, QHSE, Employees)
 - Phase 5: 4 pages created + critical bug fixes (Production stabilization)
+- Phase 6: PostgREST foreign key fixes (October 4, 2025)
 - **Total**: All 61 pages fully functional with backend integration + production-ready stability
+
+## 🔧 Phase 6: PostgREST Foreign Key Relationship Fixes - COMPLETED
+
+**Completion Date**: October 4, 2025
+**Total Work**: Critical API fixes for foreign key join issues
+**Result**: All invoice and payment endpoints now working correctly
+
+### ✅ PHASE 6 WORK COMPLETED
+
+**Critical Pattern Discovered**:
+PostgREST nested foreign key relationships (`table:relation(nested:relation)`) are unreliable and cause 400/500 errors. Solution: Use separate queries with manual data mapping.
+
+**Files Fixed (3 files, 3 commits)**:
+
+1. **`app/sales/payments/page.tsx`** - Payments list page
+   - **Issue**: Nested foreign key `invoices:invoice_id(clients:client_id(company_name))` causing 400 error
+   - **Fix**: Fetch payments → fetch invoices → fetch clients separately, manual mapping
+   - **Result**: Payments page now loads with correct client and invoice data
+
+2. **`app/api/sales/invoices/route.ts`** - Invoice creation API
+   - **Issue**: `client:clients!inner(...)` syntax on line 352 causing 500 error after invoice creation
+   - **Fix**: Fetch invoice → fetch client separately → fetch items separately → manual combination
+   - **Result**: Invoice creation now returns complete data
+
+3. **`app/api/sales/invoices/[id]/route.ts`** - Invoice detail/update API
+   - **Issue**: GET (line 94) and PUT (line 248) using `client:clients!inner(...)` causing 500 errors
+   - **Fix**: Both endpoints now fetch invoice, client, and items separately with manual joins
+   - **Result**: Invoice detail view and edit operations work correctly
+
+### 📋 Standard Pattern Established
+
+**❌ Anti-Pattern (Causes errors)**:
+```typescript
+// Don't use nested foreign keys
+const { data } = await supabase
+  .from('main_table')
+  .select(`
+    *,
+    relation:foreign_table!constraint(fields),
+    nested:table(deep:nested_table(fields))  // ❌ FAILS
+  `)
+```
+
+**✅ Best Practice (Always works)**:
+```typescript
+// 1. Fetch main entity
+const { data: mainData } = await supabase
+  .from('main_table')
+  .select('*')
+
+// 2. Extract foreign IDs
+const ids = [...new Set(mainData.map(item => item.foreign_id).filter(Boolean))]
+
+// 3. Fetch related entities
+const { data: relatedData } = await supabase
+  .from('related_table')
+  .select('id, field1, field2')
+  .in('id', ids)
+
+// 4. Create lookup map
+const relatedMap = relatedData.reduce((acc, item) => {
+  acc[item.id] = item
+  return acc
+}, {})
+
+// 5. Manual join
+const result = mainData.map(item => ({
+  ...item,
+  relation: relatedMap[item.foreign_id] || null
+}))
+```
+
+### 📊 Phase 6 Statistics
+
+**Files Modified**: 3
+**Commits**: 2
+- `7be8eb30` - Fix Payments & Invoice Creation
+- `bd7db658` - Fix Invoice Detail/Update
+
+**Errors Fixed**:
+1. ✅ Payments page 400 error (PGRST200)
+2. ✅ Invoice creation 500 error
+3. ✅ Invoice detail GET 500 error
+4. ✅ Invoice update PUT 500 error
+
+**Testing**:
+- ✅ TypeScript: 0 errors
+- ✅ Build: Successful
+- ✅ Deployment: Pushed to Vercel production
+
+**Documentation Created**:
+- `docs/SESSION_2025-10-04_PRODUCTION_FIXES.md` - Complete session documentation with code examples
 
 ## Essential Commands
 

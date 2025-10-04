@@ -172,12 +172,20 @@ export default function CreateInvoicePage() {
   }
 
   const calculateTotals = () => {
-    const subtotal = formData.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
-    const taxAmount = formData.items.reduce((sum, item) => {
-      const itemSubtotal = item.quantity * item.unitPrice
-      return sum + (itemSubtotal * (item.taxRate / 100))
+    const subtotal = formData.items.reduce((sum, item) => {
+      const qty = item.quantity || 0
+      const price = item.unitPrice || 0
+      return sum + (qty * price)
     }, 0)
-    const total = subtotal + taxAmount - formData.discountAmount
+    const taxAmount = formData.items.reduce((sum, item) => {
+      const qty = item.quantity || 0
+      const price = item.unitPrice || 0
+      const rate = item.taxRate || 0
+      const itemSubtotal = qty * price
+      return sum + (itemSubtotal * (rate / 100))
+    }, 0)
+    const discount = formData.discountAmount || 0
+    const total = subtotal + taxAmount - discount
 
     return { subtotal, taxAmount, total }
   }
@@ -612,7 +620,7 @@ export default function CreateInvoicePage() {
                                 Line Total
                               </label>
                               <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md">
-                                ${item.lineTotal.toFixed(2)}
+                                ${(item.lineTotal || 0).toFixed(2)}
                               </div>
                             </div>
                           </div>
@@ -667,25 +675,25 @@ export default function CreateInvoicePage() {
                   <CardContent className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Subtotal:</span>
-                      <span className="font-medium">${subtotal.toFixed(2)}</span>
+                      <span className="font-medium">${(subtotal || 0).toFixed(2)}</span>
                     </div>
 
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Tax:</span>
-                      <span className="font-medium">${taxAmount.toFixed(2)}</span>
+                      <span className="font-medium">${(taxAmount || 0).toFixed(2)}</span>
                     </div>
 
                     {formData.discountAmount > 0 && (
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Discount:</span>
-                        <span className="font-medium text-red-600">-${formData.discountAmount.toFixed(2)}</span>
+                        <span className="font-medium text-red-600">-${(formData.discountAmount || 0).toFixed(2)}</span>
                       </div>
                     )}
 
                     <div className="border-t pt-4">
                       <div className="flex justify-between items-center">
                         <span className="text-lg font-semibold">Total:</span>
-                        <span className="text-lg font-bold">${total.toFixed(2)}</span>
+                        <span className="text-lg font-bold">${(total || 0).toFixed(2)}</span>
                       </div>
                     </div>
 

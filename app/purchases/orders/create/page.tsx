@@ -334,7 +334,7 @@ export default function CreatePurchaseOrderPage() {
               </Button>
               <Button
                 onClick={() => savePO('SENT')}
-                disabled={saving || !formData.supplierId}
+                disabled={saving || !formData.clientId}
               >
                 <Send className="h-4 w-4 mr-2" />
                 Send PO

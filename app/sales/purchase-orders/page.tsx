@@ -6,7 +6,7 @@ export default function SalesPurchaseOrders() {
   const router = useRouter()
 
   // Redirect to the actual purchase orders page
-  router.push('/purchase/orders')
+  router.push('/purchases/orders')
 
   return (
     <div className="flex items-center justify-center min-h-screen">

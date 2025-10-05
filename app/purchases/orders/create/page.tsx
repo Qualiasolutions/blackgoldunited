@@ -21,11 +21,28 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
-interface Supplier {
+interface Client {
   id: string
   companyName: string
   contactPerson: string
   email: string
+}
+
+interface RFQ {
+  id: string
+  quotation_number: string
+  title: string
+  client_id: string
+}
+
+interface RFQItem {
+  id: string
+  description: string
+  quantity: number
+  uom: string | null
+  unit_price: number
+  currency: string
+  line_total: number
 }
 
 interface POItem {
@@ -42,13 +59,15 @@ export default function CreatePurchaseOrderPage() {
   const { user } = useAuth()
   const { hasFullAccess } = usePermissions()
   const router = useRouter()
-  const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  const [clients, setClients] = useState<Client[]>([])
+  const [rfqs, setRfqs] = useState<RFQ[]>([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState({
-    supplierId: '',
+    clientId: '',
+    quotationId: '',
     orderDate: new Date().toISOString().split('T')[0],
     deliveryDate: '',
     terms: '',
@@ -70,28 +89,75 @@ export default function CreatePurchaseOrderPage() {
   const canCreate = hasFullAccess('purchase')
 
   useEffect(() => {
-    fetchSuppliers()
+    fetchClients()
+    fetchRFQs()
   }, [])
 
-  const fetchSuppliers = async () => {
+  const fetchClients = async () => {
     try {
       const supabase = createClient()
       const { data, error } = await supabase
-        .from('suppliers')
+        .from('clients')
         .select('id, company_name, contact_person, email')
         .eq('is_active', true)
         .order('company_name')
 
       if (error) throw error
-      const mappedSuppliers = (data || []).map(supplier => ({
-        id: supplier.id,
-        companyName: supplier.company_name,
-        contactPerson: supplier.contact_person,
-        email: supplier.email
+      const mappedClients = (data || []).map(client => ({
+        id: client.id,
+        companyName: client.company_name,
+        contactPerson: client.contact_person,
+        email: client.email
       }))
-      setSuppliers(mappedSuppliers)
+      setClients(mappedClients)
     } catch (error) {
-      console.error('Error fetching suppliers:', error)
+      console.error('Error fetching clients:', error)
+    }
+  }
+
+  const fetchRFQs = async () => {
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('quotations')
+        .select('id, quotation_number, title, client_id')
+        .eq('status', 'SENT')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setRfqs(data || [])
+    } catch (error) {
+      console.error('Error fetching RFQs:', error)
+    }
+  }
+
+  const loadRFQData = async (rfqId: string) => {
+    if (!rfqId) return
+
+    try {
+      const supabase = createClient()
+      const { data: rfqItems, error } = await supabase
+        .from('quotation_items')
+        .select('*')
+        .eq('quotation_id', rfqId)
+        .order('created_at')
+
+      if (error) throw error
+
+      if (rfqItems && rfqItems.length > 0) {
+        const mappedItems: POItem[] = rfqItems.map((item, index) => ({
+          id: (index + 1).toString(),
+          description: item.description || '',
+          quantity: item.quantity || 1,
+          uom: item.uom || '',
+          unitPrice: item.unit_price || 0,
+          currency: item.currency || 'KD',
+          total: item.line_total || 0
+        }))
+        setItems(mappedItems)
+      }
+    } catch (error) {
+      console.error('Error loading RFQ items:', error)
     }
   }
 
@@ -100,6 +166,11 @@ export default function CreatePurchaseOrderPage() {
       ...prev,
       [field]: value
     }))
+
+    // Load RFQ items when RFQ is selected
+    if (field === 'quotationId' && value) {
+      loadRFQData(value)
+    }
   }
 
   const handleItemChange = (itemId: string, field: string, value: string | number) => {
@@ -154,7 +225,9 @@ export default function CreatePurchaseOrderPage() {
       // Prepare PO data
       const poData = {
         po_number: poNumber,
-        supplier_id: formData.supplierId,
+        client_id: formData.clientId || null,
+        supplier_id: null, // To be filled later when supplier responds
+        quotation_id: formData.quotationId || null,
         order_date: formData.orderDate,
         delivery_date: formData.deliveryDate || null,
         subtotal: calculateSubtotal(),
@@ -289,21 +362,41 @@ export default function CreatePurchaseOrderPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="supplier">Supplier *</Label>
+                    <Label htmlFor="client">Client *</Label>
                     <select
-                      id="supplier"
-                      value={formData.supplierId}
-                      onChange={(e) => handleInputChange('supplierId', e.target.value)}
+                      id="client"
+                      value={formData.clientId}
+                      onChange={(e) => handleInputChange('clientId', e.target.value)}
                       className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
                     >
-                      <option value="">Select a supplier...</option>
-                      {suppliers.map(supplier => (
-                        <option key={supplier.id} value={supplier.id}>
-                          {supplier.companyName} ({supplier.contactPerson})
+                      <option value="">Select a client...</option>
+                      {clients.map(client => (
+                        <option key={client.id} value={client.id}>
+                          {client.companyName} ({client.contactPerson})
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="rfq">Link to RFQ (Optional)</Label>
+                    <select
+                      id="rfq"
+                      value={formData.quotationId}
+                      onChange={(e) => handleInputChange('quotationId', e.target.value)}
+                      className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">No RFQ - Create from scratch</option>
+                      {rfqs.map(rfq => (
+                        <option key={rfq.id} value={rfq.id}>
+                          {rfq.quotation_number} {rfq.title ? `- ${rfq.title}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Select an RFQ to automatically populate items
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -470,6 +563,17 @@ export default function CreatePurchaseOrderPage() {
                   <CardTitle>PO Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {formData.quotationId && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                      <div className="text-sm">
+                        <span className="font-medium text-blue-800">Linked to RFQ:</span>
+                        <div className="text-blue-700">
+                          {rfqs.find(r => r.id === formData.quotationId)?.quotation_number}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="text-sm">
                     <div className="flex justify-between py-2">
                       <span className="text-gray-600">Items:</span>

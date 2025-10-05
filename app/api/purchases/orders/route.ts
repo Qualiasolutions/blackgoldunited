@@ -16,7 +16,9 @@ const purchaseOrderItemSchema = z.object({
 
 // Purchase Order schema
 const purchaseOrderSchema = z.object({
-  supplier_id: z.string().uuid('Supplier ID is required'),
+  client_id: z.string().uuid('Client ID is required').optional(),
+  supplier_id: z.string().uuid('Supplier ID is required').optional(),
+  quotation_id: z.string().uuid('Quotation ID must be valid UUID').optional(),
   orderDate: z.string().optional(),
   expectedDeliveryDate: z.string().optional(),
 
@@ -73,12 +75,14 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 100)
     const offset = (page - 1) * limit
 
-    // Build query with supplier and items
+    // Build query with client, supplier and items
     let queryBuilder = supabase
       .from('purchase_orders')
       .select(`
         *,
+        client:clients(id, company_name, contact_person, email, phone),
         supplier:suppliers(id, name, supplierCode, email, phone),
+        quotation:quotations(id, quotation_number, title, client_id),
         items:purchase_order_items(
           id,
           productId,

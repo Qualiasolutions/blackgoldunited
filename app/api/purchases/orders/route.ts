@@ -5,29 +5,31 @@ import { authenticateAndAuthorize } from '@/lib/auth/api-auth'
 
 // Purchase Order Item schema
 const purchaseOrderItemSchema = z.object({
-  productId: z.string().uuid('Product ID is required'),
+  productId: z.string().uuid('Product ID is required').optional(),
   quantity: z.number().min(1, 'Quantity must be greater than 0'),
   unitPrice: z.number().min(0, 'Unit price must be non-negative'),
-  description: z.string().optional(),
+  description: z.string().min(1, 'Description is required'),
+  uom: z.string().optional(),
+  currency: z.string().default('KD'),
   expectedDeliveryDate: z.string().datetime().optional()
 })
 
 // Purchase Order schema
 const purchaseOrderSchema = z.object({
   supplier_id: z.string().uuid('Supplier ID is required'),
-  orderDate: z.string().datetime().default(new Date().toISOString()),
-  expectedDeliveryDate: z.string().datetime(),
+  orderDate: z.string().optional(),
+  expectedDeliveryDate: z.string().optional(),
 
   // Order Details
   items: z.array(purchaseOrderItemSchema).min(1, 'At least one item is required'),
 
   // Terms and Conditions
-  paymentTerms: z.enum(['NET_15', 'NET_30', 'NET_45', 'NET_60', 'COD', 'ADVANCE']).default('NET_30'),
+  paymentTerms: z.enum(['NET_15', 'NET_30', 'NET_45', 'NET_60', 'COD', 'ADVANCE']).optional(),
   deliveryTerms: z.string().optional(),
   notes: z.string().optional(),
 
   // Addresses
-  deliveryAddress: z.string().min(1, 'Delivery address is required'),
+  deliveryAddress: z.string().optional(),
   billingAddress: z.string().optional(),
 
   // Financial
@@ -40,7 +42,7 @@ const purchaseOrderSchema = z.object({
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).default('MEDIUM'),
 
   // Approval
-  requiresApproval: z.boolean().default(true),
+  requiresApproval: z.boolean().default(false),
   approvalThreshold: z.number().min(0).default(10000), // Amount requiring approval
 })
 
@@ -84,6 +86,8 @@ export async function GET(request: NextRequest) {
           unitPrice,
           totalAmount,
           description,
+          uom,
+          currency,
           expectedDeliveryDate,
           receivedQuantity,
           product:products(id, name, productCode, unit)
@@ -204,21 +208,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Supplier is not active' }, { status: 400 })
     }
 
-    // Verify all products exist
-    const productIds = items.map(item => item.productId)
-    const { data: products, error: productsError } = await supabase
-      .from('products')
-      .select('id, name, isActive')
-      .in('id', productIds)
-      if (productsError || !products || products.length !== productIds.length) {
-      return NextResponse.json({ error: 'One or more products not found' }, { status: 404 })
-    }
+    // Verify products exist (if productId is provided)
+    const productIds = items.map(item => item.productId).filter(Boolean)
+    if (productIds.length > 0) {
+      const { data: products, error: productsError } = await supabase
+        .from('products')
+        .select('id, name, isActive')
+        .in('id', productIds)
 
-    const inactiveProducts = products.filter(p => !p.isActive)
-    if (inactiveProducts.length > 0) {
-      return NextResponse.json({
-        error: `Products not active: ${inactiveProducts.map(p => p.name).join(', ')}`
-      }, { status: 400 })
+      if (productsError) {
+        return NextResponse.json({ error: 'Error validating products' }, { status: 500 })
+      }
+
+      if (products && products.length !== productIds.length) {
+        return NextResponse.json({ error: 'One or more products not found' }, { status: 404 })
+      }
+
+      const inactiveProducts = products?.filter(p => !p.isActive) || []
+      if (inactiveProducts.length > 0) {
+        return NextResponse.json({
+          error: `Products not active: ${inactiveProducts.map(p => p.name).join(', ')}`
+        }, { status: 400 })
+      }
     }
 
     // Generate PO number
@@ -275,10 +286,17 @@ export async function POST(request: NextRequest) {
 
     // Create purchase order items
     const itemsToInsert = itemsWithTotals.map(item => ({
-      ...item,
-      purchaseOrderId: purchaseOrder.id,
-      receivedQuantity: 0,
-      createdAt: new Date().toISOString()
+      po_id: purchaseOrder.id,
+      product_id: item.productId || null,
+      description: item.description,
+      quantity: item.quantity,
+      unit_price: item.unitPrice,
+      uom: item.uom || null,
+      currency: item.currency || 'KD',
+      tax_rate: 0,
+      line_total: item.totalAmount,
+      delivered_qty: 0,
+      created_at: new Date().toISOString()
     }))
 
     const { data: createdItems, error: itemsError } = await supabase

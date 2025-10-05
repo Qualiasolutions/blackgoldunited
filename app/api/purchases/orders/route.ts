@@ -197,19 +197,42 @@ export async function POST(request: NextRequest) {
     const orderData = validationResult.data
     const { items, ...poData } = orderData
 
-    // Verify supplier exists and is active
-    const { data: supplier, error: supplierError } = await supabase
-      .from('suppliers')
-      .select('id, isActive, paymentTerms')
-      .eq('id', orderData.supplier_id)
-      .single()
+    // Verify client exists and is active (if provided)
+    let client = null
+    if (orderData.client_id) {
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('id, is_active, company_name')
+        .eq('id', orderData.client_id)
+        .single()
 
-    if (supplierError || !supplier) {
-      return NextResponse.json({ error: 'Supplier not found' }, { status: 404 })
+      if (clientError || !clientData) {
+        return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+      }
+
+      if (!clientData.is_active) {
+        return NextResponse.json({ error: 'Client is not active' }, { status: 400 })
+      }
+      client = clientData
     }
 
-    if (!supplier.isActive) {
-      return NextResponse.json({ error: 'Supplier is not active' }, { status: 400 })
+    // Verify supplier exists and is active (if provided)
+    let supplier = null
+    if (orderData.supplier_id) {
+      const { data: supplierData, error: supplierError } = await supabase
+        .from('suppliers')
+        .select('id, isActive, paymentTerms')
+        .eq('id', orderData.supplier_id)
+        .single()
+
+      if (supplierError || !supplierData) {
+        return NextResponse.json({ error: 'Supplier not found' }, { status: 404 })
+      }
+
+      if (!supplierData.isActive) {
+        return NextResponse.json({ error: 'Supplier is not active' }, { status: 400 })
+      }
+      supplier = supplierData
     }
 
     // Verify products exist (if productId is provided)
@@ -262,8 +285,8 @@ export async function POST(request: NextRequest) {
     const requiresApproval = poData.requiresApproval && totalAmount >= poData.approvalThreshold
     const approvalStatus = requiresApproval ? 'PENDING' : 'APPROVED'
 
-    // Use supplier's payment terms if not specified
-    const paymentTerms = poData.paymentTerms || supplier.paymentTerms
+    // Use supplier's payment terms if not specified (only if supplier exists)
+    const paymentTerms = poData.paymentTerms || (supplier?.paymentTerms) || null
 
     // Create the purchase order
     const { data: purchaseOrder, error } = await supabase

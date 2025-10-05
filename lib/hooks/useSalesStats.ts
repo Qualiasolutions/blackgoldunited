@@ -78,7 +78,7 @@ export function useSalesStats() {
         const { data: invoices } = await supabase
           .from('invoices')
           .select('id, total_amount, paid_amount, status, created_at, invoice_number, client_id')
-          .is('deleted_at', null)
+          .eq('is_active', true)
 
         if (invoices) {
           statsData.invoicesCount = invoices.length
@@ -114,7 +114,7 @@ export function useSalesStats() {
         const { data: clients } = await supabase
           .from('clients')
           .select('id, company_name, is_active, created_at')
-          .is('deleted_at', null)
+          .eq('is_active', true)
 
         if (clients) {
           statsData.activeClients = clients.filter(c => c.is_active !== false).length
@@ -136,7 +136,6 @@ export function useSalesStats() {
         const { data: quotations } = await supabase
           .from('quotations')
           .select('id, total_amount, status, created_at')
-          .is('deleted_at', null)
 
         if (quotations) {
           statsData.rfqCount = quotations.length
@@ -162,7 +161,6 @@ export function useSalesStats() {
         const { data: creditNotes } = await supabase
           .from('credit_notes')
           .select('id, amount, status, created_at')
-          .is('deleted_at', null)
 
         if (creditNotes) {
           statsData.creditNotesCount = creditNotes.length
@@ -177,7 +175,6 @@ export function useSalesStats() {
         const { data: payments } = await supabase
           .from('invoice_payments')
           .select('id, amount, payment_date, created_at')
-          .is('deleted_at', null)
 
         if (payments) {
           statsData.paymentsCount = payments.length
@@ -213,7 +210,7 @@ export function useSalesStats() {
           .select('total_amount, paid_amount')
           .gte('created_at', lastMonth.toISOString())
           .lt('created_at', thisMonth.toISOString())
-          .is('deleted_at', null)
+          .eq('is_active', true)
 
         if (lastMonthInvoices && lastMonthInvoices.length > 0) {
           const lastMonthRevenue = lastMonthInvoices.reduce((sum, inv) =>
@@ -225,7 +222,7 @@ export function useSalesStats() {
             .from('invoices')
             .select('total_amount, paid_amount, created_at')
             .gte('created_at', thisMonth.toISOString())
-            .is('deleted_at', null)
+            .eq('is_active', true)
 
           const thisMonthRevenue = (currentMonthInvoices || []).reduce((sum, inv) =>
             sum + (Number(inv.paid_amount) || Number(inv.total_amount) || 0), 0
@@ -240,7 +237,6 @@ export function useSalesStats() {
         const { data: allQuotations } = await supabase
           .from('quotations')
           .select('id, status')
-          .is('deleted_at', null)
 
         if (allQuotations && allQuotations.length > 0) {
           const convertedQuotes = allQuotations.filter(q => q.status === 'CONVERTED').length
@@ -253,7 +249,6 @@ export function useSalesStats() {
           .select('id, status')
           .gte('created_at', lastMonth.toISOString())
           .lt('created_at', thisMonth.toISOString())
-          .is('deleted_at', null)
 
         if (lastMonthQuotations && lastMonthQuotations.length > 0) {
           const lastMonthConversionRate = Math.round(

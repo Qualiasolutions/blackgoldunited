@@ -282,9 +282,22 @@ export function Sidebar({ className }: SidebarProps) {
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
 
   const SidebarContent = () => (
-    <div className="flex h-full flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700">
+    <div className="flex h-full flex-col bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50">
+      {/* Corporate Branding Header */}
+      <div className="border-b border-slate-700/50 px-4 py-5">
+        <div className="flex items-center space-x-3">
+          <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center shadow-lg">
+            <span className="text-white text-lg font-bold">BG</span>
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-white">BlackGoldUnited</h2>
+            <p className="text-xs text-slate-400">Enterprise ERP</p>
+          </div>
+        </div>
+      </div>
+
       {/* Corporate Navigation */}
-      <ScrollArea className="flex-1 px-3 py-6">
+      <ScrollArea className="flex-1 px-3 py-4">
         <div className="space-y-2">
           {/* Module Navigation */}
           {bguNavigationModules.map((module) => {
@@ -301,8 +314,8 @@ export function Sidebar({ className }: SidebarProps) {
                     className={cn(
                       "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group",
                       moduleActive
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
+                        ? "bg-primary text-white shadow-lg shadow-primary/20"
+                        : "text-slate-300 hover:bg-slate-700/70 hover:text-white"
                     )}
                   >
                     <div className="flex items-center space-x-3">
@@ -325,8 +338,8 @@ export function Sidebar({ className }: SidebarProps) {
                     <div className={cn(
                       "flex items-center space-x-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group",
                       moduleActive
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
+                        ? "bg-primary text-white shadow-lg shadow-primary/20"
+                        : "text-slate-300 hover:bg-slate-700/70 hover:text-white"
                     )}>
                       {IconComponent && (
                         <IconComponent className={cn(
@@ -341,14 +354,14 @@ export function Sidebar({ className }: SidebarProps) {
 
                 {/* Corporate Submenu */}
                 {expanded && hasSubModules && (
-                  <div className="ml-7 space-y-1 border-l border-slate-600 pl-4 py-1">
+                  <div className="ml-7 space-y-0.5 border-l-2 border-slate-600/50 pl-4 py-1">
                     {module.subModules.map((subModule) => (
                       <Link key={subModule.id} href={subModule.href}>
                         <div className={cn(
                           "flex items-center rounded-md px-3 py-2 text-xs transition-all duration-200 group",
                           isActive(subModule.href)
-                            ? "bg-primary/10 text-primary font-medium border-r-2 border-primary"
-                            : "text-slate-400 hover:bg-slate-700/30 hover:text-slate-200"
+                            ? "bg-primary/20 text-primary font-medium border-l-2 border-primary shadow-sm"
+                            : "text-slate-400 hover:bg-slate-700/40 hover:text-slate-200 hover:border-l-2 hover:border-slate-500"
                         )}>
                           <span className="truncate">{subModule.title}</span>
                         </div>
@@ -363,24 +376,24 @@ export function Sidebar({ className }: SidebarProps) {
       </ScrollArea>
 
       {/* Corporate Footer with User Info */}
-      <div className="border-t border-slate-700 p-4 bg-slate-800/50">
+      <div className="border-t border-slate-700/50 p-4 bg-slate-800/80 backdrop-blur-sm">
         {user && (
-          <div className="flex items-center space-x-3 mb-3">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center shadow-sm">
-              <span className="text-primary-foreground text-sm font-semibold">
+          <div className="flex items-center space-x-3 mb-3 p-3 bg-slate-700/30 rounded-lg border border-slate-600/30 hover:bg-slate-700/50 transition-colors">
+            <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg">
+              <span className="text-white text-sm font-bold">
                 {user.firstName?.charAt(0) || 'U'}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">
+              <p className="text-sm font-semibold text-white truncate">
                 {user.firstName} {user.lastName}
               </p>
               <p className="text-xs text-slate-400 truncate">{user.role}</p>
             </div>
           </div>
         )}
-        <div className="text-xs text-slate-500 text-center">
-          BGU ERP v2.0 • Enterprise
+        <div className="text-xs text-slate-500 text-center font-medium">
+          BGU ERP v2.0 • Enterprise Edition
         </div>
       </div>
     </div>

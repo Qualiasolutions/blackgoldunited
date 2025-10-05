@@ -124,7 +124,7 @@ export function Header({ user }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 shadow-sm">
+    <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/80 shadow-sm">
       <div className="flex h-16 items-center justify-between px-6">
         {/* Left Section - Logo & Company Info */}
         <div className="flex items-center space-x-4">

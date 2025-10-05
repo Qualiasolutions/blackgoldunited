@@ -145,44 +145,26 @@ export function Header({ user }: HeaderProps) {
           </Link>
         </div>
 
-        {/* Center - Corporate Navigation Menu */}
-        <div className="hidden lg:flex items-center space-x-1">
-          <NavigationMenu>
-            <NavigationMenuList>
-              {quickNavItems.map((section) => (
-                <NavigationMenuItem key={section.title}>
-                  <NavigationMenuTrigger className="text-sm font-medium bg-transparent hover:bg-accent data-[state=open]:bg-accent">
-                    {section.title}
-                    <ChevronDown className="ml-1 h-3 w-3" />
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <div className="w-80 p-4">
-                      <div className="grid gap-3">
-                        <div className="mb-2">
-                          <h4 className="text-sm font-semibold text-foreground">{section.title}</h4>
-                          <p className="text-xs text-muted-foreground">Quick access to {section.title.toLowerCase()} functions</p>
-                        </div>
-                        {section.items.map((item) => (
-                          <Link
-                            key={item.name}
-                            href={item.href}
-                            className={cn(
-                              "flex items-center space-x-3 rounded-md p-3 transition-colors hover:bg-accent hover:text-accent-foreground"
-                            )}
-                          >
-                            <item.icon className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <div className="text-sm font-medium">{item.name}</div>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-              ))}
-            </NavigationMenuList>
-          </NavigationMenu>
+        {/* Center - Quick Actions */}
+        <div className="hidden lg:flex items-center space-x-2">
+          <Link href="/sales/invoices/create">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <FileText className="h-4 w-4" />
+              <span>New Invoice</span>
+            </Button>
+          </Link>
+          <Link href="/clients/create">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <Users className="h-4 w-4" />
+              <span>Add Client</span>
+            </Button>
+          </Link>
+          <Link href="/reports">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              <span>Reports</span>
+            </Button>
+          </Link>
         </div>
 
         {/* Right Section - Search, Time, Actions & User */}

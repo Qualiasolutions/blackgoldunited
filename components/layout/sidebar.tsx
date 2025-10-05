@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
@@ -268,13 +268,25 @@ export function Sidebar({ className }: SidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const pathname = usePathname()
   const { user } = useAuth()
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
 
   const toggleModule = (moduleId: string) => {
-    setExpandedModules(prev => 
-      prev.includes(moduleId) 
+    // Store current scroll position before toggling
+    const currentScrollPosition = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]')?.scrollTop || 0
+
+    setExpandedModules(prev =>
+      prev.includes(moduleId)
         ? prev.filter(id => id !== moduleId)
         : [...prev, moduleId]
     )
+
+    // Restore scroll position after state update
+    setTimeout(() => {
+      const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]')
+      if (viewport) {
+        viewport.scrollTop = currentScrollPosition
+      }
+    }, 0)
   }
 
   const isModuleExpanded = (moduleId: string) => expandedModules.includes(moduleId)
@@ -297,7 +309,7 @@ export function Sidebar({ className }: SidebarProps) {
       </div>
 
       {/* Corporate Navigation */}
-      <ScrollArea className="flex-1 px-3 py-4">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 px-3 py-4">
         <div className="space-y-2">
           {/* Module Navigation */}
           {bguNavigationModules.map((module) => {

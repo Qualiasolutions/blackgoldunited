@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
     const offset = parseInt(searchParams.get('offset') || '0')
 
+    // Fetch credit notes without nested joins (Phase 6 best practice)
     let query = supabase
       .from('credit_notes')
       .select(`
@@ -29,16 +30,7 @@ export async function GET(request: NextRequest) {
         reason,
         status,
         created_at,
-        updated_at,
-        clients!credit_notes_client_id_fkey(
-          id,
-          company_name,
-          client_code
-        ),
-        invoices!credit_notes_invoice_id_fkey(
-          id,
-          invoice_number
-        )
+        updated_at
       `)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
@@ -54,14 +46,51 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch refund receipts' }, { status: 500 })
     }
 
-    // Format data for frontend
+    // Fetch related data separately to avoid PostgREST nested join issues
+    const clientIds = [...new Set(data?.map((item: any) => item.client_id).filter(Boolean))]
+    const invoiceIds = [...new Set(data?.map((item: any) => item.invoice_id).filter(Boolean))]
+
+    let clientsMap: Record<string, any> = {}
+    let invoicesMap: Record<string, any> = {}
+
+    // Fetch clients separately
+    if (clientIds.length > 0) {
+      const { data: clientsData } = await supabase
+        .from('clients')
+        .select('id, company_name, client_code')
+        .in('id', clientIds)
+
+      if (clientsData) {
+        clientsMap = clientsData.reduce((acc: any, client: any) => {
+          acc[client.id] = client
+          return acc
+        }, {})
+      }
+    }
+
+    // Fetch invoices separately
+    if (invoiceIds.length > 0) {
+      const { data: invoicesData } = await supabase
+        .from('invoices')
+        .select('id, invoice_number')
+        .in('id', invoiceIds)
+
+      if (invoicesData) {
+        invoicesMap = invoicesData.reduce((acc: any, invoice: any) => {
+          acc[invoice.id] = invoice
+          return acc
+        }, {})
+      }
+    }
+
+    // Format data for frontend with manual joins
     const formattedData = data?.map((item: any) => ({
       id: item.id,
       receiptNumber: item.credit_note_number,
       clientId: item.client_id,
-      clientName: item.clients?.company_name || 'Unknown Client',
+      clientName: clientsMap[item.client_id]?.company_name || 'Unknown Client',
       invoiceId: item.invoice_id,
-      invoiceNumber: item.invoices?.invoice_number || '-',
+      invoiceNumber: invoicesMap[item.invoice_id]?.invoice_number || '-',
       amount: parseFloat(item.amount || 0),
       date: item.issue_date,
       reason: item.reason,

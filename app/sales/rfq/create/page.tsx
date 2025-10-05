@@ -32,7 +32,9 @@ interface RFQItem {
   id: string
   description: string
   quantity: number
+  uom: string
   unitPrice: number
+  currency: string
   total: number
 }
 
@@ -59,7 +61,9 @@ export default function CreateRFQPage() {
       id: '1',
       description: '',
       quantity: 1,
+      uom: '',
       unitPrice: 0,
+      currency: 'KD',
       total: 0
     }
   ])
@@ -121,7 +125,9 @@ export default function CreateRFQPage() {
       id: (items.length + 1).toString(),
       description: '',
       quantity: 1,
+      uom: '',
       unitPrice: 0,
+      currency: 'KD',
       total: 0
     }
     setItems(prev => [...prev, newItem])
@@ -147,18 +153,21 @@ export default function CreateRFQPage() {
       // Generate RFQ number
       const rfqNumber = `RFQ-${Date.now().toString().slice(-6)}`
 
-      // Prepare RFQ data
+      // Prepare RFQ data (using snake_case for database columns)
       const rfqData = {
-        quotationNumber: rfqNumber,
-        clientId: formData.clientId,
+        quotation_number: rfqNumber,
+        client_id: formData.clientId,
         title: formData.title,
         description: formData.description,
+        issue_date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD
         status: status,
-        validUntil: formData.validUntil || null,
-        totalAmount: calculateSubtotal(),
-        terms: formData.terms,
+        valid_until: formData.validUntil || null,
+        subtotal: calculateSubtotal(),
+        tax_amount: 0,
+        total_amount: calculateSubtotal(),
+        terms_and_conditions: formData.terms,
         notes: formData.notes,
-        createdBy: user?.id
+        created_by: user?.id
       }
 
       // Create RFQ
@@ -174,11 +183,13 @@ export default function CreateRFQPage() {
       const itemsData = items
         .filter(item => item.description.trim() !== '')
         .map(item => ({
-          quotationId: rfq.id,
+          quotation_id: rfq.id,
           description: item.description,
           quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          totalPrice: item.total
+          uom: item.uom || null,
+          unit_price: item.unitPrice,
+          currency: item.currency,
+          line_total: item.total
         }))
 
       if (itemsData.length > 0) {
@@ -363,8 +374,8 @@ export default function CreateRFQPage() {
                           )}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                          <div className="md:col-span-2">
+                        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                          <div className="md:col-span-3">
                             <Label>Description</Label>
                             <Input
                               value={item.description}
@@ -384,6 +395,15 @@ export default function CreateRFQPage() {
                           </div>
 
                           <div>
+                            <Label>UOM</Label>
+                            <Input
+                              value={item.uom}
+                              onChange={(e) => handleItemChange(item.id, 'uom', e.target.value)}
+                              placeholder="pcs, kg, box..."
+                            />
+                          </div>
+
+                          <div>
                             <Label>Est. Unit Price</Label>
                             <Input
                               type="number"
@@ -396,9 +416,26 @@ export default function CreateRFQPage() {
                           </div>
                         </div>
 
+                        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-3">
+                          <div className="md:col-span-3">
+                            <Label>Currency</Label>
+                            <select
+                              value={item.currency}
+                              onChange={(e) => handleItemChange(item.id, 'currency', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="KD">KD - Kuwaiti Dinar</option>
+                              <option value="USD">$ - US Dollar</option>
+                              <option value="EUR">€ - Euro</option>
+                              <option value="SAR">SAR - Saudi Riyal</option>
+                              <option value="EGP">EGP - Egyptian Pound</option>
+                            </select>
+                          </div>
+                        </div>
+
                         <div className="mt-3 text-right">
                           <span className="text-sm text-gray-600">Total: </span>
-                          <span className="font-semibold">${item.total.toFixed(2)}</span>
+                          <span className="font-semibold">{item.currency} {item.total.toFixed(2)}</span>
                         </div>
                       </div>
                     ))}

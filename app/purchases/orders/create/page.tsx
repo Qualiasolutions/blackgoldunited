@@ -21,7 +21,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
-interface Supplier {
+interface Client {
   id: string
   companyName: string
   contactPerson: string
@@ -42,12 +42,12 @@ export default function CreatePurchaseOrderPage() {
   const { user } = useAuth()
   const { hasFullAccess } = usePermissions()
   const router = useRouter()
-  const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const [formData, setFormData] = useState({
-    supplierId: '',
+    clientId: '',
     orderDate: new Date().toISOString().split('T')[0],
     deliveryDate: '',
     terms: '',
@@ -68,31 +68,31 @@ export default function CreatePurchaseOrderPage() {
 
   const canCreate = hasFullAccess('purchase')
 
-  // Fetch suppliers - NO useCallback
+  // Fetch clients - NO useCallback
   useEffect(() => {
-    const fetchSuppliers = async () => {
+    const fetchClients = async () => {
       try {
         const supabase = createClient()
         const { data, error } = await supabase
-          .from('suppliers')
+          .from('clients')
           .select('id, company_name, contact_person, email')
           .eq('is_active', true)
           .order('company_name')
 
         if (error) throw error
-        const mappedSuppliers = (data || []).map(supplier => ({
-          id: supplier.id,
-          companyName: supplier.company_name,
-          contactPerson: supplier.contact_person,
-          email: supplier.email
+        const mappedClients = (data || []).map(client => ({
+          id: client.id,
+          companyName: client.company_name,
+          contactPerson: client.contact_person,
+          email: client.email
         }))
-        setSuppliers(mappedSuppliers)
+        setClients(mappedClients)
       } catch (error) {
-        console.error('Error fetching suppliers:', error)
+        console.error('Error fetching clients:', error)
       }
     }
 
-    fetchSuppliers()
+    fetchClients()
   }, [])
 
   const handleInputChange = (field: string, value: string) => {
@@ -155,7 +155,7 @@ export default function CreatePurchaseOrderPage() {
       const { data: po, error: poError } = await supabase
         .from('purchase_orders')
         .insert({
-          supplier_id: formData.supplierId,
+          client_id: formData.clientId,
           order_date: formData.orderDate,
           delivery_date: formData.deliveryDate || null,
           terms: formData.terms || null,
@@ -240,17 +240,17 @@ export default function CreatePurchaseOrderPage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <Label>Supplier *</Label>
+                  <Label>Client *</Label>
                   <select
                     className="w-full mt-1 border rounded px-3 py-2"
-                    value={formData.supplierId}
-                    onChange={(e) => handleInputChange('supplierId', e.target.value)}
+                    value={formData.clientId}
+                    onChange={(e) => handleInputChange('clientId', e.target.value)}
                     required
                   >
-                    <option value="">Select Supplier</option>
-                    {suppliers.map(supplier => (
-                      <option key={supplier.id} value={supplier.id}>
-                        {supplier.companyName}
+                    <option value="">Select Client</option>
+                    {clients.map(client => (
+                      <option key={client.id} value={client.id}>
+                        {client.companyName}
                       </option>
                     ))}
                   </select>
@@ -398,14 +398,14 @@ export default function CreatePurchaseOrderPage() {
                 <Button
                   variant="outline"
                   onClick={() => handleSave('DRAFT')}
-                  disabled={saving || !formData.supplierId}
+                  disabled={saving || !formData.clientId}
                 >
                   <Save className="w-4 h-4 mr-2" />
                   Save as Draft
                 </Button>
                 <Button
                   onClick={() => handleSave('APPROVED')}
-                  disabled={saving || !formData.supplierId}
+                  disabled={saving || !formData.clientId}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   <Send className="w-4 h-4 mr-2" />

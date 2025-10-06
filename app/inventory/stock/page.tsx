@@ -127,19 +127,6 @@ export default function StockTrackingPage() {
   const canManage = hasFullAccess('inventory')
   const canRead = hasModuleAccess('inventory')
 
-  if (!canRead) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-6 text-center">
-            <h1 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h1>
-            <p className="text-gray-600">You don't have permission to access the Inventory module.</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   const fetchStocks = async (params: {
     query?: string
     warehouse?: string
@@ -240,6 +227,7 @@ export default function StockTrackingPage() {
 
   // Initial fetch
   useEffect(() => {
+    if (!canRead) return
     fetchStocks({
       lowStock: showLowStock,
       outOfStock: showOutOfStock,
@@ -249,7 +237,7 @@ export default function StockTrackingPage() {
     fetchMovements({ page: 1, limit: 10 })
     fetchWarehouses()
     fetchCategories()
-  }, [showLowStock, showOutOfStock])
+  }, [canRead, showLowStock, showOutOfStock])
 
   const handleRefresh = () => {
     fetchStocks({
@@ -317,6 +305,20 @@ export default function StockTrackingPage() {
     const price = stock.product.costPrice || stock.product.sellingPrice
     return sum + (stock.quantity * price)
   }, 0)
+
+  // Check permissions AFTER all hooks
+  if (!canRead) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center">
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h1>
+            <p className="text-gray-600">You don't have permission to access the Inventory module.</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

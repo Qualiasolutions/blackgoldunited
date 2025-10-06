@@ -90,22 +90,6 @@ export default function CreateProductPage() {
 
   const canManage = hasFullAccess('inventory')
 
-  if (!canManage) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-6 text-center">
-            <h1 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h1>
-            <p className="text-gray-600">You don't have permission to create products.</p>
-            <Button asChild className="mt-4">
-              <Link href="/inventory">Back to Inventory</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   const fetchCategories = async () => {
     try {
       const response = await fetch('/api/inventory/categories')
@@ -119,8 +103,9 @@ export default function CreateProductPage() {
   }
 
   useEffect(() => {
+    if (!canManage) return
     fetchCategories()
-  }, [])
+  }, [canManage])
 
   const handleInputChange = (field: keyof FormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -247,6 +232,23 @@ export default function CreateProductPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Check permissions AFTER all hooks
+  if (!canManage) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center">
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h1>
+            <p className="text-gray-600">You don't have permission to create products.</p>
+            <Button asChild className="mt-4">
+              <Link href="/inventory">Back to Inventory</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (

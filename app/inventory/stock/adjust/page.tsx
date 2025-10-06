@@ -74,19 +74,6 @@ export default function StockAdjustmentPage() {
   const canManage = hasFullAccess('inventory')
   const canRead = hasModuleAccess('inventory')
 
-  if (!canManage) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-6 text-center">
-            <h1 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h1>
-            <p className="text-gray-600">You don't have permission to adjust stock.</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   // Fetch products
   const fetchProducts = async () => {
     try {
@@ -153,14 +140,16 @@ export default function StockAdjustmentPage() {
 
   // Initial data fetch
   useEffect(() => {
+    if (!canManage) return
     fetchProducts()
     fetchWarehouses()
-  }, [])
+  }, [canManage])
 
   // Fetch stock when product/warehouse changes
   useEffect(() => {
+    if (!canManage) return
     fetchCurrentStock()
-  }, [formData.productId, formData.warehouseId])
+  }, [canManage, formData.productId, formData.warehouseId])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -281,6 +270,20 @@ export default function StockAdjustmentPage() {
       default:
         return <Package className="w-4 h-4 text-gray-500" />
     }
+  }
+
+  // Check permissions AFTER all hooks
+  if (!canManage) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center">
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h1>
+            <p className="text-gray-600">You don't have permission to adjust stock.</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (

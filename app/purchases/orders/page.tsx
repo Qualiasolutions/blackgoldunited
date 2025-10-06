@@ -15,7 +15,6 @@ import {
 import {
   Plus,
   Search,
-  Filter,
   ShoppingCart,
   Eye,
   Edit,
@@ -119,54 +118,38 @@ export default function PurchaseOrdersPage() {
     )
   }
 
-  const fetchOrders = async (params: {
-    query?: string
-    status?: string
-    priority?: string
-    approvalStatus?: string
-    supplierId?: string
-    page?: number
-    limit?: number
-  } = {}) => {
-    setLoading(true)
-    try {
-      const searchParams = new URLSearchParams()
-
-      if (params.query) searchParams.set('query', params.query)
-      if (params.status) searchParams.set('status', params.status)
-      if (params.priority) searchParams.set('priority', params.priority)
-      if (params.approvalStatus) searchParams.set('approvalStatus', params.approvalStatus)
-      if (params.supplierId) searchParams.set('supplierId', params.supplierId)
-      if (params.page) searchParams.set('page', params.page.toString())
-      if (params.limit) searchParams.set('limit', params.limit.toString())
-
-      const response = await fetch(`/api/purchases/orders?${searchParams}`)
-      const result = await response.json()
-
-      if (result.success) {
-        setOrders(result.data)
-        setPagination(result.pagination)
-      } else {
-        console.error('Failed to fetch purchase orders:', result.error)
-      }
-    } catch (error) {
-      console.error('Error fetching purchase orders:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
+  // Fetch orders - NO useCallback wrapper
   useEffect(() => {
-    fetchOrders({
-      query: searchTerm || undefined,
-      status: statusFilter || undefined,
-      priority: priorityFilter || undefined,
-      approvalStatus: approvalFilter || undefined,
-      supplierId: supplierFilter || undefined,
-      page: pagination.page,
-      limit: pagination.limit
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const fetchOrders = async () => {
+      setLoading(true)
+      try {
+        const searchParams = new URLSearchParams()
+
+        if (searchTerm) searchParams.set('query', searchTerm)
+        if (statusFilter) searchParams.set('status', statusFilter)
+        if (priorityFilter) searchParams.set('priority', priorityFilter)
+        if (approvalFilter) searchParams.set('approvalStatus', approvalFilter)
+        if (supplierFilter) searchParams.set('supplierId', supplierFilter)
+        searchParams.set('page', pagination.page.toString())
+        searchParams.set('limit', pagination.limit.toString())
+
+        const response = await fetch(`/api/purchases/orders?${searchParams}`)
+        const result = await response.json()
+
+        if (result.success) {
+          setOrders(result.data)
+          setPagination(result.pagination)
+        } else {
+          console.error('Failed to fetch purchase orders:', result.error)
+        }
+      } catch (error) {
+        console.error('Error fetching purchase orders:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchOrders()
   }, [searchTerm, statusFilter, priorityFilter, approvalFilter, supplierFilter, pagination.page, pagination.limit])
 
   const handleSearch = () => {
@@ -441,26 +424,6 @@ export default function PurchaseOrdersPage() {
                           </div>
                         </div>
 
-                        {/* Progress for received orders */}
-                        {['PARTIALLY_RECEIVED', 'RECEIVED'].includes(order.status) && (
-                          <div className="mb-4">
-                            <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
-                              <span>Delivery Progress</span>
-                              <span>
-                                {order.items.reduce((sum, item) => sum + item.receivedQuantity, 0)} / {order.items.reduce((sum, item) => sum + item.quantity, 0)} items
-                              </span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div
-                                className="bg-green-500 h-2 rounded-full"
-                                style={{
-                                  width: `${Math.min(100, (order.items.reduce((sum, item) => sum + item.receivedQuantity, 0) / order.items.reduce((sum, item) => sum + item.quantity, 0)) * 100)}%`
-                                }}
-                              />
-                            </div>
-                          </div>
-                        )}
-
                         {/* Overdue warning */}
                         {order.status !== 'CANCELLED' && order.status !== 'RECEIVED' &&
                          new Date(order.expectedDeliveryDate) < new Date() && (
@@ -481,13 +444,6 @@ export default function PurchaseOrdersPage() {
                           <Button variant="outline" size="sm" asChild>
                             <Link href={`/purchases/orders/${order.id}/edit`}>
                               <Edit className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        )}
-                        {canManage && order.approvalStatus === 'PENDING' && (
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/purchases/orders/${order.id}/approve`}>
-                              <Check className="h-4 w-4" />
                             </Link>
                           </Button>
                         )}

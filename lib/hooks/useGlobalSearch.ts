@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 
 export interface SearchResult {
   id: string
@@ -23,7 +23,7 @@ export function useGlobalSearch() {
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
 
-  const search = useCallback(async (searchQuery: string) => {
+  const search = async (searchQuery: string) => {
     if (!searchQuery || searchQuery.trim().length < 2) {
       setResults([])
       setError(null)
@@ -49,13 +49,13 @@ export function useGlobalSearch() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
 
-  const clearSearch = useCallback(() => {
+  const clearSearch = () => {
     setResults([])
     setQuery('')
     setError(null)
-  }, [])
+  }
 
   // Debounced search
   useEffect(() => {

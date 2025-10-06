@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { NotificationResponse, Notification } from '@/lib/types/bgu'
 
 export function useNotifications() {
@@ -7,7 +7,7 @@ export function useNotifications() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = async () => {
     try {
       setLoading(true)
       setError(null)
@@ -27,9 +27,9 @@ export function useNotifications() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
 
-  const markAsRead = useCallback(async (notificationId: string) => {
+  const markAsRead = async (notificationId: string) => {
     try {
       const response = await fetch(`/api/notifications/${notificationId}`, {
         method: 'PATCH',
@@ -57,9 +57,9 @@ export function useNotifications() {
     } catch (err) {
       console.error('Error marking notification as read:', err)
     }
-  }, [])
+  }
 
-  const markAllAsRead = useCallback(async () => {
+  const markAllAsRead = async () => {
     try {
       const unreadNotifications = notifications.filter(n => !n.read)
 
@@ -85,9 +85,9 @@ export function useNotifications() {
     } catch (err) {
       console.error('Error marking all notifications as read:', err)
     }
-  }, [notifications])
+  }
 
-  const deleteNotification = useCallback(async (notificationId: string) => {
+  const deleteNotification = async (notificationId: string) => {
     try {
       const response = await fetch(`/api/notifications/${notificationId}`, {
         method: 'DELETE',
@@ -108,21 +108,21 @@ export function useNotifications() {
     } catch (err) {
       console.error('Error deleting notification:', err)
     }
-  }, [notifications])
+  }
 
-  const refreshNotifications = useCallback(() => {
+  const refreshNotifications = () => {
     fetchNotifications()
-  }, [fetchNotifications])
+  }
 
   useEffect(() => {
     fetchNotifications()
-  }, [fetchNotifications])
+  }, [])
 
   // Auto-refresh notifications every 30 seconds
   useEffect(() => {
     const interval = setInterval(fetchNotifications, 30000)
     return () => clearInterval(interval)
-  }, [fetchNotifications])
+  }, [])
 
   return {
     notifications,

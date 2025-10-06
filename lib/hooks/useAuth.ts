@@ -2,7 +2,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import type {
@@ -73,7 +73,7 @@ export function useAuth() {
     }
   }
 
-  const login = useCallback(async (credentials: LoginCredentials): Promise<AuthResponse> => {
+  const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
     setIsLoading(true)
     setError(null)
 
@@ -113,9 +113,9 @@ export function useAuth() {
     } finally {
       setIsLoading(false)
     }
-  }, [router, supabase.auth])
+  }
 
-  const logout = useCallback(async (): Promise<void> => {
+  const logout = async (): Promise<void> => {
     setIsLoading(true)
     try {
       await supabase.auth.signOut()
@@ -125,18 +125,18 @@ export function useAuth() {
     } finally {
       setIsLoading(false)
     }
-  }, [router, supabase.auth])
+  }
 
   // Signup functionality is disabled - accounts are created directly in Supabase dashboard
-  const signup = useCallback(async (data: SignupData): Promise<AuthResponse> => {
+  const signup = async (data: SignupData): Promise<AuthResponse> => {
     // Account creation is managed by administrators through Supabase dashboard
     return {
       success: false,
       message: 'Account creation is managed by administrators. Please contact your system administrator.'
     }
-  }, [])
+  }
 
-  const requestPasswordReset = useCallback(async (data: PasswordResetRequest): Promise<AuthResponse> => {
+  const requestPasswordReset = async (data: PasswordResetRequest): Promise<AuthResponse> => {
     setIsLoading(true)
     setError(null)
 
@@ -167,9 +167,9 @@ export function useAuth() {
     } finally {
       setIsLoading(false)
     }
-  }, [supabase.auth])
+  }
 
-  const resetPassword = useCallback(async (data: PasswordReset): Promise<AuthResponse> => {
+  const resetPassword = async (data: PasswordReset): Promise<AuthResponse> => {
     setIsLoading(true)
     setError(null)
 
@@ -200,9 +200,9 @@ export function useAuth() {
     } finally {
       setIsLoading(false)
     }
-  }, [supabase.auth])
+  }
 
-  const changePassword = useCallback(async (data: ChangePasswordData): Promise<AuthResponse> => {
+  const changePassword = async (data: ChangePasswordData): Promise<AuthResponse> => {
     setIsLoading(true)
     setError(null)
 
@@ -233,9 +233,9 @@ export function useAuth() {
     } finally {
       setIsLoading(false)
     }
-  }, [supabase.auth])
+  }
 
-  const updateProfile = useCallback(async (data: Partial<SessionUser>): Promise<AuthResponse> => {
+  const updateProfile = async (data: Partial<SessionUser>): Promise<AuthResponse> => {
     setIsLoading(true)
     setError(null)
 
@@ -263,11 +263,11 @@ export function useAuth() {
     } finally {
       setIsLoading(false)
     }
-  }, [supabase.auth])
+  }
 
-  const clearError = useCallback(() => {
+  const clearError = () => {
     setError(null)
-  }, [])
+  }
 
   return {
     // Session data
@@ -292,41 +292,41 @@ export function useAuth() {
 export function usePermissions() {
   const { user } = useAuth()
 
-  const hasPermission = useCallback((module: string, action: 'create' | 'read' | 'update' | 'delete'): boolean => {
+  const hasPermission = (module: string, action: 'create' | 'read' | 'update' | 'delete'): boolean => {
     if (!user?.permissions) return false
 
     const modulePermission = user.permissions[module as keyof typeof user.permissions]
     if (!modulePermission) return false
 
     return modulePermission.actions[action]
-  }, [user])
+  }
 
-  const hasModuleAccess = useCallback((module: string): boolean => {
+  const hasModuleAccess = (module: string): boolean => {
     if (!user?.permissions) return false
 
     const modulePermission = user.permissions[module as keyof typeof user.permissions]
     if (!modulePermission) return false
 
     return modulePermission.access !== 'NONE'
-  }, [user])
+  }
 
-  const hasFullAccess = useCallback((module: string): boolean => {
+  const hasFullAccess = (module: string): boolean => {
     if (!user?.permissions) return false
 
     const modulePermission = user.permissions[module as keyof typeof user.permissions]
     if (!modulePermission) return false
 
     return modulePermission.access === 'FULL'
-  }, [user])
+  }
 
-  const hasReadOnlyAccess = useCallback((module: string): boolean => {
+  const hasReadOnlyAccess = (module: string): boolean => {
     if (!user?.permissions) return false
 
     const modulePermission = user.permissions[module as keyof typeof user.permissions]
     if (!modulePermission) return false
 
     return modulePermission.access === 'READ'
-  }, [user])
+  }
 
   return {
     hasPermission,

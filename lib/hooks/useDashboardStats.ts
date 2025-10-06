@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 export interface DashboardStats {
@@ -43,7 +43,7 @@ export function useDashboardStats() {
   const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
 
-  const fetchDashboardStats = useCallback(async () => {
+  const fetchDashboardStats = async () => {
     try {
       setLoading(true)
       setError(null)
@@ -74,21 +74,21 @@ export function useDashboardStats() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
 
   useEffect(() => {
     fetchDashboardStats()
-  }, [fetchDashboardStats])
+  }, [])
 
   // Auto-refresh stats every 5 minutes
   useEffect(() => {
     const interval = setInterval(fetchDashboardStats, 5 * 60 * 1000)
     return () => clearInterval(interval)
-  }, [fetchDashboardStats])
+  }, [])
 
-  const refreshStats = useCallback(() => {
+  const refreshStats = () => {
     fetchDashboardStats()
-  }, [fetchDashboardStats])
+  }
 
   return {
     stats,

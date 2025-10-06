@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 
 export interface Transaction {
   id: string
@@ -31,7 +31,7 @@ export function useDashboardActivity() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchActivity = useCallback(async () => {
+  const fetchActivity = async () => {
     try {
       setLoading(true)
       setError(null)
@@ -50,15 +50,15 @@ export function useDashboardActivity() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
 
-  const refreshActivity = useCallback(() => {
+  const refreshActivity = () => {
     fetchActivity()
-  }, [fetchActivity])
+  }
 
   useEffect(() => {
     fetchActivity()
-  }, [fetchActivity])
+  }, [])
 
   return {
     data,

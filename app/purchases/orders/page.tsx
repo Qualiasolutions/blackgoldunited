@@ -32,7 +32,7 @@ import {
   Loader2
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 
 interface PurchaseOrderItem {
   id: string
@@ -119,7 +119,7 @@ export default function PurchaseOrdersPage() {
     )
   }
 
-  const fetchOrders = useCallback(async (params: {
+  const fetchOrders = async (params: {
     query?: string
     status?: string
     priority?: string
@@ -154,7 +154,7 @@ export default function PurchaseOrdersPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
 
   useEffect(() => {
     fetchOrders({
@@ -166,7 +166,8 @@ export default function PurchaseOrdersPage() {
       page: pagination.page,
       limit: pagination.limit
     })
-  }, [fetchOrders, searchTerm, statusFilter, priorityFilter, approvalFilter, supplierFilter, pagination.page, pagination.limit])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, statusFilter, priorityFilter, approvalFilter, supplierFilter, pagination.page, pagination.limit])
 
   const handleSearch = () => {
     setPagination(prev => ({ ...prev, page: 1 }))

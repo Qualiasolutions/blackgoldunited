@@ -32,7 +32,7 @@ import {
   ShoppingCart
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 
 interface Supplier {
   id: string
@@ -103,7 +103,7 @@ export default function SuppliersPage() {
     )
   }
 
-  const fetchSuppliers = useCallback(async (params: {
+  const fetchSuppliers = async (params: {
     query?: string
     category?: string
     type?: string
@@ -138,7 +138,7 @@ export default function SuppliersPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
 
   useEffect(() => {
     fetchSuppliers({
@@ -150,7 +150,8 @@ export default function SuppliersPage() {
       page: pagination.page,
       limit: pagination.limit
     })
-  }, [fetchSuppliers, searchTerm, categoryFilter, typeFilter, statusFilter, paymentTermsFilter, pagination.page, pagination.limit])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, categoryFilter, typeFilter, statusFilter, paymentTermsFilter, pagination.page, pagination.limit])
 
   const handleSearch = () => {
     setPagination(prev => ({ ...prev, page: 1 }))

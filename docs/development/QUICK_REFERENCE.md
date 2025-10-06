@@ -100,16 +100,19 @@ export default function ModulePage() {
     return <div className="p-6 text-center text-red-600">Access Denied</div>
   }
 
-  const fetchItems = useCallback(async (params = {}) => {
+  // ✅ CORRECT PATTERN - React 19 Compatible
+  const fetchItems = useCallback(async (params: {
+    query?: string
+    page?: number
+    limit?: number
+  } = {}) => {
     setLoading(true)
     try {
-      const searchParams = new URLSearchParams({
-        page: pagination.page.toString(),
-        limit: pagination.limit.toString(),
-        ...params
-      })
+      const searchParams = new URLSearchParams()
 
-      if (searchTerm) searchParams.set('query', searchTerm)
+      if (params.query) searchParams.set('query', params.query)
+      if (params.page) searchParams.set('page', params.page.toString())
+      if (params.limit) searchParams.set('limit', params.limit.toString())
 
       const response = await fetch(`/api/module_name/items?${searchParams}`)
       const result = await response.json()
@@ -123,11 +126,15 @@ export default function ModulePage() {
     } finally {
       setLoading(false)
     }
-  }, [searchTerm, pagination.page, pagination.limit])
+  }, []) // ✅ Empty dependency array - no stale closures
 
   useEffect(() => {
-    fetchItems()
-  }, [fetchItems])
+    fetchItems({
+      query: searchTerm || undefined,
+      page: pagination.page,
+      limit: pagination.limit
+    })
+  }, [fetchItems, searchTerm, pagination.page, pagination.limit])
 
   return (
     <div className="space-y-6">

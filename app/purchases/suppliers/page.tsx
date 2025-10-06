@@ -103,20 +103,26 @@ export default function SuppliersPage() {
     )
   }
 
-  const fetchSuppliers = useCallback(async (params = {}) => {
+  const fetchSuppliers = useCallback(async (params: {
+    query?: string
+    category?: string
+    type?: string
+    isActive?: string
+    paymentTerms?: string
+    page?: number
+    limit?: number
+  } = {}) => {
     setLoading(true)
     try {
-      const searchParams = new URLSearchParams({
-        page: pagination.page.toString(),
-        limit: pagination.limit.toString(),
-        ...params
-      })
+      const searchParams = new URLSearchParams()
 
-      if (searchTerm) searchParams.set('query', searchTerm)
-      if (categoryFilter) searchParams.set('category', categoryFilter)
-      if (typeFilter) searchParams.set('type', typeFilter)
-      if (statusFilter) searchParams.set('isActive', statusFilter)
-      if (paymentTermsFilter) searchParams.set('paymentTerms', paymentTermsFilter)
+      if (params.query) searchParams.set('query', params.query)
+      if (params.category) searchParams.set('category', params.category)
+      if (params.type) searchParams.set('type', params.type)
+      if (params.isActive) searchParams.set('isActive', params.isActive)
+      if (params.paymentTerms) searchParams.set('paymentTerms', params.paymentTerms)
+      if (params.page) searchParams.set('page', params.page.toString())
+      if (params.limit) searchParams.set('limit', params.limit.toString())
 
       const response = await fetch(`/api/purchases/suppliers?${searchParams}`)
       const result = await response.json()
@@ -132,15 +138,22 @@ export default function SuppliersPage() {
     } finally {
       setLoading(false)
     }
-  }, [searchTerm, categoryFilter, typeFilter, statusFilter, paymentTermsFilter, pagination.page, pagination.limit])
+  }, [])
 
   useEffect(() => {
-    fetchSuppliers()
-  }, [fetchSuppliers])
+    fetchSuppliers({
+      query: searchTerm || undefined,
+      category: categoryFilter || undefined,
+      type: typeFilter || undefined,
+      isActive: statusFilter || undefined,
+      paymentTerms: paymentTermsFilter || undefined,
+      page: pagination.page,
+      limit: pagination.limit
+    })
+  }, [fetchSuppliers, searchTerm, categoryFilter, typeFilter, statusFilter, paymentTermsFilter, pagination.page, pagination.limit])
 
   const handleSearch = () => {
     setPagination(prev => ({ ...prev, page: 1 }))
-    fetchSuppliers()
   }
 
   const handleClearFilters = () => {
@@ -150,7 +163,6 @@ export default function SuppliersPage() {
     setStatusFilter('')
     setPaymentTermsFilter('')
     setPagination(prev => ({ ...prev, page: 1 }))
-    setTimeout(() => fetchSuppliers(), 100)
   }
 
   const handlePageChange = (newPage: number) => {

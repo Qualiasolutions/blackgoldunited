@@ -119,20 +119,26 @@ export default function PurchaseOrdersPage() {
     )
   }
 
-  const fetchOrders = useCallback(async (params = {}) => {
+  const fetchOrders = useCallback(async (params: {
+    query?: string
+    status?: string
+    priority?: string
+    approvalStatus?: string
+    supplierId?: string
+    page?: number
+    limit?: number
+  } = {}) => {
     setLoading(true)
     try {
-      const searchParams = new URLSearchParams({
-        page: pagination.page.toString(),
-        limit: pagination.limit.toString(),
-        ...params
-      })
+      const searchParams = new URLSearchParams()
 
-      if (searchTerm) searchParams.set('query', searchTerm)
-      if (statusFilter) searchParams.set('status', statusFilter)
-      if (priorityFilter) searchParams.set('priority', priorityFilter)
-      if (approvalFilter) searchParams.set('approvalStatus', approvalFilter)
-      if (supplierFilter) searchParams.set('supplierId', supplierFilter)
+      if (params.query) searchParams.set('query', params.query)
+      if (params.status) searchParams.set('status', params.status)
+      if (params.priority) searchParams.set('priority', params.priority)
+      if (params.approvalStatus) searchParams.set('approvalStatus', params.approvalStatus)
+      if (params.supplierId) searchParams.set('supplierId', params.supplierId)
+      if (params.page) searchParams.set('page', params.page.toString())
+      if (params.limit) searchParams.set('limit', params.limit.toString())
 
       const response = await fetch(`/api/purchases/orders?${searchParams}`)
       const result = await response.json()
@@ -148,15 +154,22 @@ export default function PurchaseOrdersPage() {
     } finally {
       setLoading(false)
     }
-  }, [searchTerm, statusFilter, priorityFilter, approvalFilter, supplierFilter, pagination.page, pagination.limit])
+  }, [])
 
   useEffect(() => {
-    fetchOrders()
-  }, [fetchOrders])
+    fetchOrders({
+      query: searchTerm || undefined,
+      status: statusFilter || undefined,
+      priority: priorityFilter || undefined,
+      approvalStatus: approvalFilter || undefined,
+      supplierId: supplierFilter || undefined,
+      page: pagination.page,
+      limit: pagination.limit
+    })
+  }, [fetchOrders, searchTerm, statusFilter, priorityFilter, approvalFilter, supplierFilter, pagination.page, pagination.limit])
 
   const handleSearch = () => {
     setPagination(prev => ({ ...prev, page: 1 }))
-    fetchOrders()
   }
 
   const handleClearFilters = () => {
@@ -166,7 +179,6 @@ export default function PurchaseOrdersPage() {
     setApprovalFilter('')
     setSupplierFilter('')
     setPagination(prev => ({ ...prev, page: 1 }))
-    setTimeout(() => fetchOrders(), 100)
   }
 
   const handlePageChange = (newPage: number) => {

@@ -25,7 +25,6 @@ export async function GET(request: NextRequest) {
     let ordersQuery = supabase
       .from('purchase_orders')
       .select('*', { count: 'exact' })
-      .eq('is_active', true)
       .order('created_at', { ascending: false });
 
     // Apply filters

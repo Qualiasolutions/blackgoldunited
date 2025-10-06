@@ -252,7 +252,7 @@ export default function PurchaseOrdersPage() {
             </div>
             {canManage && (
               <Button asChild>
-                <Link href="/purchases/orders/create">
+                <Link href="/sales/purchase-orders/create">
                   <Plus className="h-4 w-4 mr-2" />
                   Create Purchase Order
                 </Link>
@@ -373,7 +373,7 @@ export default function PurchaseOrdersPage() {
                 </p>
                 {canManage && !searchTerm && !statusFilter && !priorityFilter && !approvalFilter && (
                   <Button asChild className="mt-4">
-                    <Link href="/purchases/orders/create">
+                    <Link href="/sales/purchase-orders/create">
                       <Plus className="h-4 w-4 mr-2" />
                       Create First Purchase Order
                     </Link>
@@ -436,13 +436,13 @@ export default function PurchaseOrdersPage() {
 
                       <div className="ml-6 flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                          <Link href={`/purchases/orders/${order.id}`}>
+                          <Link href={`/sales/purchase-orders/${order.id}`}>
                             <Eye className="h-4 w-4" />
                           </Link>
                         </Button>
                         {canManage && ['DRAFT', 'SENT'].includes(order.status) && (
                           <Button variant="outline" size="sm" asChild>
-                            <Link href={`/purchases/orders/${order.id}/edit`}>
+                            <Link href={`/sales/purchase-orders/${order.id}/edit`}>
                               <Edit className="h-4 w-4" />
                             </Link>
                           </Button>

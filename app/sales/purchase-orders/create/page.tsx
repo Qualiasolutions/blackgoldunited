@@ -186,7 +186,7 @@ export default function CreatePurchaseOrderPage() {
 
       if (itemsError) throw itemsError
 
-      router.push('/purchases/orders')
+      router.push('/sales/purchase-orders')
     } catch (error) {
       console.error('Error saving purchase order:', error)
       alert('Failed to save purchase order')
@@ -217,7 +217,7 @@ export default function CreatePurchaseOrderPage() {
               <h1 className="text-2xl font-bold text-gray-900">Create Purchase Order</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href="/purchases/orders">
+              <Link href="/sales/purchase-orders">
                 <Button variant="outline">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back

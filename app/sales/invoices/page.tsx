@@ -27,7 +27,7 @@ import {
   Loader2
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect} from 'react'
 
 interface InvoiceClient {
   id: string
@@ -92,7 +92,7 @@ export default function InvoicesPage() {
   const canManage = hasFullAccess('sales')
   const canRead = hasModuleAccess('sales')
 
-  const fetchInvoices = useCallback(async (params: {
+  const fetchInvoices = async (params: {
     query?: string
     status?: string
     paymentStatus?: string
@@ -144,14 +144,14 @@ export default function InvoicesPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
 
   // Initial load
   useEffect(() => {
     if (canRead) {
       fetchInvoices()
     }
-  }, [canRead, fetchInvoices])
+  }, [canRead])
 
   // Debounced search
   useEffect(() => {

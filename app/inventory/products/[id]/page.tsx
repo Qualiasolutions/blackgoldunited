@@ -20,7 +20,7 @@ import {
   ShoppingCart
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect} from 'react'
 import { useParams } from 'next/navigation'
 
 interface ProductCategory {
@@ -101,7 +101,7 @@ export default function ProductViewPage() {
   const canRead = hasModuleAccess('inventory')
   const canManage = hasFullAccess('inventory')
 
-  const fetchProduct = useCallback(async () => {
+  const fetchProduct = async () => {
     if (!productId) return
 
     try {
@@ -132,11 +132,11 @@ export default function ProductViewPage() {
     } finally {
       setLoading(false)
     }
-  }, [productId])
+  }
 
   useEffect(() => {
     fetchProduct()
-  }, [fetchProduct])
+  }, [])
 
   if (!canRead) {
     return (

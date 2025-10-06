@@ -35,7 +35,7 @@ import {
   FileText
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect} from 'react'
 
 interface ProductCategory {
   id: string
@@ -140,7 +140,7 @@ export default function StockTrackingPage() {
     )
   }
 
-  const fetchStocks = useCallback(async (params: {
+  const fetchStocks = async (params: {
     query?: string
     warehouse?: string
     category?: string
@@ -184,9 +184,9 @@ export default function StockTrackingPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
 
-  const fetchMovements = useCallback(async (params: {
+  const fetchMovements = async (params: {
     query?: string
     warehouse?: string
     type?: string
@@ -212,9 +212,9 @@ export default function StockTrackingPage() {
     } catch (err) {
       console.error('Error fetching movements:', err)
     }
-  }, [])
+  }
 
-  const fetchWarehouses = useCallback(async () => {
+  const fetchWarehouses = async () => {
     try {
       const response = await fetch('/api/inventory/warehouses')
       if (response.ok) {
@@ -224,9 +224,9 @@ export default function StockTrackingPage() {
     } catch (err) {
       console.error('Error fetching warehouses:', err)
     }
-  }, [])
+  }
 
-  const fetchCategories = useCallback(async () => {
+  const fetchCategories = async () => {
     try {
       const response = await fetch('/api/inventory/categories')
       if (response.ok) {
@@ -236,7 +236,7 @@ export default function StockTrackingPage() {
     } catch (err) {
       console.error('Error fetching categories:', err)
     }
-  }, [])
+  }
 
   // Initial fetch
   useEffect(() => {
@@ -249,7 +249,7 @@ export default function StockTrackingPage() {
     fetchMovements({ page: 1, limit: 10 })
     fetchWarehouses()
     fetchCategories()
-  }, [fetchStocks, fetchMovements, fetchWarehouses, fetchCategories, showLowStock, showOutOfStock])
+  }, [showLowStock, showOutOfStock])
 
   const handleRefresh = () => {
     fetchStocks({

@@ -31,7 +31,7 @@ import {
   BarChart3
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 
 interface ProductCategory {
   id: string
@@ -116,28 +116,136 @@ export default function InventoryPage() {
     )
   }
 
-  const fetchProducts = useCallback(async (params: {
-    query?: string
-    category?: string
-    type?: string
-    isActive?: string
-    lowStock?: boolean
-    page?: number
-    limit?: number
-  } = {}) => {
+  // Initial fetch
+  useEffect(() => {
+    const fetchProducts = async (params: {
+      query?: string
+      category?: string
+      type?: string
+      isActive?: string
+      lowStock?: boolean
+      page?: number
+      limit?: number
+    } = {}) => {
+      try {
+        setLoading(true)
+        setError('')
+
+        // Build query string
+        const queryParams = new URLSearchParams()
+        if (params.query) queryParams.set('query', params.query)
+        if (params.category) queryParams.set('category', params.category)
+        if (params.type) queryParams.set('type', params.type)
+        if (params.isActive) queryParams.set('isActive', params.isActive)
+        if (params.lowStock) queryParams.set('lowStock', 'true')
+        queryParams.set('page', (params.page || 1).toString())
+        queryParams.set('limit', (params.limit || 10).toString())
+
+        const response = await fetch(`/api/inventory/products?${queryParams}`)
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to fetch products')
+        }
+
+        const result = await response.json()
+
+        if (result.success) {
+          setProducts(result.data || [])
+          setPagination(result.pagination || { page: 1, limit: 10, total: 0, pages: 0 })
+        } else {
+          throw new Error(result.error || 'Failed to fetch products')
+        }
+      } catch (err) {
+        console.error('Error fetching products:', err)
+        setError(err instanceof Error ? err.message : 'Failed to fetch products')
+        setProducts([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/inventory/categories')
+        if (response.ok) {
+          const result = await response.json()
+          setCategories(result.success ? result.data || [] : [])
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err)
+      }
+    }
+
+    fetchProducts({
+      page: 1,
+      limit: pagination.limit,
+      isActive: filterActive,
+      lowStock: showLowStock
+    })
+    fetchCategories()
+  }, [filterActive, showLowStock, pagination.limit])
+
+  // Search with debounce
+  useEffect(() => {
+    if (searchDebounce) clearTimeout(searchDebounce)
+
+    const timeout = setTimeout(async () => {
+      try {
+        setLoading(true)
+        setError('')
+
+        const queryParams = new URLSearchParams()
+        if (searchTerm) queryParams.set('query', searchTerm)
+        if (filterCategory) queryParams.set('category', filterCategory)
+        if (filterType) queryParams.set('type', filterType)
+        if (filterActive) queryParams.set('isActive', filterActive)
+        if (showLowStock) queryParams.set('lowStock', 'true')
+        queryParams.set('page', '1')
+        queryParams.set('limit', pagination.limit.toString())
+
+        const response = await fetch(`/api/inventory/products?${queryParams}`)
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to fetch products')
+        }
+
+        const result = await response.json()
+
+        if (result.success) {
+          setProducts(result.data || [])
+          setPagination(result.pagination || { page: 1, limit: 10, total: 0, pages: 0 })
+        } else {
+          throw new Error(result.error || 'Failed to fetch products')
+        }
+      } catch (err) {
+        console.error('Error fetching products:', err)
+        setError(err instanceof Error ? err.message : 'Failed to fetch products')
+        setProducts([])
+      } finally {
+        setLoading(false)
+      }
+    }, 500)
+
+    setSearchDebounce(timeout)
+
+    return () => clearTimeout(timeout)
+  }, [searchTerm, filterCategory, filterType, pagination.limit])
+
+  const handlePageChange = async (newPage: number) => {
     try {
       setLoading(true)
       setError('')
 
-      // Build query string
       const queryParams = new URLSearchParams()
-      if (params.query) queryParams.set('query', params.query)
-      if (params.category) queryParams.set('category', params.category)
-      if (params.type) queryParams.set('type', params.type)
-      if (params.isActive) queryParams.set('isActive', params.isActive)
-      if (params.lowStock) queryParams.set('lowStock', 'true')
-      queryParams.set('page', (params.page || 1).toString())
-      queryParams.set('limit', (params.limit || 10).toString())
+      if (searchTerm) queryParams.set('query', searchTerm)
+      if (filterCategory) queryParams.set('category', filterCategory)
+      if (filterType) queryParams.set('type', filterType)
+      if (filterActive) queryParams.set('isActive', filterActive)
+      if (showLowStock) queryParams.set('lowStock', 'true')
+      queryParams.set('page', newPage.toString())
+      queryParams.set('limit', pagination.limit.toString())
 
       const response = await fetch(`/api/inventory/products?${queryParams}`)
 
@@ -150,7 +258,7 @@ export default function InventoryPage() {
 
       if (result.success) {
         setProducts(result.data || [])
-        setPagination(result.pagination || { page: 1, limit: 10, total: 0, pages: 0 })
+        setPagination(result.pagination || { page: newPage, limit: pagination.limit, total: 0, pages: 0 })
       } else {
         throw new Error(result.error || 'Failed to fetch products')
       }
@@ -161,75 +269,44 @@ export default function InventoryPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
-
-  const fetchCategories = useCallback(async () => {
-    try {
-      const response = await fetch('/api/inventory/categories')
-      if (response.ok) {
-        const result = await response.json()
-        setCategories(result.success ? result.data || [] : [])
-      }
-    } catch (err) {
-      console.error('Error fetching categories:', err)
-    }
-  }, [])
-
-  // Initial fetch
-  useEffect(() => {
-    fetchProducts({
-      page: 1,
-      limit: pagination.limit,
-      isActive: filterActive,
-      lowStock: showLowStock
-    })
-    fetchCategories()
-  }, [fetchProducts, filterActive, showLowStock, pagination.limit])
-
-  // Search with debounce
-  useEffect(() => {
-    if (searchDebounce) clearTimeout(searchDebounce)
-
-    const timeout = setTimeout(() => {
-      fetchProducts({
-        query: searchTerm,
-        category: filterCategory,
-        type: filterType,
-        isActive: filterActive,
-        lowStock: showLowStock,
-        page: 1,
-        limit: pagination.limit
-      })
-    }, 500)
-
-    setSearchDebounce(timeout)
-
-    return () => clearTimeout(timeout)
-  }, [searchTerm, filterCategory, filterType, fetchProducts, pagination.limit])
-
-  const handlePageChange = (newPage: number) => {
-    setPagination(prev => ({ ...prev, page: newPage }))
-    fetchProducts({
-      query: searchTerm,
-      category: filterCategory,
-      type: filterType,
-      isActive: filterActive,
-      lowStock: showLowStock,
-      page: newPage,
-      limit: pagination.limit
-    })
   }
 
-  const handleRefresh = () => {
-    fetchProducts({
-      query: searchTerm,
-      category: filterCategory,
-      type: filterType,
-      isActive: filterActive,
-      lowStock: showLowStock,
-      page: pagination.page,
-      limit: pagination.limit
-    })
+  const handleRefresh = async () => {
+    try {
+      setLoading(true)
+      setError('')
+
+      const queryParams = new URLSearchParams()
+      if (searchTerm) queryParams.set('query', searchTerm)
+      if (filterCategory) queryParams.set('category', filterCategory)
+      if (filterType) queryParams.set('type', filterType)
+      if (filterActive) queryParams.set('isActive', filterActive)
+      if (showLowStock) queryParams.set('lowStock', 'true')
+      queryParams.set('page', pagination.page.toString())
+      queryParams.set('limit', pagination.limit.toString())
+
+      const response = await fetch(`/api/inventory/products?${queryParams}`)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to fetch products')
+      }
+
+      const result = await response.json()
+
+      if (result.success) {
+        setProducts(result.data || [])
+        setPagination(result.pagination || pagination)
+      } else {
+        throw new Error(result.error || 'Failed to fetch products')
+      }
+    } catch (err) {
+      console.error('Error fetching products:', err)
+      setError(err instanceof Error ? err.message : 'Failed to fetch products')
+      setProducts([])
+    } finally {
+      setLoading(false)
+    }
   }
 
   const getStatusBadge = (product: Product) => {

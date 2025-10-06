@@ -26,7 +26,7 @@ import {
   Eye
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect} from 'react'
 import { useParams, useRouter } from 'next/navigation'
 
 interface ProductCategory {
@@ -109,7 +109,7 @@ export default function EditProductPage() {
     )
   }
 
-  const fetchProduct = useCallback(async () => {
+  const fetchProduct = async () => {
     if (!productId) return
 
     try {
@@ -161,9 +161,9 @@ export default function EditProductPage() {
     } finally {
       setLoading(false)
     }
-  }, [productId])
+  }
 
-  const fetchCategories = useCallback(async () => {
+  const fetchCategories = async () => {
     try {
       const response = await fetch('/api/inventory/categories')
       if (response.ok) {
@@ -173,12 +173,12 @@ export default function EditProductPage() {
     } catch (err) {
       console.error('Error fetching categories:', err)
     }
-  }, [])
+  }
 
   useEffect(() => {
     fetchProduct()
     fetchCategories()
-  }, [fetchProduct, fetchCategories])
+  }, [])
 
   const handleInputChange = (field: keyof FormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }))

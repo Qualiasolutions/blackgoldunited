@@ -30,7 +30,7 @@ import {
   Package
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 
 interface WarehouseData {
   id: string
@@ -88,24 +88,114 @@ export default function WarehousesPage() {
     )
   }
 
-  const fetchWarehouses = useCallback(async (params: {
-    query?: string
-    location?: string
-    isActive?: string
-    page?: number
-    limit?: number
-  } = {}) => {
+  // Initial fetch
+  useEffect(() => {
+    const fetchWarehouses = async (params: {
+      query?: string
+      location?: string
+      isActive?: string
+      page?: number
+      limit?: number
+    } = {}) => {
+      try {
+        setLoading(true)
+        setError('')
+
+        // Build query string
+        const queryParams = new URLSearchParams()
+        if (params.query) queryParams.set('query', params.query)
+        if (params.location) queryParams.set('location', params.location)
+        if (params.isActive) queryParams.set('isActive', params.isActive)
+        queryParams.set('page', (params.page || 1).toString())
+        queryParams.set('limit', (params.limit || 10).toString())
+
+        const response = await fetch(`/api/inventory/warehouses?${queryParams}`)
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to fetch warehouses')
+        }
+
+        const result = await response.json()
+
+        if (result.success) {
+          setWarehouses(result.data || [])
+          setPagination(result.pagination || { page: 1, limit: 10, total: 0, pages: 0 })
+        } else {
+          throw new Error(result.error || 'Failed to fetch warehouses')
+        }
+      } catch (err) {
+        console.error('Error fetching warehouses:', err)
+        setError(err instanceof Error ? err.message : 'Failed to fetch warehouses')
+        setWarehouses([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchWarehouses({
+      page: 1,
+      limit: pagination.limit,
+      isActive: filterActive
+    })
+  }, [filterActive, pagination.limit])
+
+  // Search with debounce
+  useEffect(() => {
+    if (searchDebounce) clearTimeout(searchDebounce)
+
+    const timeout = setTimeout(async () => {
+      try {
+        setLoading(true)
+        setError('')
+
+        const queryParams = new URLSearchParams()
+        if (searchTerm) queryParams.set('query', searchTerm)
+        if (filterLocation) queryParams.set('location', filterLocation)
+        if (filterActive) queryParams.set('isActive', filterActive)
+        queryParams.set('page', '1')
+        queryParams.set('limit', pagination.limit.toString())
+
+        const response = await fetch(`/api/inventory/warehouses?${queryParams}`)
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to fetch warehouses')
+        }
+
+        const result = await response.json()
+
+        if (result.success) {
+          setWarehouses(result.data || [])
+          setPagination(result.pagination || { page: 1, limit: 10, total: 0, pages: 0 })
+        } else {
+          throw new Error(result.error || 'Failed to fetch warehouses')
+        }
+      } catch (err) {
+        console.error('Error fetching warehouses:', err)
+        setError(err instanceof Error ? err.message : 'Failed to fetch warehouses')
+        setWarehouses([])
+      } finally {
+        setLoading(false)
+      }
+    }, 500)
+
+    setSearchDebounce(timeout)
+
+    return () => clearTimeout(timeout)
+  }, [searchTerm, filterLocation, pagination.limit])
+
+  const handlePageChange = async (newPage: number) => {
     try {
       setLoading(true)
       setError('')
 
-      // Build query string
       const queryParams = new URLSearchParams()
-      if (params.query) queryParams.set('query', params.query)
-      if (params.location) queryParams.set('location', params.location)
-      if (params.isActive) queryParams.set('isActive', params.isActive)
-      queryParams.set('page', (params.page || 1).toString())
-      queryParams.set('limit', (params.limit || 10).toString())
+      if (searchTerm) queryParams.set('query', searchTerm)
+      if (filterLocation) queryParams.set('location', filterLocation)
+      if (filterActive) queryParams.set('isActive', filterActive)
+      queryParams.set('page', newPage.toString())
+      queryParams.set('limit', pagination.limit.toString())
 
       const response = await fetch(`/api/inventory/warehouses?${queryParams}`)
 
@@ -118,7 +208,7 @@ export default function WarehousesPage() {
 
       if (result.success) {
         setWarehouses(result.data || [])
-        setPagination(result.pagination || { page: 1, limit: 10, total: 0, pages: 0 })
+        setPagination(result.pagination || { page: newPage, limit: pagination.limit, total: 0, pages: 0 })
       } else {
         throw new Error(result.error || 'Failed to fetch warehouses')
       }
@@ -129,55 +219,42 @@ export default function WarehousesPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
-
-  // Initial fetch
-  useEffect(() => {
-    fetchWarehouses({
-      page: 1,
-      limit: pagination.limit,
-      isActive: filterActive
-    })
-  }, [fetchWarehouses, filterActive, pagination.limit])
-
-  // Search with debounce
-  useEffect(() => {
-    if (searchDebounce) clearTimeout(searchDebounce)
-
-    const timeout = setTimeout(() => {
-      fetchWarehouses({
-        query: searchTerm,
-        location: filterLocation,
-        isActive: filterActive,
-        page: 1,
-        limit: pagination.limit
-      })
-    }, 500)
-
-    setSearchDebounce(timeout)
-
-    return () => clearTimeout(timeout)
-  }, [searchTerm, filterLocation, fetchWarehouses, pagination.limit])
-
-  const handlePageChange = (newPage: number) => {
-    setPagination(prev => ({ ...prev, page: newPage }))
-    fetchWarehouses({
-      query: searchTerm,
-      location: filterLocation,
-      isActive: filterActive,
-      page: newPage,
-      limit: pagination.limit
-    })
   }
 
-  const handleRefresh = () => {
-    fetchWarehouses({
-      query: searchTerm,
-      location: filterLocation,
-      isActive: filterActive,
-      page: pagination.page,
-      limit: pagination.limit
-    })
+  const handleRefresh = async () => {
+    try {
+      setLoading(true)
+      setError('')
+
+      const queryParams = new URLSearchParams()
+      if (searchTerm) queryParams.set('query', searchTerm)
+      if (filterLocation) queryParams.set('location', filterLocation)
+      if (filterActive) queryParams.set('isActive', filterActive)
+      queryParams.set('page', pagination.page.toString())
+      queryParams.set('limit', pagination.limit.toString())
+
+      const response = await fetch(`/api/inventory/warehouses?${queryParams}`)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to fetch warehouses')
+      }
+
+      const result = await response.json()
+
+      if (result.success) {
+        setWarehouses(result.data || [])
+        setPagination(result.pagination || pagination)
+      } else {
+        throw new Error(result.error || 'Failed to fetch warehouses')
+      }
+    } catch (err) {
+      console.error('Error fetching warehouses:', err)
+      setError(err instanceof Error ? err.message : 'Failed to fetch warehouses')
+      setWarehouses([])
+    } finally {
+      setLoading(false)
+    }
   }
 
   const getStatusBadge = (warehouse: WarehouseData) => {

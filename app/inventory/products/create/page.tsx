@@ -27,7 +27,7 @@ import {
   Loader2
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect} from 'react'
 import { useRouter } from 'next/navigation'
 
 interface ProductCategory {
@@ -106,7 +106,7 @@ export default function CreateProductPage() {
     )
   }
 
-  const fetchCategories = useCallback(async () => {
+  const fetchCategories = async () => {
     try {
       const response = await fetch('/api/inventory/categories')
       if (response.ok) {
@@ -116,11 +116,11 @@ export default function CreateProductPage() {
     } catch (err) {
       console.error('Error fetching categories:', err)
     }
-  }, [])
+  }
 
   useEffect(() => {
     fetchCategories()
-  }, [fetchCategories])
+  }, [])
 
   const handleInputChange = (field: keyof FormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }))

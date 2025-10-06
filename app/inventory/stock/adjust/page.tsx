@@ -23,7 +23,7 @@ import {
   Save
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect} from 'react'
 import { useRouter } from 'next/navigation'
 
 interface Product {
@@ -88,7 +88,7 @@ export default function StockAdjustmentPage() {
   }
 
   // Fetch products
-  const fetchProducts = useCallback(async () => {
+  const fetchProducts = async () => {
     try {
       const response = await fetch('/api/inventory/products?limit=1000&isActive=true')
       if (response.ok) {
@@ -98,10 +98,10 @@ export default function StockAdjustmentPage() {
     } catch (err) {
       console.error('Error fetching products:', err)
     }
-  }, [])
+  }
 
   // Fetch warehouses
-  const fetchWarehouses = useCallback(async () => {
+  const fetchWarehouses = async () => {
     try {
       const response = await fetch('/api/inventory/warehouses?limit=1000&isActive=true')
       if (response.ok) {
@@ -111,10 +111,10 @@ export default function StockAdjustmentPage() {
     } catch (err) {
       console.error('Error fetching warehouses:', err)
     }
-  }, [])
+  }
 
   // Fetch current stock when product and warehouse are selected
-  const fetchCurrentStock = useCallback(async () => {
+  const fetchCurrentStock = async () => {
     if (!formData.productId || !formData.warehouseId) {
       setCurrentStock(null)
       return
@@ -149,18 +149,18 @@ export default function StockAdjustmentPage() {
     } finally {
       setLoadingStock(false)
     }
-  }, [formData.productId, formData.warehouseId])
+  }
 
   // Initial data fetch
   useEffect(() => {
     fetchProducts()
     fetchWarehouses()
-  }, [fetchProducts, fetchWarehouses])
+  }, [])
 
   // Fetch stock when product/warehouse changes
   useEffect(() => {
     fetchCurrentStock()
-  }, [fetchCurrentStock])
+  }, [formData.productId, formData.warehouseId])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))

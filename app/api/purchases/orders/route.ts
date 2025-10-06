@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   const offset = (page - 1) * limit;
 
   try {
-    // Build base query
+    // Build base query (no is_active column - purchase_orders doesn't have soft delete)
     let ordersQuery = supabase
       .from('purchase_orders')
       .select('*', { count: 'exact' })

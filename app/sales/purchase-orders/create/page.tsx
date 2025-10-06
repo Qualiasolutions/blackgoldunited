@@ -160,7 +160,7 @@ export default function CreatePurchaseOrderPage() {
         .from('purchase_orders')
         .insert({
           po_number: poNumber,
-          supplier_id: formData.clientId,
+          client_id: formData.clientId,
           order_date: formData.orderDate,
           delivery_date: formData.deliveryDate || null,
           subtotal: totalAmount,

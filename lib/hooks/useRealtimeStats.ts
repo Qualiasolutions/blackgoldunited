@@ -71,7 +71,7 @@ export function useRealtimeStats() {
         const { data: invoices } = await supabase
           .from('invoices')
           .select('id, total_amount, paid_amount, status, created_at, invoice_number')
-          .eq('is_active', true)
+          .is('deleted_at', null)
         results.invoices = invoices || []
       } catch (err) {
         results.invoices = []

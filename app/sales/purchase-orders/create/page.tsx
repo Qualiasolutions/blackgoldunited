@@ -144,24 +144,30 @@ export default function CreatePurchaseOrderPage() {
     return items.reduce((sum, item) => sum + item.total, 0)
   }
 
-  const handleSave = async (status: 'DRAFT' | 'APPROVED') => {
+  const handleSave = async (status: 'DRAFT' | 'SENT') => {
     if (!canCreate) return
 
     try {
       setSaving(true)
       const supabase = createClient()
 
+      // Generate PO number
+      const poNumber = `PO-${Date.now().toString().slice(-6)}`
+      const totalAmount = calculateTotal()
+
       // Create PO
       const { data: po, error: poError } = await supabase
         .from('purchase_orders')
         .insert({
-          client_id: formData.clientId,
+          po_number: poNumber,
+          supplier_id: formData.clientId,
           order_date: formData.orderDate,
           delivery_date: formData.deliveryDate || null,
-          terms: formData.terms || null,
+          subtotal: totalAmount,
+          total_amount: totalAmount,
+          terms_and_conditions: formData.terms || null,
           notes: formData.notes || null,
           status,
-          total_amount: calculateTotal(),
           created_by: user?.id
         })
         .select()
@@ -171,13 +177,13 @@ export default function CreatePurchaseOrderPage() {
 
       // Create line items
       const lineItems = items.map(item => ({
-        purchase_order_id: po.id,
+        po_id: po.id,
         description: item.description,
         quantity: item.quantity,
         uom: item.uom,
         unit_price: item.unitPrice,
-        currency: item.currency,
-        total: item.total
+        line_total: item.total,
+        currency: item.currency
       }))
 
       const { error: itemsError } = await supabase
@@ -404,12 +410,12 @@ export default function CreatePurchaseOrderPage() {
                   Save as Draft
                 </Button>
                 <Button
-                  onClick={() => handleSave('APPROVED')}
+                  onClick={() => handleSave('SENT')}
                   disabled={saving || !formData.clientId}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   <Send className="w-4 h-4 mr-2" />
-                  Create & Approve
+                  Create & Send
                 </Button>
               </div>
             </CardContent>

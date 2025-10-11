@@ -30,11 +30,14 @@ interface Client {
 
 interface RFQItem {
   id: string
+  partNumber: string
   description: string
   quantity: number
-  uom: string
+  unit: string
   unitPrice: number
-  currency: string
+  taxRate: number
+  discountRate: number
+  deliveryTime: string
   total: number
 }
 
@@ -53,17 +56,31 @@ export default function CreateRFQPage() {
     description: '',
     validUntil: '',
     terms: '',
-    notes: ''
+    notes: '',
+    // New PDF fields
+    clientRefNo: '',
+    customerRfqNo: '',
+    bguRefNo: '',
+    subject: '',
+    discountPercentage: 0,
+    salesPerson: '',
+    deliveryTime: '',
+    paymentTermsText: '',
+    currency: 'KWD',
+    attentionTo: ''
   })
 
   const [items, setItems] = useState<RFQItem[]>([
     {
       id: '1',
+      partNumber: '',
       description: '',
       quantity: 1,
-      uom: '',
+      unit: 'pc',
       unitPrice: 0,
-      currency: 'KD',
+      taxRate: 0,
+      discountRate: 0,
+      deliveryTime: '',
       total: 0
     }
   ])
@@ -109,9 +126,13 @@ export default function CreateRFQPage() {
       if (item.id === itemId) {
         const updatedItem = { ...item, [field]: value }
 
-        // Recalculate total if quantity or unit price changed
-        if (field === 'quantity' || field === 'unitPrice') {
-          updatedItem.total = updatedItem.quantity * updatedItem.unitPrice
+        // Recalculate total if quantity, unit price, tax rate, or discount rate changed
+        if (field === 'quantity' || field === 'unitPrice' || field === 'taxRate' || field === 'discountRate') {
+          const subtotal = updatedItem.quantity * updatedItem.unitPrice
+          const discount = subtotal * (updatedItem.discountRate / 100)
+          const afterDiscount = subtotal - discount
+          const tax = afterDiscount * (updatedItem.taxRate / 100)
+          updatedItem.total = afterDiscount + tax
         }
 
         return updatedItem
@@ -123,11 +144,14 @@ export default function CreateRFQPage() {
   const addItem = () => {
     const newItem: RFQItem = {
       id: (items.length + 1).toString(),
+      partNumber: '',
       description: '',
       quantity: 1,
-      uom: '',
+      unit: 'pc',
       unitPrice: 0,
-      currency: 'KD',
+      taxRate: 0,
+      discountRate: 0,
+      deliveryTime: '',
       total: 0
     }
     setItems(prev => [...prev, newItem])
@@ -148,56 +172,52 @@ export default function CreateRFQPage() {
 
     setSaving(true)
     try {
-      const supabase = createClient()
-
-      // Generate RFQ number
-      const rfqNumber = `RFQ-${Date.now().toString().slice(-6)}`
-
-      // Prepare RFQ data (using snake_case for database columns)
-      const rfqData = {
-        quotation_number: rfqNumber,
-        client_id: formData.clientId,
+      const submitData = {
+        clientId: formData.clientId,
         title: formData.title,
-        description: formData.description,
-        issue_date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD
+        description: formData.description || undefined,
+        issueDate: new Date().toISOString(),
+        validUntil: formData.validUntil ? new Date(formData.validUntil).toISOString() : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         status: status,
-        valid_until: formData.validUntil || null,
-        subtotal: calculateSubtotal(),
-        tax_amount: 0,
-        total_amount: calculateSubtotal(),
-        terms_and_conditions: formData.terms,
-        notes: formData.notes,
-        created_by: user?.id
+        termsAndConditions: formData.terms || undefined,
+        notes: formData.notes || undefined,
+        // New PDF fields
+        clientRefNo: formData.clientRefNo || undefined,
+        customerRfqNo: formData.customerRfqNo || undefined,
+        bguRefNo: formData.bguRefNo || undefined,
+        subject: formData.subject || undefined,
+        discountPercentage: formData.discountPercentage,
+        salesPerson: formData.salesPerson || undefined,
+        deliveryTime: formData.deliveryTime || undefined,
+        paymentTermsText: formData.paymentTermsText || undefined,
+        currency: formData.currency,
+        attentionTo: formData.attentionTo || undefined,
+        items: items
+          .filter(item => item.description.trim() !== '')
+          .map(item => ({
+            partNumber: item.partNumber || undefined,
+            description: item.description,
+            unit: item.unit,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            taxRate: item.taxRate,
+            discountRate: item.discountRate,
+            deliveryTime: item.deliveryTime || undefined
+          }))
       }
 
-      // Create RFQ
-      const { data: rfq, error: rfqError } = await supabase
-        .from('quotations')
-        .insert([rfqData])
-        .select()
-        .single()
+      const response = await fetch('/api/sales/quotations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submitData),
+      })
 
-      if (rfqError) throw rfqError
+      const result = await response.json()
 
-      // Create RFQ items
-      const itemsData = items
-        .filter(item => item.description.trim() !== '')
-        .map(item => ({
-          quotation_id: rfq.id,
-          description: item.description,
-          quantity: item.quantity,
-          uom: item.uom || null,
-          unit_price: item.unitPrice,
-          currency: item.currency,
-          line_total: item.total
-        }))
-
-      if (itemsData.length > 0) {
-        const { error: itemsError } = await supabase
-          .from('quotation_items')
-          .insert(itemsData)
-
-        if (itemsError) throw itemsError
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create quotation')
       }
 
       // Success message and redirect
@@ -207,7 +227,7 @@ export default function CreateRFQPage() {
 
     } catch (error) {
       console.error('Error saving RFQ:', error)
-      alert('Error saving RFQ. Please try again.')
+      alert(error instanceof Error ? error.message : 'Error saving RFQ. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -342,6 +362,137 @@ export default function CreateRFQPage() {
                 </CardContent>
               </Card>
 
+              {/* PDF-Specific Fields */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Quote className="h-5 w-5 mr-2" />
+                    Additional Details (From PDF Template)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="clientRefNo">Client Ref. No</Label>
+                      <Input
+                        id="clientRefNo"
+                        value={formData.clientRefNo}
+                        onChange={(e) => handleInputChange('clientRefNo', e.target.value)}
+                        placeholder="e.g., CR-2025-001"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="customerRfqNo">Customer RFQ No</Label>
+                      <Input
+                        id="customerRfqNo"
+                        value={formData.customerRfqNo}
+                        onChange={(e) => handleInputChange('customerRfqNo', e.target.value)}
+                        placeholder="e.g., RFQ-2025-001"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="bguRefNo">BGU Ref. No</Label>
+                      <Input
+                        id="bguRefNo"
+                        value={formData.bguRefNo}
+                        onChange={(e) => handleInputChange('bguRefNo', e.target.value)}
+                        placeholder="e.g., BGU-2025-001"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="attentionTo">Attention To</Label>
+                      <Input
+                        id="attentionTo"
+                        value={formData.attentionTo}
+                        onChange={(e) => handleInputChange('attentionTo', e.target.value)}
+                        placeholder="Contact person name"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="subject">Subject</Label>
+                    <Input
+                      id="subject"
+                      value={formData.subject}
+                      onChange={(e) => handleInputChange('subject', e.target.value)}
+                      placeholder="Quotation subject"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="salesPerson">Sales Person</Label>
+                      <Input
+                        id="salesPerson"
+                        value={formData.salesPerson}
+                        onChange={(e) => handleInputChange('salesPerson', e.target.value)}
+                        placeholder="Sales representative name"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="deliveryTime">Delivery Time</Label>
+                      <Input
+                        id="deliveryTime"
+                        value={formData.deliveryTime}
+                        onChange={(e) => handleInputChange('deliveryTime', e.target.value)}
+                        placeholder="e.g., 2-3 weeks"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="currency">Currency</Label>
+                      <select
+                        id="currency"
+                        value={formData.currency}
+                        onChange={(e) => handleInputChange('currency', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="KWD">KWD - Kuwaiti Dinar</option>
+                        <option value="USD">USD - US Dollar</option>
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="GBP">GBP - British Pound</option>
+                        <option value="SAR">SAR - Saudi Riyal</option>
+                        <option value="AED">AED - UAE Dirham</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="discountPercentage">Discount %</Label>
+                      <Input
+                        id="discountPercentage"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={formData.discountPercentage}
+                        onChange={(e) => handleInputChange('discountPercentage', e.target.value)}
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="paymentTermsText">Payment Terms</Label>
+                    <Textarea
+                      id="paymentTermsText"
+                      value={formData.paymentTermsText}
+                      onChange={(e) => handleInputChange('paymentTermsText', e.target.value)}
+                      placeholder="e.g., 50% advance, 50% on delivery"
+                      rows={2}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Items */}
               <Card>
                 <CardHeader>
@@ -375,8 +526,17 @@ export default function CreateRFQPage() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-                          <div className="md:col-span-3">
-                            <Label>Description</Label>
+                          <div>
+                            <Label>Part Number</Label>
+                            <Input
+                              value={item.partNumber}
+                              onChange={(e) => handleItemChange(item.id, 'partNumber', e.target.value)}
+                              placeholder="e.g., PN-12345"
+                            />
+                          </div>
+
+                          <div className="md:col-span-2">
+                            <Label>Description *</Label>
                             <Input
                               value={item.description}
                               onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
@@ -385,7 +545,26 @@ export default function CreateRFQPage() {
                           </div>
 
                           <div>
-                            <Label>Quantity</Label>
+                            <Label>Unit</Label>
+                            <select
+                              value={item.unit}
+                              onChange={(e) => handleItemChange(item.id, 'unit', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="pc">Piece (pc)</option>
+                              <option value="set">Set</option>
+                              <option value="box">Box</option>
+                              <option value="kg">Kilogram (kg)</option>
+                              <option value="ltr">Liter (ltr)</option>
+                              <option value="m">Meter (m)</option>
+                              <option value="sqm">Square Meter (sqm)</option>
+                              <option value="hour">Hour</option>
+                              <option value="day">Day</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <Label>Quantity *</Label>
                             <Input
                               type="number"
                               value={item.quantity}
@@ -395,16 +574,7 @@ export default function CreateRFQPage() {
                           </div>
 
                           <div>
-                            <Label>UOM</Label>
-                            <Input
-                              value={item.uom}
-                              onChange={(e) => handleItemChange(item.id, 'uom', e.target.value)}
-                              placeholder="pcs, kg, box..."
-                            />
-                          </div>
-
-                          <div>
-                            <Label>Est. Unit Price</Label>
+                            <Label>Unit Price</Label>
                             <Input
                               type="number"
                               value={item.unitPrice}
@@ -417,25 +587,47 @@ export default function CreateRFQPage() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-3">
-                          <div className="md:col-span-3">
-                            <Label>Currency</Label>
-                            <select
-                              value={item.currency}
-                              onChange={(e) => handleItemChange(item.id, 'currency', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                              <option value="KD">KD - Kuwaiti Dinar</option>
-                              <option value="USD">$ - US Dollar</option>
-                              <option value="EUR">€ - Euro</option>
-                              <option value="SAR">SAR - Saudi Riyal</option>
-                              <option value="EGP">EGP - Egyptian Pound</option>
-                            </select>
+                          <div>
+                            <Label>Tax Rate (%)</Label>
+                            <Input
+                              type="number"
+                              value={item.taxRate}
+                              onChange={(e) => handleItemChange(item.id, 'taxRate', Number(e.target.value))}
+                              min="0"
+                              max="100"
+                              step="0.01"
+                              placeholder="0"
+                            />
                           </div>
-                        </div>
 
-                        <div className="mt-3 text-right">
-                          <span className="text-sm text-gray-600">Total: </span>
-                          <span className="font-semibold">{item.currency} {item.total.toFixed(2)}</span>
+                          <div>
+                            <Label>Discount (%)</Label>
+                            <Input
+                              type="number"
+                              value={item.discountRate}
+                              onChange={(e) => handleItemChange(item.id, 'discountRate', Number(e.target.value))}
+                              min="0"
+                              max="100"
+                              step="0.01"
+                              placeholder="0"
+                            />
+                          </div>
+
+                          <div className="md:col-span-2">
+                            <Label>Delivery Time</Label>
+                            <Input
+                              value={item.deliveryTime}
+                              onChange={(e) => handleItemChange(item.id, 'deliveryTime', e.target.value)}
+                              placeholder="e.g., 2-3 weeks"
+                            />
+                          </div>
+
+                          <div className="md:col-span-2">
+                            <Label>Line Total</Label>
+                            <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md">
+                              {formData.currency} {item.total.toFixed(2)}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ))}

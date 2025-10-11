@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth, usePermissions } from '@/lib/hooks/useAuth'
+import { usePermissions } from '@/lib/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input'
 import {
   Plus,
   Search,
-  Filter,
   FileText,
   Download,
   Eye,
@@ -27,13 +26,17 @@ import {
   Loader2
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useEffect} from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 interface InvoiceClient {
   id: string
   companyName: string
-  contactPerson: string
-  email: string
+  contactPerson: string | null
+  email: string | null
+  address?: string | null
+  city?: string | null
+  state?: string | null
+  country?: string | null
 }
 
 interface InvoiceItem {
@@ -48,9 +51,9 @@ interface InvoiceItem {
 interface Invoice {
   id: string
   invoiceNumber: string
-  clientId: string
-  issueDate: string
-  dueDate: string
+  clientId: string | null
+  issueDate: string | null
+  dueDate: string | null
   status: 'DRAFT' | 'SENT' | 'PAID' | 'OVERDUE' | 'CANCELLED' | 'REFUNDED'
   paymentStatus: 'PENDING' | 'PARTIAL' | 'COMPLETED' | 'FAILED' | 'REFUNDED'
   subtotal: number
@@ -58,16 +61,15 @@ interface Invoice {
   discountAmount: number
   totalAmount: number
   paidAmount: number
-  notes?: string
-  terms?: string
-  createdAt: string
-  updatedAt: string
-  client: InvoiceClient
+  notes?: string | null
+  terms?: string | null
+  createdAt: string | null
+  updatedAt: string | null
+  client: InvoiceClient | null
   items: InvoiceItem[]
 }
 
 export default function InvoicesPage() {
-  const { user } = useAuth()
   const { hasModuleAccess, hasFullAccess } = usePermissions()
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
@@ -81,7 +83,7 @@ export default function InvoicesPage() {
     total: 0,
     totalPages: 0
   })
-  const [searchDebounce, setSearchDebounce] = useState<NodeJS.Timeout>()
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; invoiceId: string; invoiceNumber: string }>({
     show: false,
     invoiceId: '',
@@ -92,13 +94,15 @@ export default function InvoicesPage() {
   const canManage = hasFullAccess('sales')
   const canRead = hasModuleAccess('sales')
 
-  const fetchInvoices = async (params: {
+  const fetchInvoices = useCallback(async (params: {
     query?: string
     status?: string
     paymentStatus?: string
     page?: number
     limit?: number
   } = {}) => {
+    if (!canRead) return
+
     try {
       setLoading(true)
       setError('')
@@ -144,24 +148,27 @@ export default function InvoicesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [canRead])
 
   // Initial load
   useEffect(() => {
     if (canRead) {
-      fetchInvoices()
+      fetchInvoices({
+        page: 1,
+        limit: pagination.limit
+      })
     }
-  }, [canRead])
+  }, [canRead, fetchInvoices, pagination.limit])
 
   // Debounced search
   useEffect(() => {
     if (!canRead) return
 
-    if (searchDebounce) {
-      clearTimeout(searchDebounce)
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
     }
 
-    const timeout = setTimeout(() => {
+    searchTimeoutRef.current = setTimeout(() => {
       fetchInvoices({
         query: searchTerm || undefined,
         status: filterStatus || undefined,
@@ -171,10 +178,10 @@ export default function InvoicesPage() {
       })
     }, 300)
 
-    setSearchDebounce(timeout)
-
     return () => {
-      if (timeout) clearTimeout(timeout)
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
     }
   }, [searchTerm, filterStatus, filterPaymentStatus, pagination.limit, fetchInvoices, canRead])
 
@@ -235,6 +242,30 @@ export default function InvoicesPage() {
 
   const handleDeleteCancel = () => {
     setDeleteConfirm({ show: false, invoiceId: '', invoiceNumber: '' })
+  }
+
+  const handleDownloadPdf = async (invoice: Invoice) => {
+    try {
+      const response = await fetch(`/api/sales/invoices/${invoice.id}/pdf`)
+      if (!response.ok) {
+        const result = await response.json().catch(() => null)
+        throw new Error(result?.error ?? 'Failed to download invoice PDF')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      const fileName = `${invoice.invoiceNumber || 'invoice'}.pdf`
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('Error downloading invoice PDF:', err)
+      alert(err instanceof Error ? err.message : 'Unable to download invoice PDF. Please try again.')
+    }
   }
 
   const getStatusBadge = (status: string) => {
@@ -527,11 +558,19 @@ export default function InvoicesPage() {
                           <div className="flex items-center space-x-4 text-xs text-gray-500">
                             <span className="flex items-center">
                               <Calendar className="h-3 w-3 mr-1" />
-                              Due: {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}
+                              Due: {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                              }) : 'Not set'}
                             </span>
                             <span className="flex items-center">
                               <User className="h-3 w-3 mr-1" />
-                              Created: {invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString() : 'N/A'}
+                              Created: {invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                              }) : 'Not set'}
                             </span>
                             {invoice.paidAmount > 0 && (
                               <span className="flex items-center text-green-600">
@@ -554,7 +593,7 @@ export default function InvoicesPage() {
                             </Button>
                           </Link>
 
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" onClick={() => handleDownloadPdf(invoice)}>
                             <Download className="h-4 w-4 mr-1" />
                             PDF
                           </Button>

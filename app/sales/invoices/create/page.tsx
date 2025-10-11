@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth, usePermissions } from '@/lib/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -21,7 +21,9 @@ import {
   DollarSign,
   Loader2,
   AlertCircle,
-  Search
+  Search,
+  Users,
+  Package
 } from 'lucide-react'
 
 interface Client {
@@ -50,10 +52,12 @@ interface InvoiceFormData {
   notes: string
   terms: string
   items: InvoiceItem[]
+  invoiceType: 'business_development' | 'supply'
 }
 
 export default function CreateInvoicePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user } = useAuth()
   const { hasFullAccess } = usePermissions()
 
@@ -65,6 +69,7 @@ export default function CreateInvoicePage() {
   const [clientSearch, setClientSearch] = useState('')
   const [showClientDropdown, setShowClientDropdown] = useState(false)
   const [errors, setErrors] = useState<{[key: string]: string}>({})
+  const [invoiceType, setInvoiceType] = useState<'business_development' | 'supply' | null>(null)
 
   const [formData, setFormData] = useState<InvoiceFormData>({
     clientId: '',
@@ -74,6 +79,7 @@ export default function CreateInvoicePage() {
     discountAmount: 0,
     notes: '',
     terms: '',
+    invoiceType: 'business_development', // default value
     items: [{
       id: '1',
       description: '',
@@ -86,10 +92,25 @@ export default function CreateInvoicePage() {
 
   const canManage = hasFullAccess('sales')
 
+  // Handle invoice type from URL params
+  useEffect(() => {
+    const typeParam = searchParams.get('type') as 'business_development' | 'supply' | null
+    if (typeParam && ['business_development', 'supply'].includes(typeParam)) {
+      setInvoiceType(typeParam)
+      setFormData(prev => ({ ...prev, invoiceType: typeParam }))
+    } else {
+      // If no type parameter, redirect to selection page
+      router.replace('/sales/invoices/new')
+      return
+    }
+  }, [searchParams, router])
+
   // Fetch clients for dropdown
   useEffect(() => {
-    fetchClients()
-  }, [])
+    if (invoiceType) {
+      fetchClients()
+    }
+  }, [invoiceType])
 
   const fetchClients = async () => {
     try {
@@ -234,6 +255,7 @@ export default function CreateInvoicePage() {
 
       const submitData = {
         clientId: formData.clientId,
+        invoiceType: formData.invoiceType,
         issueDate: new Date(formData.issueDate).toISOString(),
         dueDate: new Date(formData.dueDate).toISOString(),
         status: formData.status,
@@ -322,8 +344,25 @@ export default function CreateInvoicePage() {
                 <FileText className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Create Invoice</h1>
-                <p className="text-sm text-gray-600">Create a new customer invoice</p>
+                <div className="flex items-center space-x-3">
+                  <h1 className="text-2xl font-bold text-gray-900">Create Invoice</h1>
+                  {invoiceType && (
+                    <Badge className={
+                      invoiceType === 'business_development'
+                        ? 'bg-blue-100 text-blue-700 border-blue-200'
+                        : 'bg-green-100 text-green-700 border-green-200'
+                    }>
+                      {invoiceType === 'business_development' ? (
+                        <><Users className="h-3 w-3 mr-1" /> Business Development</>
+                      ) : (
+                        <><Package className="h-3 w-3 mr-1" /> Supply</>
+                      )}
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600">
+                  Create a new {invoiceType === 'business_development' ? 'business development' : 'supply'} invoice
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-4">

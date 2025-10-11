@@ -24,6 +24,9 @@ import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { authenticateAndAuthorize } from '@/lib/auth/api-auth';
 import { OPTIMIZED_SELECTS } from '@/lib/database/query-helpers';
+import { transformInvoice } from '@/lib/transformers/invoices';
+import type { ClientRow, InvoiceItemRow, InvoiceRow } from '@/lib/transformers/invoices';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Invoice item validation schema for line items
@@ -42,6 +45,7 @@ const invoiceItemSchema = z.object({
  */
 const invoiceSchema = z.object({
   clientId: z.string().uuid('Invalid client ID'),
+  invoiceType: z.enum(['business_development', 'supply']).optional().default('business_development'),
   issueDate: z.string().datetime().optional(),
   dueDate: z.string().datetime('Due date is required'),
   status: z.enum(['DRAFT', 'SENT', 'PAID', 'OVERDUE', 'CANCELLED', 'REFUNDED']).optional().default('DRAFT'),
@@ -60,13 +64,6 @@ const invoiceSchema = z.object({
 });
 
 /**
- * Partial schema for invoice updates (all fields optional)
- */
-const invoiceUpdateSchema = invoiceSchema.partial().extend({
-  items: z.array(invoiceItemSchema).optional(),
-});
-
-/**
  * Search and pagination parameters schema
  * Supports filtering, sorting, and pagination for invoice listings
  */
@@ -74,6 +71,7 @@ const searchSchema = z.object({
   query: z.string().optional(),
   status: z.string().optional(),
   paymentStatus: z.string().optional(),
+  invoiceType: z.enum(['business_development', 'supply']).optional(),
   clientId: z.string().uuid().optional(),
   dateFrom: z.string().datetime().optional(),
   dateTo: z.string().datetime().optional(),
@@ -127,8 +125,8 @@ export async function GET(request: NextRequest) {
     // This reduces data transfer by ~50% and improves query speed by ~40%
     let query = supabase
       .from('invoices')
-      .select(OPTIMIZED_SELECTS.invoices, { count: 'exact' })
-      ;
+      .select(OPTIMIZED_SELECTS.invoicesFull, { count: 'exact' })
+      .is('deleted_at', null);
 
     // Apply search filter
     if (validatedParams.query) {
@@ -142,6 +140,10 @@ export async function GET(request: NextRequest) {
 
     if (validatedParams.paymentStatus) {
       query = query.eq('payment_status', validatedParams.paymentStatus);
+    }
+
+    if (validatedParams.invoiceType) {
+      query = query.eq('invoice_type', validatedParams.invoiceType);
     }
 
     if (validatedParams.clientId) {
@@ -188,17 +190,65 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch invoices' }, { status: 500 });
     }
 
-    // For now, return invoices without client data to avoid JOIN issues
-    // TODO: Fetch client data separately if needed
-    const invoicesWithBasicData = (invoices || []).map((invoice: any) => ({
-      ...invoice,
-      client: null, // Will be populated later when foreign keys are properly set up
-      items: [] // Will be populated later when foreign keys are properly set up
-    }));
+    if (!invoices || invoices.length === 0) {
+      return NextResponse.json({
+        success: true,
+        data: [],
+        pagination: {
+          page: validatedParams.page,
+          limit: validatedParams.limit,
+          total: 0,
+          totalPages: 0
+        }
+      });
+    }
+
+    const invoiceRows = invoices as unknown as InvoiceRow[];
+    const invoiceIds = invoiceRows.map((invoice) => invoice.id);
+    const clientIds = invoiceRows
+      .map((invoice) => invoice.client_id)
+      .filter(Boolean);
+
+    let clientsMap: Record<string, ClientRow> = {};
+    if (clientIds.length) {
+      const { data: clients } = await supabase
+        .from('clients')
+        .select('id, company_name, contact_person, email, address_line_1, city, state, country')
+        .in('id', clientIds);
+
+      clientsMap = (clients || []).reduce((acc: Record<string, ClientRow>, client) => {
+        acc[client.id] = client as ClientRow;
+        return acc;
+      }, {});
+    }
+
+    let itemsByInvoice: Record<string, InvoiceItemRow[]> = {};
+    if (invoiceIds.length) {
+      const { data: invoiceItems } = await supabase
+        .from('invoice_items')
+        .select('id, invoice_id, product_id, description, quantity, unit_price, line_total, tax_rate, discount_rate')
+        .in('invoice_id', invoiceIds);
+
+      itemsByInvoice = (invoiceItems || []).reduce((acc: Record<string, InvoiceItemRow[]>, item) => {
+        const castItem = item as InvoiceItemRow;
+        if (!acc[castItem.invoice_id]) {
+          acc[castItem.invoice_id] = [];
+        }
+        acc[castItem.invoice_id].push(castItem);
+        return acc;
+      }, {});
+    }
+
+    const transformed = invoiceRows.map((invoice) =>
+      transformInvoice(invoice, {
+        client: invoice.client_id ? clientsMap[invoice.client_id] : undefined,
+        items: itemsByInvoice[invoice.id] ?? []
+      })
+    );
 
     return NextResponse.json({
       success: true,
-      data: invoicesWithBasicData,
+      data: transformed,
       pagination: {
         page: validatedParams.page,
         limit: validatedParams.limit,
@@ -217,7 +267,7 @@ export async function GET(request: NextRequest) {
  * Generates the next invoice number in sequence
  * Format: INV-YYYYMMDD-NNNN (e.g., INV-20250924-0001)
  */
-async function generateInvoiceNumber(supabase: any): Promise<string> {
+async function generateInvoiceNumber(supabase: SupabaseClient): Promise<string> {
   const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const prefix = `INV-${today}`;
 
@@ -298,6 +348,7 @@ export async function POST(request: NextRequest) {
       .insert([{
         invoice_number: invoiceNumber,
         client_id: validatedData.clientId,
+        invoice_type: validatedData.invoiceType,
         issue_date: validatedData.issueDate || new Date().toISOString().split('T')[0],
         due_date: validatedData.dueDate.split('T')[0],
         status: validatedData.status,
@@ -369,16 +420,12 @@ export async function POST(request: NextRequest) {
       .select('*')
       .eq('invoice_id', completeInvoice.id);
 
-    // Combine data manually
-    const invoiceWithRelations = {
-      ...completeInvoice,
-      client: clientData || null,
-      items: itemsData || []
-    };
-
     return NextResponse.json({
       success: true,
-      data: invoiceWithRelations,
+      data: transformInvoice(completeInvoice as InvoiceRow, {
+        client: clientData as ClientRow | undefined,
+        items: itemsData as InvoiceItemRow[] | undefined
+      }),
       message: 'Invoice created successfully'
     }, { status: 201 });
 

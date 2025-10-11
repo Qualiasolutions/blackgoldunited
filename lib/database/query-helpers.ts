@@ -47,12 +47,12 @@ export const OPTIMIZED_SELECTS = {
    * Invoices table - List view
    * Excludes: notes, terms, is_recurring, recurring_period, next_recurring_date, discount_amount, updated_at
    */
-  invoices: 'id, invoice_number, client_id, issue_date, due_date, status, payment_status, subtotal, tax_amount, total_amount, paid_amount, created_at',
+  invoices: 'id, invoice_number, client_id, invoice_type, issue_date, due_date, status, payment_status, subtotal, tax_amount, total_amount, paid_amount, created_at',
 
   /**
    * Invoices table - Detail view with full info
    */
-  invoicesFull: 'id, invoice_number, client_id, issue_date, due_date, status, payment_status, subtotal, tax_amount, discount_amount, total_amount, paid_amount, notes, terms, is_recurring, recurring_period, next_recurring_date, created_at, updated_at',
+  invoicesFull: 'id, invoice_number, client_id, invoice_type, issue_date, due_date, status, payment_status, subtotal, tax_amount, discount_amount, total_amount, paid_amount, notes, terms_and_conditions, is_recurring, recurring_period, next_recurring_date, created_at, updated_at',
 
   /**
    * Employees table - List view

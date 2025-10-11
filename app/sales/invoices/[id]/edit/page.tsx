@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth, usePermissions } from '@/lib/hooks/useAuth'
+import { usePermissions } from '@/lib/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,7 +15,6 @@ import {
   Save,
   Plus,
   Trash2,
-  User,
   Building,
   Calendar,
   DollarSign,
@@ -27,8 +26,8 @@ import {
 interface Client {
   id: string
   companyName: string
-  contactPerson: string
-  email: string
+  contactPerson: string | null
+  email: string | null
 }
 
 interface InvoiceItem {
@@ -44,9 +43,9 @@ interface InvoiceItem {
 interface Invoice {
   id: string
   invoiceNumber: string
-  clientId: string
-  issueDate: string
-  dueDate: string
+  clientId: string | null
+  issueDate: string | null
+  dueDate: string | null
   status: 'DRAFT' | 'SENT' | 'PAID' | 'OVERDUE' | 'CANCELLED' | 'REFUNDED'
   paymentStatus: 'PENDING' | 'PARTIAL' | 'COMPLETED' | 'FAILED' | 'REFUNDED'
   subtotal: number
@@ -54,18 +53,17 @@ interface Invoice {
   discountAmount: number
   totalAmount: number
   paidAmount: number
-  notes?: string
-  terms?: string
-  createdAt: string
-  updatedAt: string
-  client: Client
+  notes?: string | null
+  terms?: string | null
+  createdAt: string | null
+  updatedAt: string | null
+  client: Client | null
   items: InvoiceItem[]
 }
 
 export default function EditInvoicePage() {
   const params = useParams()
   const router = useRouter()
-  const { user } = useAuth()
   const { hasFullAccess } = usePermissions()
 
   const [invoice, setInvoice] = useState<Invoice | null>(null)
@@ -90,7 +88,7 @@ export default function EditInvoicePage() {
     }
   }, [canManage, invoiceId])
 
-  const fetchInvoice = async () => {
+  const fetchInvoice = useCallback(async () => {
     try {
       setLoading(true)
       setError('')
@@ -127,9 +125,9 @@ export default function EditInvoicePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [invoiceId])
 
-  const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
     try {
       setClientsLoading(true)
       const response = await fetch('/api/clients?limit=50', {
@@ -143,7 +141,12 @@ export default function EditInvoicePage() {
 
       if (result.success) {
         // Transform snake_case to camelCase
-        const transformedClients = (result.data || []).map((client: any) => ({
+        const transformedClients = (result.data || []).map((client: {
+          id: string
+          company_name: string
+          contact_person: string | null
+          email: string | null
+        }) => ({
           id: client.id,
           companyName: client.company_name,
           contactPerson: client.contact_person,
@@ -156,11 +159,11 @@ export default function EditInvoicePage() {
     } finally {
       setClientsLoading(false)
     }
-  }
+  }, [])
 
   const filteredClients = clients.filter(client =>
     client.companyName.toLowerCase().includes(clientSearch.toLowerCase()) ||
-    client.contactPerson.toLowerCase().includes(clientSearch.toLowerCase())
+    (client.contactPerson ?? '').toLowerCase().includes(clientSearch.toLowerCase())
   )
 
   const calculateItemTotal = (quantity: number, unitPrice: number, taxRate: number) => {
@@ -212,7 +215,7 @@ export default function EditInvoicePage() {
     setHasChanges(true)
   }
 
-  const updateInvoiceField = (field: keyof Invoice, value: any) => {
+  const updateInvoiceField = <K extends keyof Invoice>(field: K, value: Invoice[K]) => {
     if (!invoice) return
 
     setInvoice(prev => prev ? ({ ...prev, [field]: value }) : null)
@@ -278,8 +281,8 @@ export default function EditInvoicePage() {
 
       const submitData = {
         clientId: invoice.clientId,
-        issueDate: new Date(invoice.issueDate).toISOString(),
-        dueDate: new Date(invoice.dueDate).toISOString(),
+        issueDate: invoice.issueDate ? new Date(invoice.issueDate).toISOString() : new Date().toISOString(),
+        dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString() : new Date().toISOString(),
         status: invoice.status,
         paymentStatus: invoice.paymentStatus,
         discountAmount: invoice.discountAmount,
@@ -314,7 +317,11 @@ export default function EditInvoicePage() {
         } else if (response.status === 409) {
           throw new Error('Cannot modify this invoice. It may be paid or have other restrictions.')
         } else if (result.details) {
-          throw new Error('Please check the form for errors: ' + result.details.map((d: any) => d.message).join(', '))
+          const detailMessages = (result.details as Array<{ message?: string }> | undefined)
+            ?.map((detail) => detail.message)
+            .filter(Boolean)
+            .join(', ')
+          throw new Error('Please check the form for errors: ' + (detailMessages || 'Unknown validation issue'))
         } else {
           throw new Error(result.error || 'Failed to update invoice')
         }
@@ -543,7 +550,7 @@ export default function EditInvoicePage() {
                         </label>
                         <Input
                           type="date"
-                          value={invoice.issueDate.split('T')[0]}
+                          value={invoice.issueDate ? invoice.issueDate.split('T')[0] : new Date().toISOString().split('T')[0]}
                           onChange={(e) => updateInvoiceField('issueDate', e.target.value)}
                         />
                       </div>
@@ -554,7 +561,7 @@ export default function EditInvoicePage() {
                         </label>
                         <Input
                           type="date"
-                          value={invoice.dueDate.split('T')[0]}
+                          value={invoice.dueDate ? invoice.dueDate.split('T')[0] : new Date().toISOString().split('T')[0]}
                           onChange={(e) => updateInvoiceField('dueDate', e.target.value)}
                           className={errors.dueDate ? 'border-red-300' : ''}
                         />
@@ -571,7 +578,7 @@ export default function EditInvoicePage() {
                         </label>
                         <select
                           value={invoice.status}
-                          onChange={(e) => updateInvoiceField('status', e.target.value)}
+                          onChange={(e) => updateInvoiceField('status', e.target.value as 'DRAFT' | 'SENT' | 'PAID' | 'OVERDUE' | 'CANCELLED' | 'REFUNDED')}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           <option value="DRAFT">Draft</option>
@@ -589,7 +596,7 @@ export default function EditInvoicePage() {
                         </label>
                         <select
                           value={invoice.paymentStatus}
-                          onChange={(e) => updateInvoiceField('paymentStatus', e.target.value)}
+                          onChange={(e) => updateInvoiceField('paymentStatus', e.target.value as 'PENDING' | 'PARTIAL' | 'COMPLETED' | 'FAILED' | 'REFUNDED')}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           <option value="PENDING">Pending</option>

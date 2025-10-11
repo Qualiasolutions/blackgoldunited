@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth, usePermissions } from '@/lib/hooks/useAuth'
+import { usePermissions } from '@/lib/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -18,10 +18,8 @@ import {
   XCircle,
   AlertCircle,
   Calendar,
-  User,
   Building,
   Mail,
-  Phone,
   DollarSign,
   Loader2,
   RefreshCw
@@ -30,12 +28,12 @@ import {
 interface InvoiceClient {
   id: string
   companyName: string
-  contactPerson: string
-  email: string
-  address?: string
-  city?: string
-  state?: string
-  country?: string
+  contactPerson: string | null
+  email: string | null
+  address?: string | null
+  city?: string | null
+  state?: string | null
+  country?: string | null
 }
 
 interface InvoiceItem {
@@ -50,9 +48,9 @@ interface InvoiceItem {
 interface Invoice {
   id: string
   invoiceNumber: string
-  clientId: string
-  issueDate: string
-  dueDate: string
+  clientId: string | null
+  issueDate: string | null
+  dueDate: string | null
   status: 'DRAFT' | 'SENT' | 'PAID' | 'OVERDUE' | 'CANCELLED' | 'REFUNDED'
   paymentStatus: 'PENDING' | 'PARTIAL' | 'COMPLETED' | 'FAILED' | 'REFUNDED'
   subtotal: number
@@ -60,17 +58,16 @@ interface Invoice {
   discountAmount: number
   totalAmount: number
   paidAmount: number
-  notes?: string
-  terms?: string
-  createdAt: string
-  updatedAt: string
-  client: InvoiceClient
+  notes?: string | null
+  terms?: string | null
+  createdAt: string | null
+  updatedAt: string | null
+  client: InvoiceClient | null
   items: InvoiceItem[]
 }
 
 export default function InvoiceViewPage() {
   const params = useParams()
-  const { user } = useAuth()
   const { hasModuleAccess, hasFullAccess } = usePermissions()
 
   const [invoice, setInvoice] = useState<Invoice | null>(null)
@@ -81,13 +78,12 @@ export default function InvoiceViewPage() {
   const canRead = hasModuleAccess('sales')
   const invoiceId = params?.id as string
 
-  useEffect(() => {
-    if (canRead && invoiceId) {
-      fetchInvoice()
-    }
-  }, [canRead, invoiceId])
+  // Validate UUID format before making API call
+  const isValidUUID = (id: string) => {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+  }
 
-  const fetchInvoice = async () => {
+  const fetchInvoice = useCallback(async () => {
     try {
       setLoading(true)
       setError('')
@@ -124,7 +120,19 @@ export default function InvoiceViewPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [invoiceId])
+
+  useEffect(() => {
+    if (canRead && invoiceId) {
+      // Check if invoiceId is a valid UUID
+      if (!isValidUUID(invoiceId)) {
+        setError('Invalid invoice ID format')
+        setLoading(false)
+        return
+      }
+      fetchInvoice()
+    }
+  }, [canRead, invoiceId, fetchInvoice])
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -163,6 +171,31 @@ export default function InvoiceViewPage() {
         {status}
       </Badge>
     )
+  }
+
+  const handleDownloadPdf = async () => {
+    if (!invoice) return
+
+    try {
+      const response = await fetch(`/api/sales/invoices/${invoice.id}/pdf`)
+      if (!response.ok) {
+        const result = await response.json().catch(() => null)
+        throw new Error(result?.error ?? 'Failed to download invoice PDF')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${invoice.invoiceNumber || 'invoice'}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (downloadError) {
+      console.error('Error downloading invoice PDF:', downloadError)
+      alert(downloadError instanceof Error ? downloadError.message : 'Unable to download invoice PDF. Please try again.')
+    }
   }
 
   if (!canRead) {
@@ -261,7 +294,7 @@ export default function InvoiceViewPage() {
                 {canManage ? 'Full Access' : 'Read Only'}
               </Badge>
 
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
                 <Download className="h-4 w-4 mr-2" />
                 PDF
               </Button>
@@ -296,28 +329,36 @@ export default function InvoiceViewPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    <div>
-                      <h3 className="font-semibold text-lg text-gray-900">{invoice.client.companyName}</h3>
-                      <p className="text-gray-600">{invoice.client.contactPerson}</p>
-                    </div>
-
-                    <div className="flex items-center space-x-2 text-gray-600">
-                      <Mail className="h-4 w-4" />
-                      <span>{invoice.client.email}</span>
-                    </div>
-
-                    {(invoice.client.address || invoice.client.city) && (
-                      <div className="text-gray-600">
-                        {invoice.client.address && <div>{invoice.client.address}</div>}
-                        <div>
-                          {[invoice.client.city, invoice.client.state, invoice.client.country]
-                            .filter(Boolean)
-                            .join(', ')}
-                        </div>
+                  {invoice.client ? (
+                    <div className="space-y-3">
+                      <div>
+                        <h3 className="font-semibold text-lg text-gray-900">{invoice.client.companyName}</h3>
+                        {invoice.client.contactPerson && (
+                          <p className="text-gray-600">{invoice.client.contactPerson}</p>
+                        )}
                       </div>
-                    )}
-                  </div>
+
+                      {invoice.client.email && (
+                        <div className="flex items-center space-x-2 text-gray-600">
+                          <Mail className="h-4 w-4" />
+                          <span>{invoice.client.email}</span>
+                        </div>
+                      )}
+
+                      {(invoice.client.address || invoice.client.city) && (
+                        <div className="text-gray-600">
+                          {invoice.client.address && <div>{invoice.client.address}</div>}
+                          <div>
+                            {[invoice.client.city, invoice.client.state, invoice.client.country]
+                              .filter(Boolean)
+                              .join(', ')}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-gray-600">Client information unavailable.</p>
+                  )}
                 </CardContent>
               </Card>
 
@@ -331,7 +372,7 @@ export default function InvoiceViewPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {invoice.items.map((item, index) => (
+                    {invoice.items.map((item) => (
                       <div key={item.id} className="border border-gray-200 rounded-lg p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -472,32 +513,32 @@ export default function InvoiceViewPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Issue Date:</span>
                     <span className="font-medium">
-                      {new Date(invoice.issueDate).toLocaleDateString()}
+                      {invoice.issueDate ? new Date(invoice.issueDate).toLocaleDateString() : 'Not set'}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Due Date:</span>
                     <span className={`font-medium ${
-                      new Date(invoice.dueDate) < new Date() && invoice.status !== 'PAID'
+                      invoice.dueDate && new Date(invoice.dueDate) < new Date() && invoice.status !== 'PAID'
                         ? 'text-red-600'
                         : 'text-gray-900'
                     }`}>
-                      {new Date(invoice.dueDate).toLocaleDateString()}
+                      {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'Not set'}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Created:</span>
                     <span className="font-medium">
-                      {new Date(invoice.createdAt).toLocaleDateString()}
+                      {invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString() : 'Not set'}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Last Updated:</span>
                     <span className="font-medium">
-                      {new Date(invoice.updatedAt).toLocaleDateString()}
+                      {invoice.updatedAt ? new Date(invoice.updatedAt).toLocaleDateString() : 'Not set'}
                     </span>
                   </div>
                 </CardContent>

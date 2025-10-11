@@ -24,6 +24,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { authenticateAndAuthorize } from '@/lib/auth/api-auth';
+import { transformInvoice } from '@/lib/transformers/invoices';
+import type { ClientRow, InvoiceItemRow, InvoiceRow } from '@/lib/transformers/invoices';
 
 /**
  * Invoice item validation schema for line items
@@ -101,6 +103,12 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch invoice' }, { status: 500 });
     }
 
+    const invoiceRecord = invoice as InvoiceRow & { deleted_at?: string | null };
+
+    if (invoiceRecord.deleted_at) {
+      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+    }
+
     // Fetch client data separately
     const { data: clientData } = await supabase
       .from('clients')
@@ -115,15 +123,12 @@ export async function GET(
       .eq('invoice_id', invoice.id);
 
     // Combine data manually
-    const invoiceWithRelations = {
-      ...invoice,
-      client: clientData || null,
-      items: itemsData || []
-    };
-
     return NextResponse.json({
       success: true,
-      data: invoiceWithRelations
+      data: transformInvoice(invoiceRecord, {
+        client: clientData as ClientRow | undefined,
+        items: itemsData as InvoiceItemRow[] | undefined
+      })
     });
 
   } catch (error) {
@@ -281,16 +286,12 @@ export async function PUT(
       .select('*')
       .eq('invoice_id', updatedInvoice.id);
 
-    // Combine data manually
-    const invoiceWithRelations = {
-      ...updatedInvoice,
-      client: clientData || null,
-      items: itemsData || []
-    };
-
     return NextResponse.json({
       success: true,
-      data: invoiceWithRelations,
+      data: transformInvoice(updatedInvoice as InvoiceRow, {
+        client: clientData as ClientRow | undefined,
+        items: itemsData as InvoiceItemRow[] | undefined
+      }),
       message: 'Invoice updated successfully'
     });
 

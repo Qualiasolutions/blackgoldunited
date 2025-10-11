@@ -34,6 +34,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 const invoiceItemSchema = z.object({
   productId: z.string().uuid().optional(),
   description: z.string().min(1, 'Description is required'),
+  unit: z.string().optional().default('pc'), // Unit of measure (pc, kg, m, etc.)
   quantity: z.number().positive('Quantity must be positive'),
   unitPrice: z.number().min(0, 'Unit price must be non-negative'),
   taxRate: z.number().min(0).max(100).optional().default(0),
@@ -41,7 +42,7 @@ const invoiceItemSchema = z.object({
 
 /**
  * Invoice validation schema for creating new invoices
- * Matches the Supabase database schema exactly
+ * Matches the Supabase database schema exactly (including new PDF fields)
  */
 const invoiceSchema = z.object({
   clientId: z.string().uuid('Invalid client ID'),
@@ -60,6 +61,15 @@ const invoiceSchema = z.object({
   isRecurring: z.boolean().optional().default(false),
   recurringPeriod: z.number().optional(),
   nextRecurringDate: z.string().datetime().optional(),
+  // New fields from PDF template
+  customerPoNumber: z.string().optional(),
+  customerPoDate: z.string().datetime().optional(),
+  attentionTo: z.string().optional(),
+  salesPerson: z.string().optional(),
+  project: z.string().optional(),
+  paymentTerms: z.string().optional(),
+  currency: z.string().length(3).optional().default('KWD'),
+  bankDetails: z.string().optional(),
   items: z.array(invoiceItemSchema).min(1, 'At least one invoice item is required'),
 });
 
@@ -360,6 +370,15 @@ export async function POST(request: NextRequest) {
         paid_amount: validatedData.paidAmount,
         notes: validatedData.notes,
         terms_and_conditions: validatedData.terms,
+        // New PDF fields
+        customer_po_number: validatedData.customerPoNumber,
+        customer_po_date: validatedData.customerPoDate ? validatedData.customerPoDate.split('T')[0] : null,
+        attention_to: validatedData.attentionTo,
+        sales_person: validatedData.salesPerson,
+        project: validatedData.project,
+        payment_terms: validatedData.paymentTerms,
+        currency: validatedData.currency,
+        bank_details: validatedData.bankDetails,
         created_by: user?.id,
       }])
       .select()
@@ -378,6 +397,7 @@ export async function POST(request: NextRequest) {
       invoice_id: newInvoice.id,
       product_id: item.productId,
       description: item.description,
+      unit: item.unit,
       quantity: item.quantity,
       unit_price: item.unitPrice,
       line_total: item.quantity * item.unitPrice,

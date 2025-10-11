@@ -37,6 +37,7 @@ interface InvoiceItem {
   id: string
   productId?: string
   description: string
+  unit: string
   quantity: number
   unitPrice: number
   taxRate: number
@@ -53,6 +54,15 @@ interface InvoiceFormData {
   terms: string
   items: InvoiceItem[]
   invoiceType: 'business_development' | 'supply'
+  // New PDF fields
+  customerPoNumber: string
+  customerPoDate: string
+  attentionTo: string
+  salesPerson: string
+  project: string
+  paymentTerms: string
+  currency: string
+  bankDetails: string
 }
 
 export default function CreateInvoicePage() {
@@ -80,9 +90,19 @@ export default function CreateInvoicePage() {
     notes: '',
     terms: '',
     invoiceType: 'business_development', // default value
+    // New PDF fields
+    customerPoNumber: '',
+    customerPoDate: '',
+    attentionTo: '',
+    salesPerson: '',
+    project: '',
+    paymentTerms: '',
+    currency: 'KWD',
+    bankDetails: '',
     items: [{
       id: '1',
       description: '',
+      unit: 'pc',
       quantity: 1,
       unitPrice: 0,
       taxRate: 0,
@@ -171,6 +191,7 @@ export default function CreateInvoicePage() {
     const newItem: InvoiceItem = {
       id: Date.now().toString(),
       description: '',
+      unit: 'pc',
       quantity: 1,
       unitPrice: 0,
       taxRate: 0,
@@ -262,9 +283,19 @@ export default function CreateInvoicePage() {
         discountAmount: formData.discountAmount,
         notes: formData.notes,
         terms: formData.terms,
+        // New PDF fields
+        customerPoNumber: formData.customerPoNumber || undefined,
+        customerPoDate: formData.customerPoDate ? new Date(formData.customerPoDate).toISOString() : undefined,
+        attentionTo: formData.attentionTo || undefined,
+        salesPerson: formData.salesPerson || undefined,
+        project: formData.project || undefined,
+        paymentTerms: formData.paymentTerms || undefined,
+        currency: formData.currency,
+        bankDetails: formData.bankDetails || undefined,
         items: formData.items.map(item => ({
           productId: item.productId,
           description: item.description,
+          unit: item.unit,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           taxRate: item.taxRate
@@ -551,6 +582,120 @@ export default function CreateInvoicePage() {
                   </CardContent>
                 </Card>
 
+                {/* PDF-Specific Fields */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <FileText className="h-5 w-5 mr-2" />
+                      Additional Details (From PDF Template)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Customer PO Number
+                        </label>
+                        <Input
+                          value={formData.customerPoNumber}
+                          onChange={(e) => setFormData(prev => ({ ...prev, customerPoNumber: e.target.value }))}
+                          placeholder="e.g., PO-2025-001"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Customer PO Date
+                        </label>
+                        <Input
+                          type="date"
+                          value={formData.customerPoDate}
+                          onChange={(e) => setFormData(prev => ({ ...prev, customerPoDate: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Attention To
+                        </label>
+                        <Input
+                          value={formData.attentionTo}
+                          onChange={(e) => setFormData(prev => ({ ...prev, attentionTo: e.target.value }))}
+                          placeholder="Contact person name"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Sales Person
+                        </label>
+                        <Input
+                          value={formData.salesPerson}
+                          onChange={(e) => setFormData(prev => ({ ...prev, salesPerson: e.target.value }))}
+                          placeholder="Sales representative name"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Project
+                        </label>
+                        <Input
+                          value={formData.project}
+                          onChange={(e) => setFormData(prev => ({ ...prev, project: e.target.value }))}
+                          placeholder="Project name or reference"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Currency
+                        </label>
+                        <select
+                          value={formData.currency}
+                          onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="KWD">KWD - Kuwaiti Dinar</option>
+                          <option value="USD">USD - US Dollar</option>
+                          <option value="EUR">EUR - Euro</option>
+                          <option value="GBP">GBP - British Pound</option>
+                          <option value="SAR">SAR - Saudi Riyal</option>
+                          <option value="AED">AED - UAE Dirham</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Payment Terms
+                      </label>
+                      <Textarea
+                        value={formData.paymentTerms}
+                        onChange={(e) => setFormData(prev => ({ ...prev, paymentTerms: e.target.value }))}
+                        placeholder="e.g., Net 30 days, 50% advance payment required"
+                        rows={2}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Bank Details
+                      </label>
+                      <Textarea
+                        value={formData.bankDetails}
+                        onChange={(e) => setFormData(prev => ({ ...prev, bankDetails: e.target.value }))}
+                        placeholder="Enter bank account details for payment"
+                        rows={3}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* Invoice Items */}
                 <Card>
                   <CardHeader>
@@ -588,7 +733,7 @@ export default function CreateInvoicePage() {
                             )}
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                             <div className="md:col-span-2">
                               <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Description *
@@ -602,6 +747,27 @@ export default function CreateInvoicePage() {
                               {errors[`item_${index}_description`] && (
                                 <p className="mt-1 text-sm text-red-600">{errors[`item_${index}_description`]}</p>
                               )}
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Unit
+                              </label>
+                              <select
+                                value={item.unit}
+                                onChange={(e) => updateItem(index, 'unit', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              >
+                                <option value="pc">Piece (pc)</option>
+                                <option value="set">Set</option>
+                                <option value="box">Box</option>
+                                <option value="kg">Kilogram (kg)</option>
+                                <option value="ltr">Liter (ltr)</option>
+                                <option value="m">Meter (m)</option>
+                                <option value="sqm">Square Meter (sqm)</option>
+                                <option value="hour">Hour</option>
+                                <option value="day">Day</option>
+                              </select>
                             </div>
 
                             <div>

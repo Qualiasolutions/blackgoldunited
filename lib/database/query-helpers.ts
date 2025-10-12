@@ -52,7 +52,7 @@ export const OPTIMIZED_SELECTS = {
   /**
    * Invoices table - Detail view with full info
    */
-  invoicesFull: 'id, invoice_number, client_id, invoice_type, issue_date, due_date, status, payment_status, subtotal, tax_amount, discount_amount, total_amount, paid_amount, notes, terms_and_conditions, is_recurring, recurring_period, next_recurring_date, created_at, updated_at',
+  invoicesFull: 'id, invoice_number, client_id, invoice_type, issue_date, due_date, status, payment_status, subtotal, tax_amount, discount_amount, total_amount, paid_amount, notes, terms_and_conditions, customer_po_number, customer_po_date, attention_to, sales_person, project, payment_terms, currency, bank_details, created_at, updated_at',
 
   /**
    * Employees table - List view

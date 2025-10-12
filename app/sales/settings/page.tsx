@@ -22,36 +22,14 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 interface SalesSettings {
-  // Invoice Settings
+  // Invoice Settings (matching database schema)
   invoicePrefix: string
-  invoiceNumbering: 'AUTO' | 'MANUAL'
   invoiceStartNumber: number
-  invoiceTerms: string
   defaultTaxRate: number
-
-  // Payment Settings
-  paymentTerms: string
-  lateFee: number
-  lateFeeType: 'FIXED' | 'PERCENTAGE'
-
-  // Email Settings
-  autoSendInvoices: boolean
-  emailTemplate: string
-  reminderEnabled: boolean
-  reminderDays: number
-
-  // General Settings
-  currency: string
-  dateFormat: string
-  timeZone: string
-
-  // Notifications
-  notifyOnPayment: boolean
-  notifyOnOverdue: boolean
-  notifyOnQuote: boolean
+  defaultPaymentTerms: number // in days
+  autoSendEmail: boolean
 }
 
 export default function SalesSettingsPage() {
@@ -59,23 +37,10 @@ export default function SalesSettingsPage() {
   const { hasFullAccess } = usePermissions()
   const [settings, setSettings] = useState<SalesSettings>({
     invoicePrefix: 'INV',
-    invoiceNumbering: 'AUTO',
-    invoiceStartNumber: 1000,
-    invoiceTerms: 'Payment due within 30 days',
+    invoiceStartNumber: 1,
     defaultTaxRate: 0,
-    paymentTerms: 'Net 30',
-    lateFee: 0,
-    lateFeeType: 'PERCENTAGE',
-    autoSendInvoices: false,
-    emailTemplate: '',
-    reminderEnabled: false,
-    reminderDays: 3,
-    currency: 'USD',
-    dateFormat: 'MM/DD/YYYY',
-    timeZone: 'UTC',
-    notifyOnPayment: true,
-    notifyOnOverdue: true,
-    notifyOnQuote: true
+    defaultPaymentTerms: 30,
+    autoSendEmail: false
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -89,37 +54,13 @@ export default function SalesSettingsPage() {
 
   const fetchSettings = async () => {
     try {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('sales_settings')
-        .select('*')
-        .single()
+      const response = await fetch('/api/sales/settings')
+      const result = await response.json()
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
-        throw error
-      }
-
-      if (data) {
-        setSettings({
-          invoicePrefix: data.invoicePrefix || 'INV',
-          invoiceNumbering: data.invoiceNumbering || 'AUTO',
-          invoiceStartNumber: data.invoiceStartNumber || 1000,
-          invoiceTerms: data.invoiceTerms || 'Payment due within 30 days',
-          defaultTaxRate: data.defaultTaxRate || 0,
-          paymentTerms: data.paymentTerms || 'Net 30',
-          lateFee: data.lateFee || 0,
-          lateFeeType: data.lateFeeType || 'PERCENTAGE',
-          autoSendInvoices: data.autoSendInvoices || false,
-          emailTemplate: data.emailTemplate || '',
-          reminderEnabled: data.reminderEnabled || false,
-          reminderDays: data.reminderDays || 3,
-          currency: data.currency || 'USD',
-          dateFormat: data.dateFormat || 'MM/DD/YYYY',
-          timeZone: data.timeZone || 'UTC',
-          notifyOnPayment: data.notifyOnPayment ?? true,
-          notifyOnOverdue: data.notifyOnOverdue ?? true,
-          notifyOnQuote: data.notifyOnQuote ?? true
-        })
+      if (result.success && result.data) {
+        setSettings(result.data)
+      } else {
+        console.error('Failed to fetch settings:', result.error)
       }
     } catch (error) {
       console.error('Error fetching settings:', error)
@@ -140,24 +81,26 @@ export default function SalesSettingsPage() {
 
     setSaving(true)
     try {
-      const supabase = createClient()
+      const response = await fetch('/api/sales/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(settings)
+      })
 
-      const { error } = await supabase
-        .from('sales_settings')
-        .upsert([{
-          ...settings,
-          updatedAt: new Date().toISOString(),
-          updatedBy: user?.id
-        }])
+      const result = await response.json()
 
-      if (error) throw error
-
-      setMessage('Settings saved successfully!')
-      setTimeout(() => setMessage(''), 3000)
+      if (result.success) {
+        setMessage('Settings saved successfully!')
+        setTimeout(() => setMessage(''), 3000)
+      } else {
+        throw new Error(result.error || 'Failed to save settings')
+      }
     } catch (error) {
       console.error('Error saving settings:', error)
-      setMessage('Error saving settings. Please try again.')
-      setTimeout(() => setMessage(''), 3000)
+      setMessage(`Error: ${error instanceof Error ? error.message : 'Please try again.'}`)
+      setTimeout(() => setMessage(''), 5000)
     } finally {
       setSaving(false)
     }
@@ -228,308 +171,124 @@ export default function SalesSettingsPage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
+      <main className="max-w-4xl mx-auto py-8 sm:px-6 lg:px-8">
         <div className="px-4 sm:px-0">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-6">
 
-            {/* Left Column */}
-            <div className="space-y-6">
-
-              {/* Invoice Settings */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <FileText className="h-5 w-5 mr-2" />
-                    Invoice Settings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="invoicePrefix">Invoice Prefix</Label>
-                      <Input
-                        id="invoicePrefix"
-                        value={settings.invoicePrefix}
-                        onChange={(e) => handleInputChange('invoicePrefix', e.target.value)}
-                        placeholder="INV"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="invoiceStartNumber">Start Number</Label>
-                      <Input
-                        id="invoiceStartNumber"
-                        type="number"
-                        value={settings.invoiceStartNumber}
-                        onChange={(e) => handleInputChange('invoiceStartNumber', Number(e.target.value))}
-                        min="1"
-                      />
-                    </div>
-                  </div>
-
+            {/* Invoice Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <FileText className="h-5 w-5 mr-2" />
+                  Invoice Settings
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="invoiceNumbering">Numbering System</Label>
-                    <select
-                      id="invoiceNumbering"
-                      value={settings.invoiceNumbering}
-                      onChange={(e) => handleInputChange('invoiceNumbering', e.target.value)}
-                      className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="AUTO">Auto-increment</option>
-                      <option value="MANUAL">Manual entry</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="invoiceTerms">Default Terms</Label>
-                    <Textarea
-                      id="invoiceTerms"
-                      value={settings.invoiceTerms}
-                      onChange={(e) => handleInputChange('invoiceTerms', e.target.value)}
-                      placeholder="Payment due within 30 days"
-                      rows={2}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="defaultTaxRate">Default Tax Rate (%)</Label>
+                    <Label htmlFor="invoicePrefix">Invoice Prefix</Label>
                     <Input
-                      id="defaultTaxRate"
+                      id="invoicePrefix"
+                      value={settings.invoicePrefix}
+                      onChange={(e) => handleInputChange('invoicePrefix', e.target.value)}
+                      placeholder="INV"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Appears before invoice numbers (e.g., INV-001)</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="invoiceStartNumber">Start Number</Label>
+                    <Input
+                      id="invoiceStartNumber"
                       type="number"
-                      value={settings.defaultTaxRate}
-                      onChange={(e) => handleInputChange('defaultTaxRate', Number(e.target.value))}
-                      min="0"
-                      max="100"
-                      step="0.01"
+                      value={settings.invoiceStartNumber}
+                      onChange={(e) => handleInputChange('invoiceStartNumber', Number(e.target.value))}
+                      min="1"
                     />
+                    <p className="text-xs text-gray-500 mt-1">First invoice number to use</p>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
 
-              {/* Payment Settings */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <DollarSign className="h-5 w-5 mr-2" />
-                    Payment Settings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="defaultTaxRate">Default Tax Rate (%)</Label>
+                  <Input
+                    id="defaultTaxRate"
+                    type="number"
+                    value={settings.defaultTaxRate}
+                    onChange={(e) => handleInputChange('defaultTaxRate', Number(e.target.value))}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Default tax percentage for new invoices</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Payment Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <DollarSign className="h-5 w-5 mr-2" />
+                  Payment Settings
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="defaultPaymentTerms">Default Payment Terms (days)</Label>
+                  <Input
+                    id="defaultPaymentTerms"
+                    type="number"
+                    value={settings.defaultPaymentTerms}
+                    onChange={(e) => handleInputChange('defaultPaymentTerms', Number(e.target.value))}
+                    min="0"
+                    max="365"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Number of days before payment is due (e.g., 30 for Net 30)</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Email Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Mail className="h-5 w-5 mr-2" />
+                  Email Settings
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="paymentTerms">Default Payment Terms</Label>
-                    <select
-                      id="paymentTerms"
-                      value={settings.paymentTerms}
-                      onChange={(e) => handleInputChange('paymentTerms', e.target.value)}
-                      className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="Due on receipt">Due on receipt</option>
-                      <option value="Net 15">Net 15</option>
-                      <option value="Net 30">Net 30</option>
-                      <option value="Net 45">Net 45</option>
-                      <option value="Net 60">Net 60</option>
-                    </select>
+                    <Label htmlFor="autoSendEmail">Auto-send invoice emails</Label>
+                    <p className="text-xs text-gray-500 mt-1">Automatically email invoices to clients when created</p>
                   </div>
+                  <Switch
+                    id="autoSendEmail"
+                    checked={settings.autoSendEmail}
+                    onCheckedChange={(checked) => handleInputChange('autoSendEmail', checked)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="lateFee">Late Fee</Label>
-                      <Input
-                        id="lateFee"
-                        type="number"
-                        value={settings.lateFee}
-                        onChange={(e) => handleInputChange('lateFee', Number(e.target.value))}
-                        min="0"
-                        step="0.01"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="lateFeeType">Fee Type</Label>
-                      <select
-                        id="lateFeeType"
-                        value={settings.lateFeeType}
-                        onChange={(e) => handleInputChange('lateFeeType', e.target.value)}
-                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="FIXED">Fixed Amount</option>
-                        <option value="PERCENTAGE">Percentage</option>
-                      </select>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* General Settings */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Calculator className="h-5 w-5 mr-2" />
-                    General Settings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="currency">Currency</Label>
-                      <select
-                        id="currency"
-                        value={settings.currency}
-                        onChange={(e) => handleInputChange('currency', e.target.value)}
-                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="USD">USD ($)</option>
-                        <option value="EUR">EUR (€)</option>
-                        <option value="GBP">GBP (£)</option>
-                        <option value="CAD">CAD ($)</option>
-                        <option value="AUD">AUD ($)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <Label htmlFor="dateFormat">Date Format</Label>
-                      <select
-                        id="dateFormat"
-                        value={settings.dateFormat}
-                        onChange={(e) => handleInputChange('dateFormat', e.target.value)}
-                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                        <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                        <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                      </select>
-                    </div>
-                    <div>
-                      <Label htmlFor="timeZone">Time Zone</Label>
-                      <select
-                        id="timeZone"
-                        value={settings.timeZone}
-                        onChange={(e) => handleInputChange('timeZone', e.target.value)}
-                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="UTC">UTC</option>
-                        <option value="America/New_York">Eastern Time</option>
-                        <option value="America/Chicago">Central Time</option>
-                        <option value="America/Denver">Mountain Time</option>
-                        <option value="America/Los_Angeles">Pacific Time</option>
-                      </select>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Right Column */}
-            <div className="space-y-6">
-
-              {/* Email Settings */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Mail className="h-5 w-5 mr-2" />
-                    Email Settings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="autoSendInvoices">Auto-send invoices</Label>
-                    <Switch
-                      id="autoSendInvoices"
-                      checked={settings.autoSendInvoices}
-                      onCheckedChange={(checked) => handleInputChange('autoSendInvoices', checked)}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="emailTemplate">Email Template</Label>
-                    <Textarea
-                      id="emailTemplate"
-                      value={settings.emailTemplate}
-                      onChange={(e) => handleInputChange('emailTemplate', e.target.value)}
-                      placeholder="Dear {client_name}, Please find attached your invoice..."
-                      rows={4}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="reminderEnabled">Payment reminders</Label>
-                    <Switch
-                      id="reminderEnabled"
-                      checked={settings.reminderEnabled}
-                      onCheckedChange={(checked) => handleInputChange('reminderEnabled', checked)}
-                    />
-                  </div>
-
-                  {settings.reminderEnabled && (
-                    <div>
-                      <Label htmlFor="reminderDays">Reminder days before due</Label>
-                      <Input
-                        id="reminderDays"
-                        type="number"
-                        value={settings.reminderDays}
-                        onChange={(e) => handleInputChange('reminderDays', Number(e.target.value))}
-                        min="1"
-                        max="30"
-                      />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Notification Settings */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Bell className="h-5 w-5 mr-2" />
-                    Notifications
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="notifyOnPayment">Payment received</Label>
-                    <Switch
-                      id="notifyOnPayment"
-                      checked={settings.notifyOnPayment}
-                      onCheckedChange={(checked) => handleInputChange('notifyOnPayment', checked)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="notifyOnOverdue">Overdue invoices</Label>
-                    <Switch
-                      id="notifyOnOverdue"
-                      checked={settings.notifyOnOverdue}
-                      onCheckedChange={(checked) => handleInputChange('notifyOnOverdue', checked)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="notifyOnQuote">New quote requests</Label>
-                    <Switch
-                      id="notifyOnQuote"
-                      checked={settings.notifyOnQuote}
-                      onCheckedChange={(checked) => handleInputChange('notifyOnQuote', checked)}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Help & Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Shield className="h-5 w-5 mr-2" />
-                    Help & Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-sm text-gray-600 space-y-2">
-                    <p><strong>Invoice Prefix:</strong> Appears before invoice numbers (e.g., INV-001)</p>
-                    <p><strong>Auto-increment:</strong> Automatically generates sequential numbers</p>
-                    <p><strong>Payment Terms:</strong> Default terms shown on new invoices</p>
-                    <p><strong>Late Fees:</strong> Automatically calculated based on payment terms</p>
-                    <p><strong>Email Templates:</strong> Use {'{client_name}'}, {'{invoice_number}'}, {'{amount}'} for dynamic content</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            {/* Help & Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Shield className="h-5 w-5 mr-2" />
+                  Help & Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-gray-600 space-y-2">
+                  <p><strong>Invoice Prefix:</strong> Customize the prefix that appears before invoice numbers (e.g., INV for INV-001)</p>
+                  <p><strong>Start Number:</strong> Set the initial invoice number. Subsequent invoices will auto-increment from this number</p>
+                  <p><strong>Tax Rate:</strong> The default tax percentage that will be applied to new invoices. Can be overridden per invoice.</p>
+                  <p><strong>Payment Terms:</strong> Default number of days clients have to pay invoices (commonly 15, 30, 45, or 60 days)</p>
+                  <p><strong>Auto-send Emails:</strong> When enabled, invoice PDFs will be automatically emailed to clients upon creation</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>

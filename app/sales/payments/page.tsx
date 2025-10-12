@@ -69,9 +69,8 @@ export default function PaymentsPage() {
           invoice_id,
           amount,
           payment_method,
-          status,
           payment_date,
-          reference,
+          reference_number,
           notes,
           created_at,
           updated_at
@@ -129,9 +128,9 @@ export default function PaymentsPage() {
           clientName: client?.company_name || 'Unknown Client',
           amount: Number(item.amount) || 0,
           paymentMethod: item.payment_method || 'OTHER',
-          status: item.status || 'PENDING',
+          status: 'COMPLETED', // invoice_payments table doesn't have status column - all payments are completed
           paymentDate: item.payment_date || '',
-          reference: item.reference || '',
+          reference: item.reference_number || '',
           notes: item.notes || '',
           createdAt: item.created_at,
           updatedAt: item.updated_at

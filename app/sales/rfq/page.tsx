@@ -122,6 +122,30 @@ export default function RFQPage() {
     )
   }
 
+  const handleDelete = async (rfqId: string, rfqNumber: string) => {
+    if (!confirm(`Are you sure you want to delete RFQ ${rfqNumber}? This action cannot be undone.`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/sales/quotations/${rfqId}`, {
+        method: 'DELETE',
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // Refresh the RFQ list
+        fetchRFQs()
+      } else {
+        alert(`Failed to delete RFQ: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Error deleting RFQ:', error)
+      alert('An error occurred while deleting the RFQ')
+    }
+  }
+
   const filteredRFQs = rfqs.filter(rfq => {
     const matchesSearch = rfq.rfqNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          rfq.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -370,6 +394,16 @@ export default function RFQPage() {
                               <Button variant="outline" size="sm" className="text-green-600 hover:text-green-700">
                                 <Download className="h-4 w-4 mr-1" />
                                 PDF
+                              </Button>
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDelete(rfq.id, rfq.rfqNumber)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Delete
                               </Button>
                             </>
                           )}

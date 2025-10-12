@@ -16,7 +16,9 @@ import {
   User,
   Calendar,
   DollarSign,
-  Package
+  Package,
+  Trash2,
+  Loader2
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
@@ -61,6 +63,7 @@ export default function RFQDetailPage() {
   const { hasModuleAccess, hasFullAccess } = usePermissions()
   const [rfq, setRfq] = useState<RFQ | null>(null)
   const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState(false)
 
   const canEdit = hasFullAccess('sales')
   const canRead = hasModuleAccess('sales')
@@ -161,6 +164,35 @@ export default function RFQDetailPage() {
     window.print()
   }
 
+  const handleDelete = async () => {
+    if (!rfq) return
+
+    if (!confirm(`Are you sure you want to delete RFQ ${rfq.quotationNumber}? This action cannot be undone.`)) {
+      return
+    }
+
+    setDeleting(true)
+    try {
+      const response = await fetch(`/api/sales/quotations/${rfq.id}`, {
+        method: 'DELETE',
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // Redirect back to RFQ list
+        router.push('/sales/rfq')
+      } else {
+        alert(`Failed to delete RFQ: ${result.error}`)
+        setDeleting(false)
+      }
+    } catch (error) {
+      console.error('Error deleting RFQ:', error)
+      alert('An error occurred while deleting the RFQ')
+      setDeleting(false)
+    }
+  }
+
   if (!canRead) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -232,12 +264,32 @@ export default function RFQDetailPage() {
                 PDF
               </Button>
               {canEdit && (
-                <Link href={`/sales/rfq/${rfq.id}/edit`}>
-                  <Button>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
+                <>
+                  <Link href={`/sales/rfq/${rfq.id}/edit`}>
+                    <Button>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    {deleting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </>
+                    )}
                   </Button>
-                </Link>
+                </>
               )}
             </div>
           </div>

@@ -128,7 +128,7 @@ export default function PaymentsPage() {
           clientName: client?.company_name || 'Unknown Client',
           amount: Number(item.amount) || 0,
           paymentMethod: item.payment_method || 'OTHER',
-          status: 'COMPLETED', // invoice_payments table doesn't have status column - all payments are completed
+          status: 'COMPLETED' as const, // invoice_payments table doesn't have status column - all payments are completed
           paymentDate: item.payment_date || '',
           reference: item.reference_number || '',
           notes: item.notes || '',

@@ -18,7 +18,7 @@ import { createClient } from '@/lib/supabase/server';
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const authResult = await authenticateAndAuthorize(request, 'sales', 'DELETE');
   if (!authResult.success) {
@@ -26,7 +26,7 @@ export async function DELETE(
   }
 
   const supabase = await createClient();
-  const { id } = params;
+  const { id } = await params;
 
   try {
     // First, check if the quotation exists and is not already deleted

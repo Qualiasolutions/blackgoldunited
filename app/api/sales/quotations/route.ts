@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('quotations')
       .select('*', { count: 'exact' })
-      .eq('is_active', true);
+      .is('deleted_at', null);
 
     // Apply search filter
     if (validatedParams.query) {

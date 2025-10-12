@@ -11,12 +11,13 @@ import {
   Calendar,
   Building2,
   FileText,
-  Loader2
+  Loader2,
+  Trash2
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 
 interface POItem {
   id: string
@@ -51,14 +52,17 @@ interface PurchaseOrder {
 
 export default function PurchaseOrderDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const id = params.id as string
-  const { hasModuleAccess } = usePermissions()
+  const { hasModuleAccess, hasFullAccess } = usePermissions()
   const [loading, setLoading] = useState(true)
   const [po, setPo] = useState<PurchaseOrder | null>(null)
   const [client, setClient] = useState<Client | null>(null)
   const [items, setItems] = useState<POItem[]>([])
+  const [deleting, setDeleting] = useState(false)
 
   const canRead = hasModuleAccess('purchase')
+  const canManage = hasFullAccess('purchase')
 
   useEffect(() => {
     if (!canRead) return
@@ -105,6 +109,35 @@ export default function PurchaseOrderDetailPage() {
 
     fetchPO()
   }, [id, canRead])
+
+  const handleDelete = async () => {
+    if (!po) return
+
+    if (!confirm(`Are you sure you want to delete purchase order ${po.po_number}? This action cannot be undone.`)) {
+      return
+    }
+
+    setDeleting(true)
+    try {
+      const response = await fetch(`/api/purchases/orders/${id}`, {
+        method: 'DELETE',
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // Redirect back to purchase orders list
+        router.push('/sales/purchase-orders')
+      } else {
+        alert(`Failed to delete purchase order: ${result.error}`)
+        setDeleting(false)
+      }
+    } catch (error) {
+      console.error('Error deleting purchase order:', error)
+      alert('An error occurred while deleting the purchase order')
+      setDeleting(false)
+    }
+  }
 
   if (!canRead) {
     return (
@@ -158,13 +191,33 @@ export default function PurchaseOrderDetailPage() {
                   Back
                 </Button>
               </Link>
-              {['DRAFT', 'SENT'].includes(po.status) && (
+              {canManage && ['DRAFT', 'SENT'].includes(po.status) && (
                 <Link href={`/sales/purchase-orders/${id}/edit`}>
                   <Button>
                     <Edit className="w-4 h-4 mr-2" />
                     Edit
                   </Button>
                 </Link>
+              )}
+              {canManage && (
+                <Button
+                  variant="outline"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete
+                    </>
+                  )}
+                </Button>
               )}
             </div>
           </div>

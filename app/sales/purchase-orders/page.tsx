@@ -28,7 +28,8 @@ import {
   Calendar,
   DollarSign,
   RefreshCw,
-  Loader2
+  Loader2,
+  Trash2
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
@@ -155,6 +156,32 @@ export default function PurchaseOrdersPage() {
 
   const handlePageChange = (newPage: number) => {
     setPagination(prev => ({ ...prev, page: newPage }))
+  }
+
+  const handleDelete = async (orderId: string, poNumber: string) => {
+    if (!confirm(`Are you sure you want to delete purchase order ${poNumber}? This action cannot be undone.`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/purchases/orders/${orderId}`, {
+        method: 'DELETE',
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // Refresh the orders list
+        setPagination(prev => ({ ...prev, page: 1 }))
+        // Trigger a re-fetch by updating a dependency
+        setSearchTerm(prev => prev)
+      } else {
+        alert(`Failed to delete purchase order: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Error deleting purchase order:', error)
+      alert('An error occurred while deleting the purchase order')
+    }
   }
 
   const getStatusBadge = (status: string) => {
@@ -447,6 +474,16 @@ export default function PurchaseOrdersPage() {
                             <Link href={`/sales/purchase-orders/${order.id}/edit`}>
                               <Edit className="h-4 w-4" />
                             </Link>
+                          </Button>
+                        )}
+                        {canManage && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(order.id, order.poNumber)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         )}
                       </div>
